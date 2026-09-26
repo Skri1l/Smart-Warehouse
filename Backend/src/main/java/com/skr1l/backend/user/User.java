@@ -1,6 +1,7 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.user;
 
-import com.skr1l.backend.entity.enums.Role;
+import com.skr1l.backend.user.enums.UserRole;
+import com.skr1l.backend.user.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,10 +28,17 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private UserRole role;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
 }
