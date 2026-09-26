@@ -1,4 +1,4 @@
-package com.skr1l.backend.entity.enums;
+package com.skr1l.backend.user.enums;
 
 public enum UserStatus {
     ACTIVE,
