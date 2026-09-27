@@ -2,6 +2,8 @@ package com.skr1l.backend.user.service;
 
 import com.skr1l.backend.exception.userException.UserAlreadyExistsException;
 import com.skr1l.backend.exception.userException.UserNotFoundException;
+import com.skr1l.backend.logging.AppLogger;
+import com.skr1l.backend.logging.LoggerFactory;
 import com.skr1l.backend.user.User;
 import com.skr1l.backend.user.dto.UserRequestDTO;
 import com.skr1l.backend.user.dto.UserResponseDTO;
@@ -19,6 +21,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+    private final static AppLogger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
@@ -26,6 +30,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public Long createUser(UserRequestDTO userDto) {
+        log.info("createUser");
         Objects.requireNonNull(userDto, "userDto is null");
 
         if (userRepository.existsByEmail(userDto.email())) {
@@ -50,6 +55,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByEmail(String email) {
+        log.info("getUserByEmail");
         Objects.requireNonNull(email, "email is null");
 
         return userRepository.findByEmail(email)
@@ -58,6 +64,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByUsername(String username) {
+        log.info("getUserByUsername");
         Objects.requireNonNull(username, "username is null");
 
         return userRepository.findByUsername(username)
@@ -66,12 +73,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO getUserById(Long id) {
-
+        log.info("getUserById");
         return toResponseDTO(getUserEntityById(id));
     }
 
     @Override
     public List<UserResponseDTO> getAllUsers() {
+        log.info("getAllUsers");
 
         return userRepository.findAll()
                 .stream()
@@ -80,6 +88,7 @@ public class UserServiceImpl implements UserService {
     }
 
     private User getUserEntityById(Long id) {
+        log.info("getUserEntityById");
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User is not found"));
     }
@@ -87,6 +96,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDTO updateUser(Long id, UserRequestDTO userDto) {
+        log.info("updateUser");
         Objects.requireNonNull(id, "id is null");
         Objects.requireNonNull(userDto, "userDto is null");
 
@@ -112,6 +122,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void blockUser(Long id) {
+        log.info("blockUser");
         User user = getUserEntityById(id);
         user.setStatus(UserStatus.BLOCKED);
     }
@@ -119,6 +130,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void unblockUser(Long id) {
+        log.info("unblockUser");
         User user = getUserEntityById(id);
         user.setStatus(UserStatus.ACTIVE);
     }
@@ -126,11 +138,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(Long id) {
+        log.info("deleteUser");
         User user = getUserEntityById(id);
         userRepository.delete(user);
     }
 
     private UserResponseDTO toResponseDTO(User user) {
+        log.info("toResponseDTO");
         return new UserResponseDTO(
                 user.getId(),
                 user.getEmail(),

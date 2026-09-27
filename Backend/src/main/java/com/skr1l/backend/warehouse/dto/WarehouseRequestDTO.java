@@ -4,5 +4,5 @@ import jakarta.validation.constraints.NotBlank;
 
 public record WarehouseRequestDTO(
         @NotBlank String name,
-        String description
+        @NotBlank String address
 ) {}
