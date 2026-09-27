@@ -92,12 +92,17 @@ public class UserServiceImpl implements UserService {
 
         User user = getUserEntityById(id);
 
-        user.setUsername(userDto.username());
+        if (userRepository.existsByUsername(userDto.username())
+                && !user.getUsername().equals(userDto.username())) {
+            throw new UserAlreadyExistsException("User with that username already exists");
+        }
 
         if (userRepository.existsByEmail(userDto.email())
                 && !user.getEmail().equals(userDto.email())) {
             throw new UserAlreadyExistsException("User with that email already exists");
         }
+
+        user.setUsername(userDto.username());
         user.setEmail(userDto.email());
         user.setPasswordHash(passwordEncoder.encode(userDto.password()));
 
