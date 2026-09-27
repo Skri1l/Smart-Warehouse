@@ -1,4 +1,4 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.warehouse;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
