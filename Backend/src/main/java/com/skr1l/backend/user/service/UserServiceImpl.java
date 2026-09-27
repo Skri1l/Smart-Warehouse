@@ -1,5 +1,7 @@
 package com.skr1l.backend.user.service;
 
+import com.skr1l.backend.exception.userException.UserAlreadyExistsException;
+import com.skr1l.backend.exception.userException.UserNotFoundException;
 import com.skr1l.backend.user.User;
 import com.skr1l.backend.user.dto.UserRequestDTO;
 import com.skr1l.backend.user.dto.UserResponseDTO;
@@ -64,8 +66,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO getUserById(Long id) {
-
-        User user = getUserEntityById(id);
 
         return toResponseDTO(getUserEntityById(id));
     }
