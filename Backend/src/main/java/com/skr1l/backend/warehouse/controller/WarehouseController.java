@@ -62,6 +62,6 @@ public class WarehouseController {
 
         warehouseService.deleteWarehouse(id);
 
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build();
     }
 }
