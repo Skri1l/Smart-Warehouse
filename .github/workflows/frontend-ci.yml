@@ -35,7 +35,12 @@ jobs:
         run: black --check .
 
       - name: Type check (mypy)
-        run: mypy .
+        run: |
+          if find . -name "*.py" | grep -q .; then
+            mypy .
+          else
+            echo "No Python files yet — skipping."
+          fi
 
       - name: Tests (pytest)
         run: |
