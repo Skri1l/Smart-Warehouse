@@ -1,5 +1,6 @@
 package com.skr1l.backend.warehouse.service;
 
+import com.skr1l.backend.exception.warehouseExceptions.WarehouseAlreadyExistsException;
 import com.skr1l.backend.exception.warehouseExceptions.WarehouseIsNotFoundException;
 import com.skr1l.backend.logging.LoggerFactory;
 import com.skr1l.backend.logging.AppLogger;
@@ -26,6 +27,11 @@ public class WarehouseServiceImpl implements WarehouseService {
     public Long createWarehouse(WarehouseRequestDTO dto) {
         log.info("createWarehouse");
         Objects.requireNonNull(dto, "dto is null");
+
+        if (warehouseRepository.existsByNameAndAddress(dto.name(), dto.address())) {
+            throw new WarehouseAlreadyExistsException("Warehouse with name "
+                    + dto.name() + " and address " + dto.address() + " already exists");
+        }
 
         Warehouse warehouse = new Warehouse();
         warehouse.setAddress(dto.address());
@@ -64,6 +70,11 @@ public class WarehouseServiceImpl implements WarehouseService {
         Objects.requireNonNull(dto, "dto is null");
 
         Warehouse warehouse = getWarehouseEntityById(id);
+
+        if (warehouseRepository.existsByNameAndAddressAndIdNot(dto.name(), dto.address(), id)) {
+            throw new WarehouseAlreadyExistsException(
+                    "Warehouse with this name and address already exists");
+        }
 
         warehouse.setName(dto.name());
         warehouse.setAddress(dto.address());
