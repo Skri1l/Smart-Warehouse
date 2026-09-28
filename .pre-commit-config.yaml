@@ -1,0 +1,37 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=5000"]
+
+  # --- Frontend (Python / Django) ---
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+        files: ^Frontend/
+      - id: ruff-format
+        files: ^Frontend/
+
+  # --- Backend (Java / Spring Boot) ---
+  - repo: local
+    hooks:
+      - id: spotless-apply
+        name: Spotless (Java formatting)
+        entry: bash -c 'cd Backend && ./mvnw -q spotless:apply'
+        language: system
+        files: ^Backend/.*\.java$
+        pass_filenames: false
+
+  # --- Commit message ---
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.29.0
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]

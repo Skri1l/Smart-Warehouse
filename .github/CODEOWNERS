@@ -1,0 +1,7 @@
+# Code ownership — reviewers are auto-requested on matching PRs.
+# Replace the placeholder GitHub handle(s) below with the actual usernames.
+
+/Backend/            @Skri1l
+/Frontend/           @uladzislau-mikhayevich
+/Documentation/      @Skri1l @uladzislau-mikhayevich
+/.github/            @Skri1l @uladzislau-mikhayevich
