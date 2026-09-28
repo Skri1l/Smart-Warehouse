@@ -1,7 +1,7 @@
 package com.skr1l.backend.user;
 
-import com.skr1l.backend.exception.userException.UserAlreadyExistsException;
-import com.skr1l.backend.exception.userException.UserNotFoundException;
+import com.skr1l.backend.exception.userExceptions.UserAlreadyExistsException;
+import com.skr1l.backend.exception.userExceptions.UserNotFoundException;
 import com.skr1l.backend.user.dto.UserRequestDTO;
 import com.skr1l.backend.user.dto.UserResponseDTO;
 import com.skr1l.backend.user.enums.UserStatus;

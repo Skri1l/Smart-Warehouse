@@ -1,7 +1,7 @@
 package com.skr1l.backend.user.service;
 
-import com.skr1l.backend.exception.userException.UserAlreadyExistsException;
-import com.skr1l.backend.exception.userException.UserNotFoundException;
+import com.skr1l.backend.exception.userExceptions.UserAlreadyExistsException;
+import com.skr1l.backend.exception.userExceptions.UserNotFoundException;
 import com.skr1l.backend.logging.AppLogger;
 import com.skr1l.backend.logging.LoggerFactory;
 import com.skr1l.backend.user.User;

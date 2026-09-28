@@ -1,5 +1,6 @@
 package com.skr1l.backend.warehouse.service;
 
+import com.skr1l.backend.exception.warehouseExceptions.WarehouseIsNotFoundException;
 import com.skr1l.backend.logging.LoggerFactory;
 import com.skr1l.backend.logging.AppLogger;
 import com.skr1l.backend.warehouse.Warehouse;
