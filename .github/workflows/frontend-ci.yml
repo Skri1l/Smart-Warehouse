@@ -1,0 +1,51 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - "Frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "Frontend/**"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dev dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Type check (mypy)
+        run: |
+          if find . -name "*.py" | grep -q .; then
+            mypy .
+          else
+            echo "No Python files yet — skipping."
+          fi
+
+      - name: Tests (pytest)
+        run: |
+          if find . -name "test_*.py" -o -name "*_test.py" | grep -q .; then
+            pytest
+          else
+            echo "No tests yet — skipping."
+          fi

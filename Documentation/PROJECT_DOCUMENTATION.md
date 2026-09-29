@@ -266,7 +266,7 @@ Shelf Camera + Controller
 ### Recommended technology stack
 
 **Backend:** Java, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway/Liquibase, OpenAPI/Swagger.  
-**Frontend:** React or another SPA framework selected by the frontend developer.  
+**Frontend:** Python, Django.  
 **ML:** Python service with REST API; OpenCV + selected detection/counting model.  
 **Infrastructure:** Docker / Docker Compose for local development, cloud deployment for demo.  
 **Testing:** JUnit, Mockito, integration tests with PostgreSQL/Testcontainers; frontend tests where appropriate.
