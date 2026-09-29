@@ -1,8 +1,11 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.shelf;
 
+import com.skr1l.backend.shelf.enums.ShelfStatus;
 import com.skr1l.backend.rack.Rack;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,9 +32,11 @@ public class Shelf {
     private String label;
 
     @Column(nullable = false)
-    private Integer level;
-
     private Integer capacity;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ShelfStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rack_id", nullable = false)

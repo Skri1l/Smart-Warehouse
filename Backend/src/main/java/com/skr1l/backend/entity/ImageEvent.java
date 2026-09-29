@@ -1,6 +1,7 @@
 package com.skr1l.backend.entity;
 
 import com.skr1l.backend.entity.enums.ProcessingStatus;
+import com.skr1l.backend.shelf.Shelf;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
