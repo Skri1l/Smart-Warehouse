@@ -1,4 +1,4 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.rack;
 
 import com.skr1l.backend.warehouse.Warehouse;
 import jakarta.persistence.Column;
@@ -26,7 +26,7 @@ public class Rack {
     private Long id;
 
     @Column(nullable = false)
-    private String name;
+    private String label;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id", nullable = false)

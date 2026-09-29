@@ -104,7 +104,6 @@ public class WarehouseServiceImpl implements WarehouseService {
         return new WarehouseResponseDTO(
                 warehouse.getId(),
                 warehouse.getName(),
-                warehouse.getAddress()
-        );
+                warehouse.getAddress());
     }
 }

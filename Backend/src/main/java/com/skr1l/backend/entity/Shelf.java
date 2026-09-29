@@ -1,5 +1,6 @@
 package com.skr1l.backend.entity;
 
+import com.skr1l.backend.rack.Rack;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
