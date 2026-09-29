@@ -1,6 +1,6 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.device;
 
-import com.skr1l.backend.entity.enums.DeviceStatus;
+import com.skr1l.backend.device.enums.DeviceStatus;
 import com.skr1l.backend.shelf.Shelf;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -16,7 +16,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,17 +29,16 @@ public class Device {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shelf_id", nullable = false, unique = true)
-    private Shelf shelf;
-
-    @Column(name = "device_key", nullable = false, unique = true)
+    @Column(nullable = false, unique = true)
     private String deviceKey;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DeviceStatus status;
 
-    @Column(name = "last_seen_at")
     private LocalDateTime lastSeenAt;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shelf_id", nullable = false, unique = true)
+    private Shelf shelf;
 }
