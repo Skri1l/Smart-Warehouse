@@ -1,6 +1,6 @@
 # 0003. Use Django for the frontend
 
-Status: Accepted
+Status: Supersedes
 Date: 2026-09-28
 
 ## Context
