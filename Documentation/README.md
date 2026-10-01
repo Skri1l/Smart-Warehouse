@@ -23,7 +23,7 @@ All documentation is Markdown, lives in this repository, and changes go through 
 | [BRANCHING.md](BRANCHING.md) | Branching model and naming |
 | [COMMIT_CONVENTION.md](COMMIT_CONVENTION.md) | Commit message format |
 | [CODE_STYLE_BACKEND.md](CODE_STYLE_BACKEND.md) | Java/Spring Boot conventions |
-| [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md) | Python/Django conventions |
+| [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md) | Python/PySide6 desktop client conventions |
 | [API_GUIDELINES.md](API_GUIDELINES.md) | REST design & OpenAPI documentation standard |
 
 ## Decisions & design
@@ -45,6 +45,7 @@ Hand-maintained API reference drifts from the code the moment someone changes a 
 
 - **Backend REST API:** [springdoc-openapi](https://springdoc.org/) generates the OpenAPI spec and Swagger UI directly from controller/DTO annotations — see [API_GUIDELINES.md](API_GUIDELINES.md). Once the first controllers exist (Milestone 2), `GET /v3/api-docs` and `/swagger-ui.html` are the canonical, always-current API reference; nothing about request/response shapes should be hand-documented elsewhere.
 - **Backend internals:** `./mvnw javadoc:javadoc` generates browsable Javadoc from the class/method comments described in [CODE_STYLE_BACKEND.md](CODE_STYLE_BACKEND.md), for internal (non-API) reference.
-- **Frontend:** the Django app is a consumer of the backend API, not a library with its own public API surface, so it does not need a separate generated reference (no Sphinx/mkdocstrings doc site) at this stage — its `api_client.py` is written against the generated OpenAPI spec instead of a hand-maintained one (see [API_GUIDELINES.md](API_GUIDELINES.md)). Doxygen/DocFX/TypeDoc don't apply — those target C++/.NET/TypeScript codebases, none of which are in this stack.
+- **Frontend:** the PySide6 desktop client is a consumer of the backend API, not a library with its own public API surface, so it does not need a separate generated reference (no Sphinx/mkdocstrings doc site) at this stage — its `api/client.py` (see [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md)) is written against the generated OpenAPI spec instead of a hand-maintained one (see [API_GUIDELINES.md](API_GUIDELINES.md)). Doxygen/DocFX/TypeDoc don't apply — those target C++/.NET/TypeScript codebases, none of which are in this stack.
+- **Third-party components:** [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) is regenerated from each component's actual installed version via `pip-licenses` (frontend/ML) and the Maven license plugin (backend) rather than hand-maintained from memory — see [ADR-0006](adr/0006-frontend-pyside6-desktop.md).
 
-CI does not yet publish the generated OpenAPI spec anywhere, because there are no controllers to generate it from and the app doesn't currently boot without a configured database (tracked as a known gap — see the backend's test setup). Once Milestone 2 adds real endpoints, add a CI step that fails the build if `/v3/api-docs` can't be generated, so the reference can never silently go stale.
+CI does not yet publish the generated OpenAPI spec anywhere, because there are no controllers to generate it from yet. Once Milestone 2 adds real endpoints, add a CI step that fails the build if `/v3/api-docs` can't be generated, so the reference can never silently go stale.

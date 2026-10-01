@@ -29,7 +29,7 @@ Any decision that would be expensive to reverse or that a new team member would 
 |---|---|---|
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-monorepo-repository-structure.md) | Use a single monorepo for Backend, Frontend and Documentation | Accepted |
-| [0003](0003-django-for-frontend.md) | Use Django for the frontend | Supersedes |
+| [0003](0003-django-for-frontend.md) | Use Django for the frontend | Superseded by [0006](0006-frontend-pyside6-desktop.md) |
 | [0004](0004-proprietary-license.md) | Use a proprietary license instead of an OSS license | Accepted |
 | [0005](0005-gitflow-lite-branching.md) | Use a GitFlow-lite branching model | Accepted |
 | [0006](0006-frontend-pyside6-desktop.md) | Use a PySide6 desktop client for the frontend | Accepted |

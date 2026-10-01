@@ -17,14 +17,17 @@ Reject any new dependency licensed under GPL or AGPL (see ADR 0004).
 
 ## Frontend (desktop client)
 
-### Qt for Python (PySide6, Shiboken6) — version <version>
+### Qt for Python (PySide6, Shiboken6) — version 6.11.2
 
+- PyPI license classifier: `LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only`
+  (Qt/PySide6 is multi-licensed; this project uses it under the **LGPL-3.0-only**
+  branch of that choice — see [ADR-0006](Documentation/adr/0006-frontend-pyside6-desktop.md))
 - License: GNU Lesser General Public License v3.0 (`licenses/LGPL-3.0.txt`,
   which incorporates `licenses/GPL-3.0.txt`)
 - Copyright: The Qt Company Ltd. and other contributors
-- Source code: https://code.qt.io/cgit/pyside/pyside-setup.git (tag `v<version>`)
+- Source code: https://code.qt.io/cgit/pyside/pyside-setup.git (tag `v6.11.2`)
 
-### Qt libraries (bundled with PySide6) — version <version>
+### Qt libraries (bundled with PySide6) — version 6.11.2
 
 - License: GNU Lesser General Public License v3.0
 - Copyright: The Qt Company Ltd. and other contributors
@@ -38,17 +41,26 @@ version of the same release. The source code of the exact versions listed
 above is available at the links provided; the copyright holders will also
 provide it on request for at least three years from the date of distribution.
 
-### pyqtgraph — version <version>
+**Qt modules that must not be used.** Qt Charts, Qt Data Visualization and any
+other Qt module whose PyPI/Qt licensing is GPL-only (not LGPL) must not be
+added to this project — see [ADR-0006](Documentation/adr/0006-frontend-pyside6-desktop.md).
+Use `pyqtgraph` or `matplotlib` for charting instead.
+
+### pyqtgraph — version 0.14.0
 
 - License: MIT (`licenses/pyqtgraph-MIT.txt`)
+- Copyright: 2012 University of North Carolina at Chapel Hill, Luke Campagnola
 - Source code: https://github.com/pyqtgraph/pyqtgraph
 
-### httpx — version <version>
+### httpx — version 0.28.1
 
 - License: BSD 3-Clause (`licenses/httpx-BSD-3-Clause.txt`)
+- Copyright: 2019, Encode OSS Ltd.
 - Source code: https://github.com/encode/httpx
 
-<!-- Add remaining frontend dependencies from the pip-licenses report here. -->
+<!-- Add remaining frontend dependencies (including transitive ones, e.g.
+httpcore) from the pip-licenses report here once the project is scaffolded
+and requirements.txt reflects the actual installed set. -->
 
 ## Backend
 

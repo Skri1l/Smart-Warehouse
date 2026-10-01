@@ -11,7 +11,7 @@ This is a monorepo. Each top-level directory is an independently buildable compo
 ```text
 Smart-Warehouse/
 ├── Backend/          Java / Spring Boot REST API, business logic, persistence
-├── Frontend/         Python / Django web application
+├── Frontend/         Python / PySide6 desktop client
 ├── Documentation/     Product, process and engineering documentation
 └── .github/          CI workflows, issue/PR templates, code ownership
 ```
@@ -19,7 +19,7 @@ Smart-Warehouse/
 | Component | Language | Framework | Docs |
 |---|---|---|---|
 | `Backend/` | Java 21 | Spring Boot, Spring Data JPA, PostgreSQL | [CODE_STYLE_BACKEND.md](Documentation/CODE_STYLE_BACKEND.md) |
-| `Frontend/` | Python 3.12+ | Django | [CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
+| `Frontend/` | Python 3.12+ | PySide6 (Qt for Python), desktop | [CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
 
 ## Engineering conventions
 
@@ -28,7 +28,7 @@ Smart-Warehouse/
 | Branching model, branch naming, merge strategy | [Documentation/BRANCHING.md](Documentation/BRANCHING.md) |
 | Commit message format | [Documentation/COMMIT_CONVENTION.md](Documentation/COMMIT_CONVENTION.md) |
 | Backend (Java) code style | [Documentation/CODE_STYLE_BACKEND.md](Documentation/CODE_STYLE_BACKEND.md) |
-| Frontend (Python/Django) code style | [Documentation/CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
+| Frontend (Python/PySide6) code style | [Documentation/CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
 | REST API design & OpenAPI documentation | [Documentation/API_GUIDELINES.md](Documentation/API_GUIDELINES.md) |
 | How to contribute (PR process, review, DoD) | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Architecture decisions (ADRs) | [Documentation/adr/](Documentation/adr/README.md) |
@@ -55,21 +55,21 @@ The API starts on `http://localhost:8080` by default. Database connection settin
 
 ### Frontend
 
-The Django application has not been scaffolded yet (tracked under Milestone 1/3 — see [MILESTONES.md](Documentation/MILESTONES.md)). Once created, run instructions will live in [Frontend/README.md](Frontend/README.md).
+The PySide6 desktop client has not been scaffolded yet (tracked under Milestone 1/3 — see [MILESTONES.md](Documentation/MILESTONES.md)). Once created, run instructions will live in [Frontend/README.md](Frontend/README.md).
 
 ## Quality gates
 
 - **Backend:** `./mvnw verify` runs unit/integration tests and checks code formatting (Spotless). Run `./mvnw spotless:apply` to auto-format before committing.
-- **Frontend:** `ruff check .`, `black --check .` and `mypy .` run from `Frontend/`. See [Frontend/pyproject.toml](Frontend/pyproject.toml).
+- **Frontend:** `ruff check .`, `black --check .`, `mypy .` and a `pip-licenses` dependency audit (see [ADR-0006](Documentation/adr/0006-frontend-pyside6-desktop.md)) run from `Frontend/`. See [Frontend/pyproject.toml](Frontend/pyproject.toml).
 - Both are enforced locally via [pre-commit](.pre-commit-config.yaml) hooks and in CI on every pull request (`.github/workflows/`).
 
 ## License
 
-This repository is **proprietary and confidential**. See [LICENSE](LICENSE). No part of this codebase may be copied, used or distributed without prior written permission from the copyright holders.
+This repository is **proprietary and confidential**. See [LICENSE](LICENSE). No part of this codebase may be copied, used or distributed without prior written permission from the copyright holders. Third-party components (e.g. the LGPL-licensed Qt/PySide6 used by the frontend) keep their own licenses — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Team
 
 | Name | Primary responsibility |
 |---|---|
 | Ivan Samal | Backend, database, ML/CV integration, forecasting logic |
-| Uladzislau Mikhayevich | Frontend, responsive UI, cloud deployment, API documentation |
+| Uladzislau Mikhayevich | Frontend, cross-platform desktop UI, cloud deployment, API documentation |

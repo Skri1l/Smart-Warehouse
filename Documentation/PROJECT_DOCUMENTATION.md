@@ -3,7 +3,7 @@
 ## 1. Project overview
 
 **Project name:** Smart Warehouse: An Intelligent Resource Storage System  
-**Type:** diploma project / web + backend + computer vision + forecasting system  
+**Type:** diploma project / desktop client + backend + computer vision + forecasting system  
 **Team size:** 2 developers  
 **Planned duration:** 12 weeks
 
@@ -11,7 +11,7 @@ Smart Warehouse is an intelligent warehouse management system designed for shelv
 
 The system also stores stock history, product shelf-life information and planned future demand. A forecasting and replenishment module determines whether the current stock is sufficient for an upcoming date. If not, it creates a replenishment recommendation and, in the extended version of the project, can automatically create an order through an external supplier integration.
 
-A web application allows warehouse staff to see current stock, locate products, receive placement recommendations, inspect stock changes and review replenishment recommendations.
+A desktop client application (see [ADR-0006](adr/0006-frontend-pyside6-desktop.md)) allows warehouse staff to see current stock, locate products, receive placement recommendations, inspect stock changes and review replenishment recommendations.
 
 ---
 
@@ -29,7 +29,7 @@ The main goal is to reduce manual warehouse inventory operations and improve sto
 - forecast future product demand;
 - take product shelf life into account when calculating replenishment;
 - generate replenishment recommendations;
-- provide a responsive web interface for warehouse workers and managers;
+- provide a cross-platform desktop interface for warehouse workers and managers;
 - expose documented REST APIs for frontend and device integration;
 - deploy the system to a cloud environment.
 
@@ -53,7 +53,7 @@ The main goal is to reduce manual warehouse inventory operations and improve sto
 12. Planned-demand management.
 13. Demand/replenishment calculation.
 14. Replenishment recommendations.
-15. Role-based web interface.
+15. Role-based desktop interface.
 16. REST API documentation using OpenAPI/Swagger.
 17. Cloud deployment.
 
@@ -174,7 +174,7 @@ A manager shall be able to confirm, reject or modify a purchase recommendation.
 
 ### FR-17 Dashboard
 
-The web application shall show current stock, low-stock products, recent movements, recognition errors and purchase recommendations.
+The desktop client shall show current stock, low-stock products, recent movements, recognition errors and purchase recommendations.
 
 ### FR-18 API documentation
 
@@ -213,9 +213,9 @@ The architecture should allow adding more shelves and devices without changing t
 
 Backend, frontend and ML responsibilities should be clearly separated and API contracts documented.
 
-### NFR-07 Responsiveness
+### NFR-07 Cross-platform desktop support
 
-The UI shall support desktop and mobile/tablet layouts.
+The UI shall run natively on Windows, macOS and Linux desktop environments (see [ADR-0006](adr/0006-frontend-pyside6-desktop.md)). Mobile/tablet access is out of scope for the diploma MVP following the move to a desktop client; revisit as an extended-scope item (e.g. a separate companion app) if floor-mobile access becomes a requirement.
 
 ---
 
@@ -266,7 +266,7 @@ Shelf Camera + Controller
 ### Recommended technology stack
 
 **Backend:** Java, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway/Liquibase, OpenAPI/Swagger.  
-**Frontend:** Python, Django.  
+**Frontend:** Python, PySide6 (Qt for Python) desktop client.  
 **ML:** Python service with REST API; OpenCV + selected detection/counting model.  
 **Infrastructure:** Docker / Docker Compose for local development, cloud deployment for demo.  
 **Testing:** JUnit, Mockito, integration tests with PostgreSQL/Testcontainers; frontend tests where appropriate.
@@ -557,8 +557,8 @@ Primary responsibility:
 
 Primary responsibility:
 
-- frontend web application;
-- responsive UI;
+- frontend desktop application (PySide6);
+- cross-platform desktop UI;
 - cloud/deployment work;
 - API documentation and frontend integration.
 

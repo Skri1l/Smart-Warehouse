@@ -118,4 +118,4 @@ public record ProductResponse(
 
 ## Frontend consumption
 
-The Django frontend must not hand-write request/response shapes from memory — generate or hand-maintain a typed client (`apps/*/api_client.py`) against the published `/v3/api-docs` schema, and re-check it whenever the backend OpenAPI spec changes.
+The PySide6 desktop client must not hand-write request/response shapes from memory — hand-maintain a typed client (`app/api/client.py`, see [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md)) against the published `/v3/api-docs` schema, and re-check it whenever the backend OpenAPI spec changes. All network calls happen off the Qt UI thread (see CODE_STYLE_FRONTEND.md's threading rule) so a slow API response never freezes the window.

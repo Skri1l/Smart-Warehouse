@@ -5,7 +5,14 @@ venv/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
-db.sqlite3
 .env
-/staticfiles/
-/media/
+
+# PyInstaller build output (see ADR-0006 — built per-OS in CI, not committed)
+build/
+dist/
+*.spec
+
+# Qt Designer / resource-compiler output is generated from .ui/.qrc sources
+# at build time (see Documentation/CODE_STYLE_FRONTEND.md) — never committed.
+**/*_ui.py
+**/resources_rc.py

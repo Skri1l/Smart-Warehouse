@@ -1,6 +1,6 @@
 # 0003. Use Django for the frontend
 
-Status: Supersedes
+Status: Superseded by [ADR-0006](0006-frontend-pyside6-desktop.md)
 Date: 2026-09-28
 
 ## Context
