@@ -32,3 +32,4 @@ Routine feature work that fits cleanly within one module and one milestone (a ne
 | # | Title | Status |
 |---|---|---|
 | [0001](0001-image-ingestion-and-recognition-pipeline.md) | Image ingestion and recognition pipeline | Draft |
+| [0002](0002-static-site-for-installer-and-onboarding.md) | Static site for desktop installer download and onboarding | Draft |
