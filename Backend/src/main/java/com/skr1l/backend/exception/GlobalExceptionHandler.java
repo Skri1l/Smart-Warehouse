@@ -2,6 +2,8 @@ package com.skr1l.backend.exception;
 
 import com.skr1l.backend.exception.deviceExceptions.DeviceAlreadyExistsException;
 import com.skr1l.backend.exception.deviceExceptions.DeviceIsNotFoundException;
+import com.skr1l.backend.exception.productExceptions.ProductAlreadyExistsException;
+import com.skr1l.backend.exception.productExceptions.ProductIsNotFoundException;
 import com.skr1l.backend.exception.rackExceptions.RackIsNotFoundException;
 import com.skr1l.backend.exception.shelfExceptions.ShelfIsNotFoundException;
 import com.skr1l.backend.exception.userExceptions.UserAlreadyExistsException;
@@ -20,7 +22,8 @@ public class GlobalExceptionHandler {
             WarehouseIsNotFoundException.class,
             RackIsNotFoundException.class,
             ShelfIsNotFoundException.class,
-            DeviceIsNotFoundException.class})
+            DeviceIsNotFoundException.class,
+            ProductIsNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
@@ -28,7 +31,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({UserAlreadyExistsException.class,
             WarehouseAlreadyExistsException.class,
-            DeviceAlreadyExistsException.class})
+            DeviceAlreadyExistsException.class,
+            ProductAlreadyExistsException.class})
     public ResponseEntity<ErrorResponse> handleAlreadyExists(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
