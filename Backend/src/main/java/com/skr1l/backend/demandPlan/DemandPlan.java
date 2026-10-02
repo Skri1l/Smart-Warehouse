@@ -1,51 +1,38 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.demandPlan;
 
-import com.skr1l.backend.entity.enums.PurchaseRequestStatus;
 import com.skr1l.backend.product.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "purchase_orders")
+@Table(name = "demand_plans")
 @Getter
 @Setter
 @NoArgsConstructor
-public class PurchaseOrder {
+public class DemandPlan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "recommendation_id", nullable = false)
-    private ReplenishmentRecommendation recommendation;
-
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
     @Column(nullable = false)
-    private Integer quantity;
+    private LocalDate requiredDate;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PurchaseRequestStatus status;
-
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Integer requiredQuantity;
 }

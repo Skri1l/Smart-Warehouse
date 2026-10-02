@@ -1,10 +1,14 @@
 package com.skr1l.backend.exception;
 
+import com.skr1l.backend.exception.ReplenishmentRecommendationExceptions.ReplenishmentRecommendationIsNotFoundException;
+import com.skr1l.backend.exception.demandPlanExceptions.DemandPlanIsNotFoundException;
 import com.skr1l.backend.exception.deviceExceptions.DeviceAlreadyExistsException;
 import com.skr1l.backend.exception.deviceExceptions.DeviceIsNotFoundException;
 import com.skr1l.backend.exception.imageEvent.ImageEventIsNotFoundException;
 import com.skr1l.backend.exception.productExceptions.ProductAlreadyExistsException;
 import com.skr1l.backend.exception.productExceptions.ProductIsNotFoundException;
+import com.skr1l.backend.exception.purchaseOrderExceptions.PurchaseOrderAlreadyExistsException;
+import com.skr1l.backend.exception.purchaseOrderExceptions.PurchaseOrderIsNotFoundException;
 import com.skr1l.backend.exception.rackExceptions.RackIsNotFoundException;
 import com.skr1l.backend.exception.recognitionResult.RecognitionResultIsNotFoundException;
 import com.skr1l.backend.exception.shelfExceptions.ShelfIsNotFoundException;
@@ -31,7 +35,10 @@ public class GlobalExceptionHandler {
             ShelfStockIsNotFoundException.class,
             StockMovementIsNotFoundException.class,
             ImageEventIsNotFoundException.class,
-            RecognitionResultIsNotFoundException.class})
+            RecognitionResultIsNotFoundException.class,
+            DemandPlanIsNotFoundException.class,
+            ReplenishmentRecommendationIsNotFoundException.class,
+            PurchaseOrderIsNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
@@ -40,7 +47,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({UserAlreadyExistsException.class,
             WarehouseAlreadyExistsException.class,
             DeviceAlreadyExistsException.class,
-            ProductAlreadyExistsException.class})
+            ProductAlreadyExistsException.class,
+            PurchaseOrderAlreadyExistsException.class})
     public ResponseEntity<ErrorResponse> handleAlreadyExists(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
