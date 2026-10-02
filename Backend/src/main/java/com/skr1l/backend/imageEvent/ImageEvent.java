@@ -1,7 +1,8 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.imageEvent;
 
 import com.skr1l.backend.device.Device;
 import com.skr1l.backend.entity.enums.ProcessingStatus;
+import com.skr1l.backend.imageEvent.enums.ImageProcessingStatus;
 import com.skr1l.backend.shelf.Shelf;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,5 +51,5 @@ public class ImageEvent {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "processing_status", nullable = false)
-    private ProcessingStatus processingStatus;
+    private ImageProcessingStatus imageProcessingStatus;
 }

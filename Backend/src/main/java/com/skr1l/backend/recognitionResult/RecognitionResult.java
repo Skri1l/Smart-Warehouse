@@ -1,6 +1,7 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.recognitionResult;
 
-import com.skr1l.backend.entity.enums.RecognitionStatus;
+import com.skr1l.backend.recognitionResult.enums.RecognitionStatus;
+import com.skr1l.backend.imageEvent.ImageEvent;
 import com.skr1l.backend.product.Product;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

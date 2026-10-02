@@ -2,9 +2,11 @@ package com.skr1l.backend.exception;
 
 import com.skr1l.backend.exception.deviceExceptions.DeviceAlreadyExistsException;
 import com.skr1l.backend.exception.deviceExceptions.DeviceIsNotFoundException;
+import com.skr1l.backend.exception.imageEvent.ImageEventIsNotFoundException;
 import com.skr1l.backend.exception.productExceptions.ProductAlreadyExistsException;
 import com.skr1l.backend.exception.productExceptions.ProductIsNotFoundException;
 import com.skr1l.backend.exception.rackExceptions.RackIsNotFoundException;
+import com.skr1l.backend.exception.recognitionResult.RecognitionResultIsNotFoundException;
 import com.skr1l.backend.exception.shelfExceptions.ShelfIsNotFoundException;
 import com.skr1l.backend.exception.shelfStockExceptions.ShelfStockIsNotFoundException;
 import com.skr1l.backend.exception.stockMovement.StockMovementIsNotFoundException;
@@ -27,7 +29,9 @@ public class GlobalExceptionHandler {
             DeviceIsNotFoundException.class,
             ProductIsNotFoundException.class,
             ShelfStockIsNotFoundException.class,
-            StockMovementIsNotFoundException.class})
+            StockMovementIsNotFoundException.class,
+            ImageEventIsNotFoundException.class,
+            RecognitionResultIsNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
