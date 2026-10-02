@@ -7,6 +7,7 @@ import com.skr1l.backend.exception.productExceptions.ProductIsNotFoundException;
 import com.skr1l.backend.exception.rackExceptions.RackIsNotFoundException;
 import com.skr1l.backend.exception.shelfExceptions.ShelfIsNotFoundException;
 import com.skr1l.backend.exception.shelfStockExceptions.ShelfStockIsNotFoundException;
+import com.skr1l.backend.exception.stockMovement.StockMovementIsNotFoundException;
 import com.skr1l.backend.exception.userExceptions.UserAlreadyExistsException;
 import com.skr1l.backend.exception.userExceptions.UserNotFoundException;
 import com.skr1l.backend.exception.warehouseExceptions.WarehouseAlreadyExistsException;
@@ -25,7 +26,8 @@ public class GlobalExceptionHandler {
             ShelfIsNotFoundException.class,
             DeviceIsNotFoundException.class,
             ProductIsNotFoundException.class,
-            ShelfStockIsNotFoundException.class})
+            ShelfStockIsNotFoundException.class,
+            StockMovementIsNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage()));

@@ -1,7 +1,7 @@
-package com.skr1l.backend.entity.enums;
+package com.skr1l.backend.stockMovement.enums;
 
 public enum StockMovementSource {
-    CAMERA,
     MANUAL,
+    CAMERA,
     SYSTEM
 }

@@ -1,7 +1,7 @@
-package com.skr1l.backend.entity;
+package com.skr1l.backend.stockMovement;
 
-import com.skr1l.backend.entity.enums.StockMovementSource;
-import com.skr1l.backend.entity.enums.StockMovementType;
+import com.skr1l.backend.stockMovement.enums.StockMovementSource;
+import com.skr1l.backend.stockMovement.enums.StockMovementType;
 import com.skr1l.backend.product.Product;
 import com.skr1l.backend.shelf.Shelf;
 import jakarta.persistence.Column;
@@ -18,7 +18,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Entity
