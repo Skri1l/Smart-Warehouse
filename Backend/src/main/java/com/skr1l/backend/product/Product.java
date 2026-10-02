@@ -28,7 +28,4 @@ public class Product {
     private String sku;
 
     private String description;
-
-    @Column(name = "shelf_life_days")
-    private Integer shelfLifeDays;
 }
