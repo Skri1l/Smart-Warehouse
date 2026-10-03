@@ -1,40 +1,31 @@
 [project]
 name = "smart-warehouse-frontend"
 version = "0.1.0"
-description = "Smart Warehouse Django frontend"
+description = "Smart Warehouse PySide6 desktop client"
 requires-python = ">=3.12"
 
 [tool.ruff]
 line-length = 88
 target-version = "py312"
-extend-exclude = ["migrations"]
+extend-exclude = ["**/*_ui.py", "**/resources_rc.py"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "DJ"]
+select = ["E", "F", "I", "UP", "B"]
 ignore = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["apps", "config"]
+known-first-party = ["app"]
 
 [tool.black]
 line-length = 88
 target-version = ["py312"]
-extend-exclude = "migrations"
+extend-exclude = "(_ui\\.py$|resources_rc\\.py$)"
 
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
-exclude = ["migrations"]
-
-# The django-stubs mypy plugin calls django.setup() against `django_settings_module`
-# at mypy startup, which requires both Django and config/settings/dev.py to exist.
-# Re-enable once the project is scaffolded (see ../README.md):
-#
-# plugins = ["mypy_django_plugin.main"]
-#
-# [tool.django-stubs]
-# django_settings_module = "config.settings.dev"
+exclude = ["_ui\\.py$", "resources_rc\\.py$"]
 
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "config.settings.dev"
 python_files = ["test_*.py", "*_test.py"]
+qt_api = "pyside6"

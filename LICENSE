@@ -22,6 +22,19 @@ Any other use — including but not limited to commercial use, redistribution,
 creation of derivative works, or incorporation into another product — requires
 a separate written license agreement executed by all copyright holders.
 
+THIRD-PARTY COMPONENTS
+
+The Software incorporates third-party components that are licensed under their
+own terms, as listed in THIRD_PARTY_NOTICES.md and the licenses/ directory.
+Those components are not the property of the copyright holders, and nothing in
+this license restricts or overrides the rights granted to you under their
+respective licenses. In particular, for components licensed under the GNU
+Lesser General Public License (including Qt and Qt for Python / PySide6), you
+may modify such components, replace them with modified versions, and reverse
+engineer the Software solely to the extent necessary to debug such
+modifications. The restrictions above apply only to the portions of the
+Software authored by the copyright holders.
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

@@ -9,7 +9,7 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=5000"]
 
-  # --- Frontend (Python / Django) ---
+  # --- Frontend (Python / PySide6) ---
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:

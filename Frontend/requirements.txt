@@ -1,0 +1,8 @@
+# Runtime dependencies for the PySide6 desktop client (see ADR-0006 and
+# ../Documentation/CODE_STYLE_FRONTEND.md). Every entry here must be checked
+# against ../THIRD_PARTY_NOTICES.md and the dependency-audit rule in
+# ../Documentation/adr/0006-frontend-pyside6-desktop.md before it is added —
+# GPL/AGPL-only packages are rejected.
+PySide6==6.11.2
+pyqtgraph==0.14.0
+httpx==0.28.1
