@@ -13,6 +13,7 @@ Smart-Warehouse/
 ├── Backend/          Java / Spring Boot REST API, business logic, persistence
 ├── Frontend/         Python / PySide6 desktop client
 ├── Documentation/     Product, process and engineering documentation
+├── Website/          Static GitHub Pages site: installer download and how-to guide (ADR-0007)
 └── .github/          CI workflows, issue/PR templates, code ownership
 ```
 

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Warehouse — Download</title>
+  <meta name="description" content="Download the Smart Warehouse desktop client for Windows, macOS or Linux.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site">
+    <div class="container">
+      <a class="brand" href="index.html">Smart Warehouse</a>
+      <nav>
+        <a href="index.html" aria-current="page">Download</a>
+        <a href="guide.html">How to use</a>
+        <a href="https://github.com/Skri1l/Smart-Warehouse">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <h1>Accurate stock, without manual counts</h1>
+      <p>Smart Warehouse combines shelf cameras, computer vision and demand forecasting to keep stock levels accurate in near real time. Download the desktop client for your operating system.</p>
+    </section>
+
+    <!-- Installers are published by the packaging CI (Milestone 8). Until then the buttons are placeholders (ADR-0007). -->
+    <div class="downloads">
+      <div class="dl-card" data-os="windows">
+        <span class="badge">Recommended for you</span>
+        <h3>Windows</h3>
+        <p class="hint">Windows 10 / 11, 64-bit</p>
+        <a class="btn" aria-disabled="true">Coming soon</a>
+      </div>
+      <div class="dl-card" data-os="macos">
+        <span class="badge">Recommended for you</span>
+        <h3>macOS</h3>
+        <p class="hint">macOS 12 or later</p>
+        <a class="btn" aria-disabled="true">Coming soon</a>
+      </div>
+      <div class="dl-card" data-os="linux">
+        <span class="badge">Recommended for you</span>
+        <h3>Linux</h3>
+        <p class="hint">x86-64, glibc-based distributions</p>
+        <a class="btn" aria-disabled="true">Coming soon</a>
+      </div>
+    </div>
+
+    <p class="note"><strong>Installers are not published yet.</strong> They will appear on the <a href="https://github.com/Skri1l/Smart-Warehouse/releases">GitHub Releases</a> page once the packaging pipeline is ready. Smart Warehouse is a <strong>desktop</strong> application; this site is a download and onboarding page, not a mobile version of the product.</p>
+
+    <section>
+      <h2>What it does</h2>
+      <div class="features">
+        <div class="feature">
+          <h3>Live stock from shelf cameras</h3>
+          <p>Shelf devices upload images, the recognition service counts products, and stock balances update automatically. Low-confidence results go to manual review.</p>
+        </div>
+        <div class="feature">
+          <h3>Find any product</h3>
+          <p>Search by SKU or name and see every shelf that holds it, with current quantities and movement history.</p>
+        </div>
+        <div class="feature">
+          <h3>Replenishment that respects shelf life</h3>
+          <p>Forecasts combine history and planned demand, and purchase recommendations account for expiry dates. A manager confirms every order.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Getting started</h2>
+      <p>Read the <a href="guide.html">How to use</a> guide for installation, first login and the core workflows.</p>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="container">Smart Warehouse — diploma project. Proprietary software, all rights reserved.</div>
+  </footer>
+  <script src="assets/os-detect.js"></script>
+</body>
+</html>
