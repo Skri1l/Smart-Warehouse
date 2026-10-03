@@ -56,7 +56,7 @@ The API starts on `http://localhost:8080` by default. Database connection settin
 
 ### Frontend
 
-The PySide6 desktop client has not been scaffolded yet (tracked under Milestone 1/3 — see [MILESTONES.md](Documentation/MILESTONES.md)). Once created, run instructions will live in [Frontend/README.md](Frontend/README.md).
+A minimal PySide6 desktop client is scaffolded in `Frontend/`; run `python -m app --demo` from that directory. See [Frontend/README.md](Frontend/README.md).
 
 ## Quality gates
 
