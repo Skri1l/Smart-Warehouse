@@ -1,6 +1,6 @@
 # 0002. Static site for desktop installer download and onboarding
 
-Status: Draft
+Status: Accepted — decision recorded in [ADR-0007](../adr/0007-static-site-for-installer-and-onboarding.md)
 Author(s): Uladzislau Mikhayevich
 Date: 2026-10-01
 Related: NFR-07 (desktop support) in [PROJECT_DOCUMENTATION.md](../PROJECT_DOCUMENTATION.md), [ADR-0006](../adr/0006-frontend-pyside6-desktop.md), Milestone 8
@@ -47,9 +47,11 @@ Separately, dropping mobile/tablet support in NFR-07 leaves a real gap: *some* r
 
 ## Unresolved questions
 
-- Build this now (cheap, but nothing to download yet — ships as a placeholder) or wait for Milestone 8 packaging to exist first? Leaning toward: skeleton now, wire real download links once CI produces installers.
-- Is a custom domain worth it for credibility if the project is actually offered for sale, versus the default `*.github.io` URL? Out of scope here — a cost/branding decision for later, possibly its own ADR once there's a buyer conversation.
-- Does accepting this RFC warrant updating [ADR-0002](../adr/0002-monorepo-repository-structure.md) (monorepo structure) to mention the new `Website/` directory, or is a line in this RFC's Outcome enough? Default: update ADR-0002's... no — ADRs are immutable, so this would need its own small ADR ("add a Website/ directory to the monorepo") once this RFC is accepted, not an edit to ADR-0002.
+Resolved on acceptance (see [ADR-0007](../adr/0007-static-site-for-installer-and-onboarding.md)):
+
+- ~~Build now or wait for Milestone 8 packaging?~~ Skeleton now with "coming soon" placeholders; real download links once CI produces installers.
+- ~~Custom domain vs `*.github.io`?~~ Default `*.github.io` for now; a custom domain is a separate later decision.
+- ~~Update ADR-0002 for the new `Website/` directory?~~ No separate ADR — ADR-0007 records the `Website/` directory as an extension of ADR-0002's monorepo layout.
 
 ## Outcome
 
