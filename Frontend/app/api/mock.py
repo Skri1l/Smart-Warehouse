@@ -1,4 +1,4 @@
-"""In-memory backend used with ``--demo`` while the real API is not ready."""
+"""In-memory mock of the backend API, used while the real API is not ready."""
 
 from app.api.client import ApiError
 from app.models.dto import Product, Role, Session
@@ -14,14 +14,14 @@ _PRODUCTS = [
 ]
 
 
-class DemoApiClient:
+class MockApiClient:
     """Accepts users ``worker`` and ``manager`` with any non-empty password."""
 
     def login(self, username: str, password: str) -> Session:
         role = _USERS.get(username)
         if role is None or not password:
             raise ApiError("Invalid username or password.")
-        return Session(token="demo-token", username=username, role=role)
+        return Session(token="mock-token", username=username, role=role)
 
     def list_products(self, session: Session) -> list[Product]:
         return list(_PRODUCTS)
