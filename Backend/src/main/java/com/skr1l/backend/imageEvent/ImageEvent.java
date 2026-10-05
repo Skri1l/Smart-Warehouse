@@ -1,7 +1,6 @@
 package com.skr1l.backend.imageEvent;
 
 import com.skr1l.backend.device.Device;
-import com.skr1l.backend.entity.enums.ProcessingStatus;
 import com.skr1l.backend.imageEvent.enums.ImageProcessingStatus;
 import com.skr1l.backend.shelf.Shelf;
 import jakarta.persistence.Column;
@@ -18,7 +17,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Entity
