@@ -11,7 +11,7 @@ from typing import Any, Protocol
 
 import httpx
 
-from app.models.dto import Product, Role, Session
+from app.models.dto import Product, Rack, Role, Session, Shelf, Warehouse
 
 DEFAULT_BASE_URL = "http://localhost:8080"
 
@@ -29,7 +29,27 @@ class WarehouseApi(Protocol):
 
     def login(self, username: str, password: str) -> Session: ...
 
+    def register(self, email: str, username: str, password: str) -> None: ...
+
     def list_products(self, session: Session) -> list[Product]: ...
+
+    def create_product(
+        self, session: Session, sku: str, name: str, description: str
+    ) -> int: ...
+
+    def list_warehouses(self, session: Session) -> list[Warehouse]: ...
+
+    def create_warehouse(self, session: Session, name: str, address: str) -> int: ...
+
+    def list_racks(self, session: Session) -> list[Rack]: ...
+
+    def create_rack(self, session: Session, label: str, warehouse_id: int) -> int: ...
+
+    def list_shelves(self, session: Session) -> list[Shelf]: ...
+
+    def create_shelf(
+        self, session: Session, label: str, capacity: int, rack_id: int
+    ) -> int: ...
 
 
 class ApiClient:
@@ -76,6 +96,53 @@ class ApiClient:
             for item in products
         ]
 
+    def register(self, email: str, username: str, password: str) -> None:
+        self._request(
+            "POST",
+            "/users",
+            json={"email": email, "username": username, "password": password},
+        )
+
+    def create_product(
+        self, session: Session, sku: str, name: str, description: str
+    ) -> int:
+        body = {"sku": sku, "name": name, "description": description or None}
+        return int(
+            self._request("POST", "/products", headers=_auth(session), json=body)
+        )
+
+    def list_warehouses(self, session: Session) -> list[Warehouse]:
+        items = self._request("GET", "/warehouses", headers=_auth(session))
+        return [Warehouse(i["id"], i["name"], i["address"]) for i in items]
+
+    def create_warehouse(self, session: Session, name: str, address: str) -> int:
+        body = {"name": name, "address": address}
+        return int(
+            self._request("POST", "/warehouses", headers=_auth(session), json=body)
+        )
+
+    def list_racks(self, session: Session) -> list[Rack]:
+        items = self._request("GET", "/racks", headers=_auth(session))
+        return [Rack(i["id"], i["label"], i["warehouseId"]) for i in items]
+
+    def create_rack(self, session: Session, label: str, warehouse_id: int) -> int:
+        body = {"label": label, "warehouseId": warehouse_id}
+        path = f"/racks/warehouse/{warehouse_id}"
+        return int(self._request("POST", path, headers=_auth(session), json=body))
+
+    def list_shelves(self, session: Session) -> list[Shelf]:
+        items = self._request("GET", "/shelves", headers=_auth(session))
+        return [
+            Shelf(i["id"], i["label"], i["capacity"], i["status"], i["rackId"])
+            for i in items
+        ]
+
+    def create_shelf(
+        self, session: Session, label: str, capacity: int, rack_id: int
+    ) -> int:
+        body = {"label": label, "capacity": capacity, "rackId": rack_id}
+        return int(self._request("POST", "/shelves", headers=_auth(session), json=body))
+
     def _request(self, method: str, path: str, **kwargs: Any) -> Any:
         try:
             response = self._http.request(method, path, **kwargs)
@@ -86,13 +153,18 @@ class ApiClient:
         if response.is_error:
             try:
                 body = response.json()
-                detail = body.get("message") or body.get("detail") or response.text
+                detail = (
+                    body.get("message")
+                    or body.get("detail")
+                    or body.get("error")
+                    or response.text
+                )
             except (ValueError, AttributeError):
                 detail = response.text
             raise ApiError(
                 f"Server error {response.status_code}: {detail}", response.status_code
             )
-        return response.json()
+        return response.json() if response.content else None
 
 
 def _auth(session: Session) -> dict[str, str]:

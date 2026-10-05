@@ -73,3 +73,28 @@ def test_list_products_sums_active_shelf_stock() -> None:
     products = _client(handler).list_products(Session("t", "anna", Role.WORKER))
     assert [(p.sku, p.quantity) for p in products] == [("S", 7), ("E", 0)]
     assert products[0].description == ""
+
+
+def test_register_posts_without_auth() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST" and request.url.path == "/users"
+        assert "Authorization" not in request.headers
+        return httpx.Response(201, json=7)
+
+    _client(handler).register("a@b.c", "anna", "pw")
+
+
+def test_create_rack_uses_warehouse_path() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/racks/warehouse/3"
+        assert request.read() == b'{"label":"R","warehouseId":3}'
+        return httpx.Response(201, json=11)
+
+    assert _client(handler).create_rack(Session("t", "a", Role.ADMIN), "R", 3) == 11
+
+
+def test_list_shelves_maps_fields() -> None:
+    body = [{"id": 1, "label": "S", "capacity": 5, "status": "ACTIVE", "rackId": 2}]
+    client = _client(lambda request: httpx.Response(200, json=body))
+    shelf = client.list_shelves(Session("t", "a", Role.ADMIN))[0]
+    assert (shelf.label, shelf.capacity, shelf.rack_id) == ("S", 5, 2)

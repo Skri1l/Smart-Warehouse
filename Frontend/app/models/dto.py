@@ -36,3 +36,26 @@ class Product:
     quantity: int
     min_quantity: int = 0
     """The backend has no per-product minimum yet, so only empty stock is low."""
+
+
+@dataclass(frozen=True)
+class Warehouse:
+    id: int
+    name: str
+    address: str
+
+
+@dataclass(frozen=True)
+class Rack:
+    id: int
+    label: str
+    warehouse_id: int
+
+
+@dataclass(frozen=True)
+class Shelf:
+    id: int
+    label: str
+    capacity: int
+    status: str
+    rack_id: int
