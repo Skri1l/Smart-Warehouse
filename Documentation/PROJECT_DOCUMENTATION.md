@@ -278,7 +278,8 @@ Shelf Camera + Controller
 ### User
 
 - id
-- email / username
+- email
+- username
 - passwordHash
 - role
 - status
@@ -287,39 +288,40 @@ Shelf Camera + Controller
 
 - id
 - name
-- description
+- address
 
 ### Rack
 
 - id
-- warehouseId
 - label
+- warehouseId
 
 ### Shelf
 
 - id
-- rackId
 - label
 - capacity
 - status
+- rackId
 
 ### Device
 
 - id
-- shelfId
 - deviceKey
 - status
 - lastSeenAt
+- shelfId
+
+Each device is linked to exactly one shelf.
 
 ### Product
 
 - id
 - sku
 - name
-- category
-- unit
-- shelfLifeDays
-- minimumStock
+- description
+
+Shelf life is not stored directly in `Product`. Expiration information belongs to a concrete stock batch stored on a shelf.
 
 ### ShelfStock
 
@@ -327,7 +329,10 @@ Shelf Camera + Controller
 - shelfId
 - productId
 - quantity
-- updatedAt
+- expirationDate
+- status
+
+`ShelfStock` represents a concrete product stock entry on a shelf. The same product may have multiple stock entries with different expiration dates.
 
 ### ImageEvent
 
@@ -339,12 +344,15 @@ Shelf Camera + Controller
 - receivedAt
 - processingStatus
 
+The shelf is derived from the device linked to the event.
+
 ### RecognitionResult
 
 - id
 - imageEventId
 - productId
-- detectedQuantity / quantityDelta
+- detectedQuantity
+- quantityDelta
 - confidence
 - status
 
@@ -357,6 +365,8 @@ Shelf Camera + Controller
 - type
 - source
 - createdAt
+
+`StockMovement` stores inventory change history independently from a concrete `ShelfStock` entity.
 
 ### DemandPlan
 
@@ -375,7 +385,7 @@ Shelf Camera + Controller
 - status
 - createdAt
 
-### PurchaseOrder / PurchaseRequest
+### PurchaseOrder
 
 - id
 - recommendationId
@@ -384,7 +394,7 @@ Shelf Camera + Controller
 - status
 - createdAt
 
----
+A purchase order is created from a replenishment recommendation. One recommendation can be associated with one purchase order.
 
 ## 9. Key business flows
 
@@ -422,42 +432,134 @@ Shelf Camera + Controller
 
 ## 10. API outline
 
-Suggested endpoint groups:
+The backend exposes REST endpoints for the main Smart Warehouse domain entities.
+
+### Users
 
 ```text
-POST   /api/auth/login
-GET    /api/users
+GET     /users
+GET     /users/{id}
+POST    /users
+PUT     /users/{id}
+PATCH   /users/{id}/block
+PATCH   /users/{id}/unblock
+DELETE  /users/{id}
 
-GET    /api/warehouses
-POST   /api/warehouses
-GET    /api/shelves
-POST   /api/shelves
-GET    /api/shelves/{id}/stock
+GET     /warehouses
+GET     /warehouses/{id}
+POST    /warehouses
+PUT     /warehouses/{id}
+DELETE  /warehouses/{id}
 
-GET    /api/products
-POST   /api/products
-GET    /api/products/{id}/locations
+GET     /racks
+GET     /racks/{id}
+POST    /racks/warehouse/{warehouseId}
+PUT     /racks/{rackId}
+DELETE  /racks/{rackId}
 
-POST   /api/device-events/images
-GET    /api/image-events/{id}
-GET    /api/recognition-results/review
-PATCH  /api/recognition-results/{id}/confirm
+GET     /shelves
+GET     /shelves/{id}
+POST    /shelves
+PUT     /shelves/{id}
+PATCH   /shelves/{id}/activate
+PATCH   /shelves/{id}/deactivate
+DELETE  /shelves/{id}
 
-GET    /api/inventory
-GET    /api/inventory/movements
-POST   /api/inventory/adjustments
+GET     /devices
+GET     /devices/{id}
+POST    /devices
+PUT     /devices/{id}
+PATCH   /devices/{id}/activate
+PATCH   /devices/{id}/deactivate
+PATCH   /devices/{id}/heartbeat
+DELETE  /devices/{id}
 
-GET    /api/placement/recommendations
+GET     /products
+GET     /products/{id}
+GET     /products/sku/{sku}
+GET     /products/search?name={name}
+POST    /products
+PUT     /products/{id}
+DELETE  /products/{id}
 
-GET    /api/demand-plans
-POST   /api/demand-plans
+GET     /shelf-stock
+GET     /shelf-stock/{id}
+GET     /shelf-stock/shelf/{shelfId}
+GET     /shelf-stock/product/{productId}
+GET     /shelf-stock/expiration-date?date={date}
+GET     /shelf-stock/expired
+POST    /shelf-stock
+PUT     /shelf-stock/{id}
+DELETE  /shelf-stock/{id}
 
-GET    /api/replenishment/recommendations
-POST   /api/replenishment/recalculate
-PATCH  /api/replenishment/recommendations/{id}
+GET     /stock-movements
+GET     /stock-movements/{id}
+GET     /stock-movements/product/{productId}
+GET     /stock-movements/shelf/{shelfId}
+GET     /stock-movements/type/{type}
+GET     /stock-movements/source/{source}
+GET     /stock-movements/date-range?from={from}&to={to}
+POST    /stock-movements
+DELETE  /stock-movements/{id}
 
-GET    /api/purchase-requests
-POST   /api/purchase-requests/{id}/confirm
+GET     /image-events
+GET     /image-events/{id}
+GET     /image-events/device/{deviceId}
+GET     /image-events/shelf/{shelfId}
+GET     /image-events/status/{status}
+GET     /image-events/date-range?from={from}&to={to}
+POST    /image-events
+PATCH   /image-events/{id}/processing
+PATCH   /image-events/{id}/processed
+PATCH   /image-events/{id}/failed
+DELETE  /image-events/{id}
+
+GET     /recognition-results
+GET     /recognition-results/{id}
+GET     /recognition-results/image-event/{imageEventId}
+GET     /recognition-results/product/{productId}
+GET     /recognition-results/status/{status}
+GET     /recognition-results/confidence?min={min}
+POST    /recognition-results
+PATCH   /recognition-results/{id}/confirm
+PATCH   /recognition-results/{id}/reject
+PATCH   /recognition-results/{id}/failed
+DELETE  /recognition-results/{id}
+
+GET     /demand-plans
+GET     /demand-plans/{id}
+GET     /demand-plans/product/{productId}
+GET     /demand-plans/date/{requiredDate}
+GET     /demand-plans/date-range?from={from}&to={to}
+GET     /demand-plans/future
+POST    /demand-plans
+PUT     /demand-plans/{id}
+DELETE  /demand-plans/{id}
+
+GET     /replenishment-recommendations
+GET     /replenishment-recommendations/{id}
+GET     /replenishment-recommendations/product/{productId}
+GET     /replenishment-recommendations/status/{status}
+GET     /replenishment-recommendations/date/{requiredBy}
+GET     /replenishment-recommendations/date-range?from={from}&to={to}
+POST    /replenishment-recommendations
+PUT     /replenishment-recommendations/{id}
+PATCH   /replenishment-recommendations/{id}/approve
+PATCH   /replenishment-recommendations/{id}/reject
+PATCH   /replenishment-recommendations/{id}/ordered
+PATCH   /replenishment-recommendations/{id}/complete
+DELETE  /replenishment-recommendations/{id}
+
+GET     /purchase-orders
+GET     /purchase-orders/{id}
+GET     /purchase-orders/product/{productId}
+GET     /purchase-orders/recommendation/{recommendationId}
+GET     /purchase-orders/status/{status}
+POST    /purchase-orders
+PATCH   /purchase-orders/{id}/ordered
+PATCH   /purchase-orders/{id}/received
+PATCH   /purchase-orders/{id}/cancel
+DELETE  /purchase-orders/{id}
 ```
 
 Exact DTOs and contracts should be defined milestone by milestone.
