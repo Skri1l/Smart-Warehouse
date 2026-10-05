@@ -38,7 +38,8 @@ public class GlobalExceptionHandler {
             RecognitionResultIsNotFoundException.class,
             DemandPlanIsNotFoundException.class,
             ReplenishmentRecommendationIsNotFoundException.class,
-            PurchaseOrderIsNotFoundException.class})
+            PurchaseOrderIsNotFoundException.class
+    })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(), ex.getMessage()));
@@ -48,9 +49,10 @@ public class GlobalExceptionHandler {
             WarehouseAlreadyExistsException.class,
             DeviceAlreadyExistsException.class,
             ProductAlreadyExistsException.class,
-            PurchaseOrderAlreadyExistsException.class})
+            PurchaseOrderAlreadyExistsException.class
+    })
     public ResponseEntity<ErrorResponse> handleAlreadyExists(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage()));
     }
 }

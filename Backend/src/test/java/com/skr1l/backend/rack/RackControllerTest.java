@@ -81,7 +81,7 @@ class RackControllerTest {
 
         // Act
         // Assert
-        mockMvc.perform(post("/racks/1")
+        mockMvc.perform(post("/racks/warehouse/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
                 .andExpect(status().isCreated())

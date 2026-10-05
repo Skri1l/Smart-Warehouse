@@ -109,7 +109,7 @@ public class ImageEventServiceImpl implements ImageEventService {
         Objects.requireNonNull(status, "status is null");
 
         return imageEventRepository
-                .findByProcessingStatus(status)
+                .findByImageProcessingStatus(status)
                 .stream()
                 .map(this::toResponseDto)
                 .toList();

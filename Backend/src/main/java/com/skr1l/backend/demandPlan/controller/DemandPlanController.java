@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
-@Tag(name = "Demand Plans", description = "Deman plan management API")
+@Tag(name = "Demand Plans", description = "Demand plan management API")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/demand-plans")
@@ -29,6 +29,7 @@ public class DemandPlanController {
     @Operation(summary = "Create a demand plan")
     @ApiResponse(responseCode = "201", description = "Demand plan created")
     @ApiResponse(responseCode = "400", description = "Invalid request data")
+    @ApiResponse(responseCode = "404", description = "Product not found")
     @PostMapping
     public ResponseEntity<Long> createDemandPlan(@Valid @RequestBody DemandPlanRequestDto dto) {
         log.info("createDemandPlan controller");
@@ -46,6 +47,7 @@ public class DemandPlanController {
     }
 
     @Operation(summary = "Get all demand plans")
+    @ApiResponse(responseCode = "200", description = "Demand plans returned successfully")
     @GetMapping
     public ResponseEntity<List<DemandPlanResponseDto>> getAllDemandPlans() {
 
@@ -62,8 +64,7 @@ public class DemandPlanController {
     }
 
     @Operation(summary = "Get demand plans by required date")
-    @ApiResponse(responseCode = "200", description = "Plan found")
-    @ApiResponse(responseCode = "404", description = "Plan not found")
+    @ApiResponse(responseCode = "200", description = "Demand plans returned successfully")
     @GetMapping("/date/{requiredDate}")
     public ResponseEntity<List<DemandPlanResponseDto>> getDemandPlansByRequiredDate(
             @PathVariable LocalDate requiredDate) {
@@ -72,8 +73,7 @@ public class DemandPlanController {
     }
 
     @Operation(summary = "Get demand plans by date range")
-    @ApiResponse(responseCode = "200", description = "Plan found")
-    @ApiResponse(responseCode = "404", description = "Plan not found")
+    @ApiResponse(responseCode = "200", description = "Demand plans returned successfully")
     @GetMapping("/date-range")
     public ResponseEntity<List<DemandPlanResponseDto>> getDemandPlansByDateRange(
             @RequestParam LocalDate from, @RequestParam LocalDate to) {
@@ -82,17 +82,16 @@ public class DemandPlanController {
     }
 
     @Operation(summary = "Get future demand plans")
-    @ApiResponse(responseCode = "200", description = "Plan found")
-    @ApiResponse(responseCode = "404", description = "Plan not found")
+    @ApiResponse(responseCode = "200", description = "Demand plans returned successfully")
     @GetMapping("/future")
     public ResponseEntity<List<DemandPlanResponseDto>> getFutureDemandPlans() {
         return ResponseEntity.ok(demandPlanService.getFutureDemandPlans());
     }
 
-    @Operation(summary = "Update demand plans")
+    @Operation(summary = "Update demand plan")
     @ApiResponse(responseCode = "200", description = "Plan updated")
     @ApiResponse(responseCode = "400", description = "Invalid request data")
-    @ApiResponse(responseCode = "404", description = "Plan not found")
+    @ApiResponse(responseCode = "404", description = "Product not found")
     @PutMapping("/{id}")
     public ResponseEntity<DemandPlanResponseDto> updateDemandPlan(
             @PathVariable Long id, @Valid @RequestBody DemandPlanRequestDto dto) {
@@ -100,7 +99,7 @@ public class DemandPlanController {
         return ResponseEntity.ok(demandPlanService.updateDemandPlan(id, dto));
     }
 
-    @Operation(summary = "Delete demand plans")
+    @Operation(summary = "Delete demand plan")
     @ApiResponse(responseCode = "204", description = "Plan deleted")
     @ApiResponse(responseCode = "404", description = "Plan not found")
     @DeleteMapping("/{id}")
