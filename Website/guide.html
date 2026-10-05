@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Smart Warehouse — How to use</title>
+  <meta name="description" content="Install Smart Warehouse, log in for the first time and learn the core workflows.">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <header class="site">
+    <div class="container">
+      <a class="brand" href="index.html">Smart Warehouse</a>
+      <nav>
+        <a href="index.html">Download</a>
+        <a href="guide.html" aria-current="page">How to use</a>
+        <a href="https://github.com/Skri1l/Smart-Warehouse">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container guide">
+    <section class="hero">
+      <h1>How to use Smart Warehouse</h1>
+      <p>Installation, first login and the everyday workflows for warehouse workers and managers.</p>
+    </section>
+
+    <nav class="toc" aria-label="Contents">
+      <ol>
+        <li><a href="#install">Install the application</a></li>
+        <li><a href="#login">First login</a></li>
+        <li><a href="#dashboard">Read the dashboard</a></li>
+        <li><a href="#find">Find a product</a></li>
+        <li><a href="#review">Confirm a recognition review</a></li>
+        <li><a href="#purchase">Handle purchase recommendations</a></li>
+        <li><a href="#admin">Manage warehouses and products</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="install">1. Install the application</h2>
+    <ol>
+      <li>Open the <a href="index.html">Download</a> page and pick your operating system.</li>
+      <li><strong>Windows:</strong> run the installer and follow the wizard.</li>
+      <li><strong>macOS:</strong> open the disk image and drag Smart Warehouse into Applications.</li>
+      <li><strong>Linux:</strong> make the downloaded file executable and run it.</li>
+    </ol>
+    <p class="note">Installers are not published yet. Until then, developers can run the client from source as described in the repository's <a href="https://github.com/Skri1l/Smart-Warehouse/blob/main/Frontend/README.md">Frontend README</a>.</p>
+
+    <h2 id="login">2. First login</h2>
+    <ol>
+      <li>Start the application. On first launch, enter the server address provided by your administrator.</li>
+      <li>Sign in with the username and password your administrator created for you.</li>
+      <li>What you see depends on your role: <em>warehouse worker</em> or <em>manager / administrator</em>.</li>
+    </ol>
+    <div class="screenshot">Screenshot: login window (coming soon)</div>
+
+    <h2 id="dashboard">3. Read the dashboard</h2>
+    <p>The dashboard is the first screen after login. It shows:</p>
+    <ul>
+      <li><strong>Current stock</strong> across shelves;</li>
+      <li><strong>Low-stock products</strong> that need attention;</li>
+      <li><strong>Recent movements</strong> — every stock change with time, shelf, amount and source;</li>
+      <li><strong>Recognition errors</strong> waiting for manual review;</li>
+      <li><strong>Purchase recommendations</strong> (managers).</li>
+    </ul>
+    <div class="screenshot">Screenshot: dashboard (coming soon)</div>
+
+    <h2 id="find">4. Find a product</h2>
+    <ol>
+      <li>Type a SKU or product name into the search field.</li>
+      <li>Select the product to see every shelf that holds it and the quantity on each.</li>
+      <li>Open the history tab to see how its stock changed over time.</li>
+    </ol>
+
+    <h2 id="review">5. Confirm a recognition review</h2>
+    <p>When camera recognition is not confident enough, stock is <strong>not</strong> changed automatically. Instead, the result appears in the review queue.</p>
+    <ol>
+      <li>Open the review queue from the dashboard.</li>
+      <li>Compare the shelf image with the detected product and quantity.</li>
+      <li>Confirm the result, correct the quantity, or reject it. Only confirmed results update stock.</li>
+    </ol>
+    <div class="screenshot">Screenshot: recognition review (coming soon)</div>
+
+    <h2 id="purchase">6. Handle purchase recommendations</h2>
+    <p>Managers only. The system forecasts demand from stock history and planned demand, accounting for shelf life, and suggests what to order.</p>
+    <ol>
+      <li>Open a recommendation to see the product, required quantity, required-by date and the explanation.</li>
+      <li>Confirm, modify the quantity, or reject it.</li>
+      <li>To plan ahead, add planned demand for a product on a given date — future recommendations will include it.</li>
+    </ol>
+
+    <h2 id="admin">7. Manage warehouses and products</h2>
+    <p>Administrators can create and edit warehouses, zones, racks and shelves; register shelf devices; and maintain the product catalogue (SKU, name, category, unit, shelf life). When goods arrive, the application recommends a shelf based on capacity and current placement.</p>
+  </main>
+
+  <footer class="site">
+    <div class="container">Smart Warehouse — diploma project. Proprietary software, all rights reserved.</div>
+  </footer>
+</body>
+</html>

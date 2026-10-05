@@ -1,10 +1,20 @@
 # Frontend
 
-Python / PySide6 (Qt for Python) cross-platform desktop client for Smart Warehouse — see [ADR-0006](../Documentation/adr/0006-frontend-pyside6-desktop.md) for why it's a desktop app rather than a web app. **Not scaffolded yet** — tracked under Milestone 1/3 in [../Documentation/MILESTONES.md](../Documentation/MILESTONES.md).
+Python / PySide6 (Qt for Python) cross-platform desktop client for Smart Warehouse — see [ADR-0006](../Documentation/adr/0006-frontend-pyside6-desktop.md) for why it's a desktop app rather than a web app.
 
 Conventions (project layout, naming, typing, testing, threading, packaging) are defined in [../Documentation/CODE_STYLE_FRONTEND.md](../Documentation/CODE_STYLE_FRONTEND.md) — read it before writing the first widget.
 
-## Tooling already configured
+## Run
+
+```bash
+pip install -r requirements.txt
+python -m app --demo                             # in-memory data, users: worker / manager, any password
+python -m app --api-url http://localhost:8080    # real backend (or set SW_API_URL)
+```
+
+Current scope: login, dashboard with low-stock products, product search, role-based navigation (managers see *Purchase recommendations*, still a placeholder). The REST client targets `/api/v1/auth/login` and `/api/v1/products` per [API_GUIDELINES.md](../Documentation/API_GUIDELINES.md); adjust once the backend endpoints exist.
+
+## Tooling
 
 - `pyproject.toml` — Ruff, Black, mypy and pytest-qt configuration.
 - `requirements.txt` — runtime dependencies (PySide6, httpx, pyqtgraph).

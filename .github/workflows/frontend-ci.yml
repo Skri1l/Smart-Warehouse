@@ -25,6 +25,14 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Install Qt system libraries
+        # PySide6 wheels link against these even with QT_QPA_PLATFORM=offscreen;
+        # ubuntu-latest does not ship them (ImportError: libEGL.so.1).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+
       - name: Install dependencies
         run: pip install -r requirements.txt -r requirements-dev.txt
 
