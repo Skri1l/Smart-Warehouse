@@ -17,13 +17,13 @@ from PySide6.QtWidgets import (
 from app.models.dto import Product, Role, Session
 from app.viewmodels.products_viewmodel import ProductsViewModel
 
-_COLUMNS = ["SKU", "Name", "Category", "Quantity", "Unit"]
+_COLUMNS = ["SKU", "Name", "Description", "Quantity"]
 
 
 def _fill_table(table: QTableWidget, products: list[Product]) -> None:
     table.setRowCount(len(products))
     for row, p in enumerate(products):
-        values = [p.sku, p.name, p.category, str(p.quantity), p.unit]
+        values = [p.sku, p.name, p.description, str(p.quantity)]
         for col, value in enumerate(values):
             table.setItem(row, col, QTableWidgetItem(value))
     table.resizeColumnsToContents()
@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
 
         self._add_page("Dashboard", self._build_dashboard())
         self._add_page("Products", self._build_products())
-        if session.role is Role.MANAGER:
+        if session.role in (Role.MANAGER, Role.ADMIN):
             # Role-based hiding is UX only; the backend enforces access (ADR-0006).
             self._add_page("Purchase recommendations", self._build_placeholder())
 

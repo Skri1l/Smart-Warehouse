@@ -6,11 +6,11 @@ from app.models.dto import Product, Role, Session
 _USERS = {"worker": Role.WORKER, "manager": Role.MANAGER}
 
 _PRODUCTS = [
-    Product(1, "SKU-1001", "Milk 1L", "Dairy", "pcs", 42, 20),
-    Product(2, "SKU-1002", "Butter 200g", "Dairy", "pcs", 8, 10),
-    Product(3, "SKU-2001", "Rice 1kg", "Grocery", "pcs", 120, 30),
-    Product(4, "SKU-2002", "Pasta 500g", "Grocery", "pcs", 15, 25),
-    Product(5, "SKU-3001", "Apple juice 1L", "Drinks", "pcs", 64, 20),
+    Product(1, "SKU-1001", "Milk 1L", "Dairy", 42, 20),
+    Product(2, "SKU-1002", "Butter 200g", "Dairy", 8, 10),
+    Product(3, "SKU-2001", "Rice 1kg", "Grocery", 120, 30),
+    Product(4, "SKU-2002", "Pasta 500g", "Grocery", 15, 25),
+    Product(5, "SKU-3001", "Apple juice 1L", "Drinks", 64, 20),
 ]
 
 

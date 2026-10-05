@@ -1,19 +1,24 @@
-"""Plain data classes mirroring backend API schemas (see API_GUIDELINES.md)."""
+"""Plain data classes mirroring backend API schemas (see /v3/api-docs)."""
 
 from dataclasses import dataclass
 from enum import StrEnum
 
 
 class Role(StrEnum):
-    """User role returned by the backend at login."""
+    """User role, mirrors the backend ``UserRole`` enum."""
 
+    ADMIN = "ADMIN"
     WORKER = "WORKER"
     MANAGER = "MANAGER"
 
 
 @dataclass(frozen=True)
 class Session:
-    """Authenticated session kept in memory only."""
+    """Authenticated session kept in memory only.
+
+    ``token`` holds the base64 ``username:password`` pair sent as HTTP Basic
+    credentials; the backend has no token-issuing login endpoint yet.
+    """
 
     token: str
     username: str
@@ -27,7 +32,7 @@ class Product:
     id: int
     sku: str
     name: str
-    category: str
-    unit: str
+    description: str
     quantity: int
-    min_quantity: int
+    min_quantity: int = 0
+    """The backend has no per-product minimum yet, so only empty stock is low."""

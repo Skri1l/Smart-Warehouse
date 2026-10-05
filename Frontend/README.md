@@ -12,7 +12,7 @@ python -m app --demo                             # in-memory data, users: worker
 python -m app --api-url http://localhost:8080    # real backend (or set SW_API_URL)
 ```
 
-Current scope: login, dashboard with low-stock products, product search, role-based navigation (managers see *Purchase recommendations*, still a placeholder). The REST client targets `/api/v1/auth/login` and `/api/v1/products` per [API_GUIDELINES.md](../Documentation/API_GUIDELINES.md); adjust once the backend endpoints exist.
+Current scope: login, dashboard with low-stock products, product search, role-based navigation (managers see *Purchase recommendations*, still a placeholder). The REST client follows the live backend spec (`/v3/api-docs`): HTTP Basic auth, role looked up via `GET /users`, products from `GET /products` with quantities summed from `GET /shelf-stock`.
 
 ## Tooling
 
