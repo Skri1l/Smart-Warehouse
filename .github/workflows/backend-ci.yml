@@ -5,17 +5,43 @@ on:
     paths:
       - "Backend/**"
       - ".github/workflows/backend-ci.yml"
+
   push:
     branches: [main, develop]
     paths:
       - "Backend/**"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: smart_warehouse_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d smart_warehouse_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+
     defaults:
       run:
         working-directory: Backend
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,5 +52,5 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Verify (tests + format check)
+      - name: Verify backend
         run: ./mvnw -B verify
