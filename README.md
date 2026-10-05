@@ -54,6 +54,31 @@ cd Backend
 
 The API starts on `http://localhost:8080` by default. Database connection settings are read from `Backend/src/main/resources/application.properties` (do not commit real credentials — use environment variables or an untracked `application-local.properties` profile).
 
+Alternatively, run the backend together with PostgreSQL in Docker:
+
+```bash
+cd Backend
+cp .env.example .env   # adjust ports/password if 8080 or 5432 are already taken
+docker compose up -d --build
+```
+
+### API documentation (Swagger)
+
+Once the backend is running, the interactive API docs are available at:
+
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI spec (JSON): `http://localhost:8080/v3/api-docs`
+
+(Replace `8080` with `BACKEND_PORT` from `Backend/.env` if you changed it.)
+
+The docs pages are public, but API calls require HTTP Basic auth. Until real users are implemented, click **Authorize** in Swagger UI and log in as `user` with the password Spring prints on startup (`Using generated security password: ...`). With Docker, find it via:
+
+```bash
+docker logs smart-warehouse-backend
+```
+
+The password is regenerated on every restart. If you get **HTTP 403** on the Swagger page, another application is most likely occupying the port — check with `docker ps` / `netstat -ano | findstr :8080`.
+
 ### Frontend
 
 A minimal PySide6 desktop client is scaffolded in `Frontend/`; run `python -m app --demo` from that directory. See [Frontend/README.md](Frontend/README.md).
