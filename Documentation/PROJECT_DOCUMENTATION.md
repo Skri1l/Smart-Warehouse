@@ -694,3 +694,77 @@ Mitigation: support manually defined planned demand and generate synthetic histo
 
 Risk: multi-warehouse, advanced AI and purchasing integrations may exceed 12 weeks.  
 Mitigation: keep a strict MVP and treat integrations as extensions.
+
+
+## 16. How to run the application
+
+### Requirements
+
+Before running the backend, make sure the following software is installed:
+- Java 21;
+- Maven or Maven Wrapper;
+- Docker;
+- Docker Compose.
+
+The backend module is located in:
+Backend/
+
+### Environment configuration
+The backend Docker configuration uses environment variables from the .env file.
+A template is provided in:
+Backend/.env.example
+Example configuration:
+POSTGRES_DB=smart_warehouse
+POSTGRES_USER=smart_warehouse
+POSTGRES_PASSWORD=change_me
+
+POSTGRES_PORT=5432
+BACKEND_PORT=8080
+Create a .env file inside the Backend directory and configure the required values before starting the application.
+Run with Docker Compose
+The recommended way to run the backend and PostgreSQL database is Docker Compose.
+Navigate to the backend directory:
+cd Backend
+Build and start the application:
+docker compose up --build
+Docker Compose starts:
+- PostgreSQL 17;
+- Smart Warehouse backend;
+- persistent PostgreSQL storage.
+The backend starts only after PostgreSQL passes its health check.
+By default, the backend is available at:
+http://localhost:8080
+PostgreSQL is available at:
+localhost:5432
+The exact ports depend on the values configured in the .env file.
+To stop the application:
+docker compose down
+To stop the application and delete the PostgreSQL volume:
+docker compose down -v
+The -v option removes the database volume and deletes locally stored database data.
+Run the backend without Docker
+The backend can also be started directly if PostgreSQL is already running.
+The default local database configuration is:
+URL: jdbc:postgresql://localhost:5432/smart_warehouse
+Username: smart_warehouse
+Password: smart_warehouse
+The database configuration can be overridden using:
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+SPRING_JPA_HIBERNATE_DDL_AUTO
+Navigate to:
+Backend/
+Run the application using Maven Wrapper.
+Linux/macOS:
+./mvnw spring-boot:run
+Windows:
+mvnw.cmd spring-boot:run
+If Maven is installed globally:
+mvn spring-boot:run
+Swagger / OpenAPI
+When the backend is running, Swagger UI is available at:
+http://localhost:8080/swagger-ui.html
+The generated OpenAPI specification is available at:
+http://localhost:8080/v3/api-docs
+Swagger UI contains the implemented REST endpoints and allows developers to inspect and execute API requests.
