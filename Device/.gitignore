@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+.env
+
+# Runtime state written by the agent / emulator / mock server
+.outbox/
+received/
+
+# Real device configs carry environment-specific addresses; only the
+# *.example.toml templates are committed.
+config/*.toml
+!config/*.example.toml

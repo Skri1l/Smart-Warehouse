@@ -1,0 +1,30 @@
+# Smoke scenario: two shelves, tiny placeholder images.
+# Checks the upload path end to end without real photos:
+#
+#   python -m shelf_agent mock-server
+#   python -m shelf_agent emulate --scenario scenarios/smoke/scenario.toml
+#
+# The images are solid colours, so the ML service won't recognise anything in them.
+# Use scenarios/demo for recognition.
+
+images_dir = "images"
+labels = "labels.csv"
+interval_s = 3
+heartbeat_interval_s = 10
+
+[backend]
+base_url = "http://127.0.0.1:8080"
+
+[[shelves]]
+name = "A1"
+device_id = 1
+shelf_id = 1
+device_key = "emulator-a1"
+frames = ["a1_*.png"]
+
+[[shelves]]
+name = "B1"
+device_id = 2
+shelf_id = 2
+device_key = "emulator-b1"
+frames = ["b1_01.png", "b1_02.png"]

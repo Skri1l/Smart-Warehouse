@@ -1,0 +1,39 @@
+# Shelf device configuration. Copy to config/device.toml (gitignored) and edit.
+#
+#   SW_DEVICE_KEY=... python -m shelf_agent run --config config/device.toml
+#
+# The device key is read from the environment, never from this file (NFR-03).
+# Relative paths are resolved against this file's directory.
+
+[backend]
+base_url = "http://192.168.1.10:8080"
+timeout_s = 10
+# upload_path = "/api/v1/device-events/images"
+# heartbeat_path = "/devices/{device_id}/heartbeat"
+
+[device]
+# Must match the Device row in the backend (POST /devices).
+device_id = 1
+shelf_id = 1
+device_key_env = "SW_DEVICE_KEY"
+heartbeat_interval_s = 30
+# Undelivered frames survive reboots here. On the Pi use a path under /var/lib.
+outbox_dir = "../.outbox"
+
+[camera]
+# "picamera" on the Raspberry Pi; "folder" replays images from `folder`,
+# which runs this exact entry point on a PC.
+type = "picamera"
+width = 2304
+height = 1296
+# folder = "../scenarios/smoke/images"
+# loop = false
+
+[trigger]
+# "gpio"     - shelf sensor on `pin` (BCM); capture `settle_s` after release
+# "interval" - every `interval_s` seconds
+# "manual"   - press Enter (bring-up / debugging)
+type = "gpio"
+pin = 17
+settle_s = 2.0
+interval_s = 60
