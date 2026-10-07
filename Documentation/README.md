@@ -24,6 +24,7 @@ All documentation is Markdown, lives in this repository, and changes go through 
 | [COMMIT_CONVENTION.md](COMMIT_CONVENTION.md) | Commit message format |
 | [CODE_STYLE_BACKEND.md](CODE_STYLE_BACKEND.md) | Java/Spring Boot conventions |
 | [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md) | Python/PySide6 desktop client conventions |
+| [CODE_STYLE_DEVICE.md](CODE_STYLE_DEVICE.md) | Python shelf agent (Raspberry Pi + emulator) conventions |
 | [API_GUIDELINES.md](API_GUIDELINES.md) | REST design & OpenAPI documentation standard |
 
 ## Decisions & design

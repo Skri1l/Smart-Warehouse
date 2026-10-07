@@ -267,6 +267,7 @@ Shelf Camera + Controller
 
 **Backend:** Java, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway/Liquibase, OpenAPI/Swagger.  
 **Frontend:** Python, PySide6 (Qt for Python) desktop client.  
+**Shelf device:** Python shelf agent on Raspberry Pi 5 (`picamera2`, `gpiozero`). The same code runs on a PC as a multi-shelf emulator ([ADR-0008](adr/0008-shelf-agent-shared-core.md), [Device/README.md](../Device/README.md)).  
 **ML:** Python service with REST API; OpenCV + selected detection/counting model.  
 **Infrastructure:** Docker / Docker Compose for local development, cloud deployment for demo.  
 **Testing:** JUnit, Mockito, integration tests with PostgreSQL/Testcontainers; frontend tests where appropriate.

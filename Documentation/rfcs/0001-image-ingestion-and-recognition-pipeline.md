@@ -21,6 +21,8 @@ FR-05 through FR-08 require the backend to accept an image from a shelf device, 
 
 Request: `multipart/form-data` with fields `shelfId`, `deviceId`, `capturedAt` (ISO-8601), and the image file.
 
+Proposed additions from the device side ([ADR-0009](../adr/0009-device-transport-http-with-outbox.md), implemented in `Device/shelf_agent/transport/client.py`): an `X-Device-Key` header carrying `Device.deviceKey`; a `clientEventId` (UUID) field, unchanged across retries, for deduplication; `capturedAt` always in UTC with a `Z` suffix (parse as an instant, not `LocalDateTime`); image part named `image`. Devices retry `5xx`/`408`/`429`/network errors in capture order and do not retry other `4xx`.
+
 On receipt, the backend:
 1. Validates the device is registered and linked to the claimed shelf.
 2. Persists the image and creates an `ImageEvent` row with `processingStatus = RECEIVED`.

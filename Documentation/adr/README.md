@@ -34,3 +34,6 @@ Any decision that would be expensive to reverse or that a new team member would 
 | [0005](0005-gitflow-lite-branching.md) | Use a GitFlow-lite branching model | Accepted |
 | [0006](0006-frontend-pyside6-desktop.md) | Use a PySide6 desktop client for the frontend | Accepted |
 | [0007](0007-static-site-for-installer-and-onboarding.md) | Use a static GitHub Pages site for installer download and onboarding | Accepted |
+| [0008](0008-shelf-agent-shared-core.md) | One Python shelf agent for the Raspberry Pi and the PC emulator | Proposed |
+| [0009](0009-device-transport-http-with-outbox.md) | Devices push images over HTTP with an ordered on-device outbox | Proposed |
+| [0010](0010-labelled-test-images-shared-by-emulator-and-ml.md) | One labelled test-image set, shared by the emulator and the ML tests | Proposed |
