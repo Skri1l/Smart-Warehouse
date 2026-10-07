@@ -71,13 +71,9 @@ Once the backend is running, the interactive API docs are available at:
 
 (Replace `8080` with `BACKEND_PORT` from `Backend/.env` if you changed it.)
 
-The docs pages are public, but API calls require HTTP Basic auth. Until real users are implemented, click **Authorize** in Swagger UI and log in as `user` with the password Spring prints on startup (`Using generated security password: ...`). With Docker, find it via:
+For now all endpoints are open (no authentication) to simplify development, so requests can be sent straight from Swagger UI via **Try it out**. Access control will be added together with real authentication — do not deploy this configuration publicly.
 
-```bash
-docker logs smart-warehouse-backend
-```
-
-The password is regenerated on every restart. If you get **HTTP 403** on the Swagger page, another application is most likely occupying the port — check with `docker ps` / `netstat -ano | findstr :8080`.
+If you get **HTTP 403** or an unexpected page at that address, another application is most likely occupying the port — check with `docker ps` / `netstat -ano | findstr :8080`.
 
 ### Frontend
 
