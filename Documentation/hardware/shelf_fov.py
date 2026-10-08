@@ -13,8 +13,12 @@ Coordinate system (millimetres):
 
 The camera looks towards +y and is pitched down by `pitch` degrees from the
 horizontal. The sensor's long side is parallel to x. A simple pinhole model is
-used; the real lens has some barrel distortion, which the default 5 % edge
-margin absorbs.
+used. The real wide lens has barrel distortion, so pixel positions near the
+image edges are approximate; the reserve in pitch, height and lens position
+(see the robustness check) covers that, not the model itself.
+
+The edge margin is a fraction of the half-frame: the default 0.05 keeps 5 % of
+the half-frame (2.5 % of the full image width or height) free at each edge.
 
 Usage:
     python shelf_fov.py                      # report for the reference design
@@ -127,8 +131,9 @@ def main() -> None:
     ap.add_argument("--cam-y", type=float, default=-30, help="lens position relative to the front edge, mm")
     ap.add_argument("--cam-z", type=float, default=400, help="lens height above the floor, mm")
     ap.add_argument("--pitch", type=float, default=60, help="camera pitch below horizontal, degrees")
-    ap.add_argument("--focus", type=float, default=380, help="focus distance, mm")
-    ap.add_argument("--margin", type=float, default=0.05, help="free frame edge, fraction of half-frame")
+    ap.add_argument("--focus", type=float, default=300, help="focus distance along the optical axis, mm")
+    ap.add_argument("--margin", type=float, default=0.05,
+                    help="free frame edge, fraction of the half-frame (0.05 = 2.5 %% of the image)")
     args = ap.parse_args()
 
     cam = CAMERAS[args.camera]
@@ -146,28 +151,36 @@ def main() -> None:
     print(f"  fits: {fits(cam, pos, args.pitch, corners, args.margin)}")
     rng = pitch_range(cam, pos, corners, args.margin)
     print(f"  allowed pitch at this position: {rng[0]:.2f}-{rng[1]:.2f} deg" if rng else "  no pitch fits")
-    hs = [h for h in range(200, 800, 5) if fits(cam, (0.0, args.cam_y, float(h)), args.pitch, corners, args.margin)]
-    print(f"  allowed lens height at this pitch: {min(hs)}-{max(hs)} mm" if hs else "  no height fits")
+    h_max = 2000
+    hs = [h for h in range(100, h_max, 5) if fits(cam, (0.0, args.cam_y, float(h)), args.pitch, corners, args.margin)]
+    if hs:
+        upper = f"and above (checked up to {h_max} mm)" if max(hs) >= h_max - 5 else f"to {max(hs)} mm"
+        print(f"  allowed lens height at this pitch: {min(hs)} mm {upper}")
+    else:
+        print("  no height fits")
     ys = [y for y in range(-150, 100) if fits(cam, (0.0, float(y), args.cam_z), args.pitch, corners, args.margin)]
     print(f"  allowed lens y at this pitch/height: {min(ys)}..{max(ys)} mm" if ys else "  no y fits")
     axis_hit = args.cam_y + args.cam_z / math.tan(math.radians(args.pitch))
     print(f"  optical axis meets the floor at y = {axis_hit:.0f} mm")
 
-    worst = 1.0
-    for dp, dz, dy in itertools.product((-3, 0, 3), (-10, 0, 10), (-10, 0, 10)):
-        p = (0.0, args.cam_y + dy, args.cam_z + dz)
-        if not fits(cam, p, args.pitch + dp, corners, args.margin):
-            worst = 0.0
-    print(f"  robust to pitch +-3 deg, height +-10 mm, y +-10 mm at once: {bool(worst)}")
+    robust = all(
+        fits(cam, (0.0, args.cam_y + dy, args.cam_z + dz), args.pitch + dp, corners, args.margin)
+        for dp, dz, dy in itertools.product((-3, 0, 3), (-10, 0, 10), (-10, 0, 10))
+    )
+    print(f"  robust to pitch +-3 deg, height +-10 mm, y +-10 mm at once: {robust}")
 
     fx = (cam.width_px / 2) / math.tan(math.radians(cam.hfov_deg / 2))
-    print("\n  point (x, y, z)            pixel (u, v)     range   elevation  px/mm")
+    print("\n  point (x, y, z)            pixel (u, v)     range   axis depth   elevation  px/mm")
     for x, y, z in itertools.product((-args.width / 2, 0.0), (0.0, args.depth / 2, args.depth), (0.0, args.height)):
         u, v, d = project(cam, pos, args.pitch, (x, y, z))
         vec = _sub((x, y, z), pos)
         rng_mm = math.sqrt(_dot(vec, vec))
         elev = math.degrees(math.asin(-vec[2] / rng_mm))
-        print(f"  ({x:6.0f},{y:4.0f},{z:4.0f})   ({u:5.0f},{v:5.0f})   {rng_mm:5.0f}   {elev:6.1f}     {fx / d:4.1f}")
+        print(f"  ({x:6.0f},{y:4.0f},{z:4.0f})   ({u:5.0f},{v:5.0f})   {rng_mm:5.0f}   {d:7.0f}      {elev:6.1f}     {fx / d:4.1f}")
+
+    # Depth of field is measured along the optical axis, so compare it with axis depth, not range.
+    axis_depths = [project(cam, pos, args.pitch, c)[2] for c in corners]
+    print(f"\n  working volume along the optical axis: {min(axis_depths):.0f}-{max(axis_depths):.0f} mm")
 
     for coc in (2, 4):
         near, far = depth_of_field(cam, args.focus, coc)

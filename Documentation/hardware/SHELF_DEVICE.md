@@ -16,16 +16,16 @@ All optical numbers below come from [shelf_fov.py](shelf_fov.py). If you change 
 | Camera | Raspberry Pi Camera Module 3 **Wide** (IMX708, 12 MP, 102° × 67°, autofocus) |
 | Lens position | centred (x = 0), **30 mm in front of** the front edge of the working area, **400 mm above** the floor |
 | Camera tilt | **60° below horizontal** (optical axis 30° from vertical, looking into the shelf) |
-| Allowed assembly error | pitch 53.8–65.8°, lens height 360–795 mm, lens y −116…+8 mm (each one separately); ±3°, ±10 mm, ±10 mm all at once |
+| Allowed assembly error | pitch 53.8–65.8°, lens height ≥ 360 mm, lens y −116…+8 mm (each one separately); ±3°, ±10 mm, ±10 mm all at once |
 | Image detail | 3.6 px/mm at the far floor corners, up to 9 px/mm on tops of front products (full resolution 4608 × 2592) |
-| Focus | fixed, 0.38 m (`LensPosition` = 2.63 dioptres) |
+| Focus | fixed, 0.30 m along the optical axis (`LensPosition` = 3.33 dioptres) |
 | Light | 2 × 240 mm 5 V COB LED bars under the ceiling, ≈ 5 W, switched by GPIO17 through a MOSFET |
 | Controller | Raspberry Pi 5 (4 GB) + Active Cooler, official 27 W USB-C supply — **one** mains plug for everything |
 | Print | PETG, ≈ 1.9 kg, all parts fit a 220 × 220 mm bed |
 
 ## 2. Requirements
 
-1. Every product placed in one layer anywhere in the working area is fully inside the frame, including its top face, with a 5 % free border at each edge of the image (lens distortion and assembly error eat into that border, not into the shelf).
+1. Every product placed in one layer anywhere in the working area is fully inside the frame, including its top face, with a free border at each edge of the image of 5 % of the half-frame, i.e. 2.5 % of the image width or height (115 px at the long side, 65 px at the short side). Assembly error is taken from the reserve in pitch, height and lens position (section 4.3), not from the shelf.
 2. The geometry imitates a real rack: the camera hangs under the shelf above, so the module has a realistic clear height (300–450 mm is common in warehouse racks), not a tall camera mast.
 3. Lighting is controlled: the photo is taken under the module's own light, which is on only while capturing, so the images look the same in a dark lab and in a bright auditorium.
 4. 3D-printable on a common printer (bed ≥ 220 × 220 mm), no parts that need machining.
@@ -36,7 +36,7 @@ All optical numbers below come from [shelf_fov.py](shelf_fov.py). If you change 
 
 ### 3.1 Camera choice
 
-The camera has to see a 400 mm wide shelf from very close. What decides the height of the whole module is the horizontal field of view: the front corners of the shelf are right below the camera and far to the side. Minimum lens height for the same 400 × 300 × 180 mm working volume (lens 30 mm in front of the shelf, 5 % frame margin):
+The camera has to see a 400 mm wide shelf from very close. What decides the height of the whole module is the horizontal field of view: the front corners of the shelf are right below the camera and far to the side. Minimum lens height for the same 400 × 300 × 180 mm working volume (lens 30 mm in front of the shelf, frame margin as in section 2):
 
 | Camera | FOV (H × V) | Focus | Minimum lens height | Verdict |
 |---|---|---|---|---|
@@ -45,7 +45,7 @@ The camera has to see a 400 mm wide shelf from very close. What decides the heig
 | Camera Module v2 (IMX219) | 62° × 49° | fixed, factory-set far | 540 mm | tall, and the fixed lens must be refocused by hand to 0.4 m |
 | OV5647 5 MP clones | 54° × 41° | fixed | 610 mm | tallest, weaker image tuning, focus by hand |
 
-The Camera Module 3 Wide is an official Raspberry Pi part: it is detected automatically on Raspberry Pi OS (Bookworm), has a tuned libcamera profile and is driven by Picamera2 without extra drivers. The wide lens has visible barrel distortion near the image edges; this is removed in software with a one-time calibration (section 9) and is already covered by the frame margin. Use the normal version, **not NoIR** — the NoIR variant has no infrared filter and shifts colours under mixed light.
+The Camera Module 3 Wide is an official Raspberry Pi part: it is detected automatically on Raspberry Pi OS (Bookworm), has a tuned libcamera profile and is driven by Picamera2 without extra drivers. The wide lens has visible barrel distortion near the image edges; this is removed in software with a one-time calibration (section 9). The script uses a pinhole model, so pixel positions near the edges are approximate; the ±3° / ±10 mm reserve of section 4.3 and the ArUco check of section 9 cover that. Use the normal version, **not NoIR** — the NoIR variant has no infrared filter and shifts colours under mixed light.
 
 ### 3.2 Bill of materials — electronics
 
@@ -59,7 +59,7 @@ The Camera Module 3 Wide is an official Raspberry Pi part: it is detected automa
 | 6 | Raspberry Pi 5 camera cable, "standard – mini", **300 mm** | 1 | The camera has a 15-pin 1 mm connector, the Pi 5 a 22-pin 0.5 mm one; the cable that comes with the camera does **not** fit the Pi 5 |
 | 7 | 5 V COB LED strip, 8 mm, 4000 K, CRI ≥ 90, ≈ 10 W/m | 0.5 m | Neutral white and high CRI keep product colours true; COB gives an even line without hot spots |
 | 8 | Aluminium LED channel ≈ 17 × 8 mm with opal (milky) diffuser + end caps | 2 × 250 mm | Cut from a 1 m profile; the diffuser removes glare on glossy packaging |
-| 9 | Logic-level N-MOSFET IRLZ44N (TO-220) | 1 | Fully on at 3.3 V gate drive for a 1 A load |
+| 9 | Logic-level N-MOSFET IRLZ44N (TO-220) | 1 | Its datasheet specifies R<sub>DS(on)</sub> at 4–5 V gate drive, not 3.3 V; at 3.3 V it still switches a 1 A load with negligible heating. A MOSFET rated at V<sub>GS</sub> = 2.5 V (e.g. IRLB8721, or AO3400 in SOT-23) removes the doubt |
 | 10 | Resistors 100 Ω and 10 kΩ, 0.25 W | 1 + 1 | Gate resistor and gate pull-down |
 | 11 | Resettable fuse (PTC), 1.35 A hold, e.g. MF-R135 | 1 | Protects the Pi's 5 V rail if an LED wire shorts |
 | 12 | Electrolytic capacitor 470 µF, 16 V | 1 | Softens the 5 V rail dip when the LEDs switch on |
@@ -71,7 +71,7 @@ The Camera Module 3 Wide is an official Raspberry Pi part: it is detected automa
 
 | Item | Qty | Used for |
 |---|---|---|
-| M3 heat-set insert, 4–5 mm long | 8 | Column lock screws in the corner bosses |
+| M3 heat-set insert, **3 mm long** (short type, OD ≈ 4.2 mm) | 8 | Column lock screws in the corner bosses. The boss wall is only 3.8 mm thick, so the usual 4–5 mm inserts would stick out into the column socket |
 | M3 × 10 screw + printed thumb knob (or a ready-made M3 thumb screw) | 8 | Locking columns in the bosses |
 | M3 × 10 screw + M3 nut | 8 | Head unit (4) and LED clips (4) to the ceiling grid |
 | M2.5 × 10 standoff + M2.5 × 6 screw | 4 + 8 | Raspberry Pi 5 on the head unit |
@@ -104,7 +104,7 @@ Lens height 400 mm is the minimum (360 mm) plus 40 mm of reserve. With the lens 
 
 ### 4.4 Image coverage and detail
 
-Computed for full resolution 4608 × 2592 (`python shelf_fov.py`); u, v are pixel coordinates with (0, 0) at the top left; *elevation* is how steeply the camera looks down at that point.
+Computed for full resolution 4608 × 2592 (`python shelf_fov.py`); u, v are pixel coordinates with (0, 0) at the top left; *distance* is the straight-line distance from the lens; *elevation* is how steeply the camera looks down at that point.
 
 | Point (x, y, z), mm | Pixel (u, v) | Distance, mm | Elevation | Detail, px/mm |
 |---|---|---|---|---|
@@ -119,7 +119,7 @@ The worst case, 3.6 px/mm, still puts ≈ 240 px across a 66 mm can. A recogniti
 
 ### 4.5 Focus
 
-The working volume is 0.22–0.56 m from the lens. Autofocus is not used during capture (it would hunt and add delay); instead the lens is set once to **0.38 m** (`LensPosition = 2.63` dioptres). With a blur of at most 2 px at full resolution everything from 0.29 to 0.55 m is sharp; at the 2× downscaled resolution the model sees, everything from 0.24 to 1.0 m is sharp, i.e. the whole volume.
+Depth of field is measured along the optical axis, so the working volume is described the same way: it spans **206–511 mm** along the axis (the nearest point is the top of a front-row product, the farthest the back floor corner; the straight-line distances in the table above are 222–556 mm). Autofocus is not used during capture (it would hunt and add delay); instead the lens is set once to **0.30 m** (`LensPosition = 3.33` dioptres). At the 2× downscaled resolution the model sees (blur ≤ 4 px at full resolution) everything from 202 to 587 mm is sharp, i.e. the whole volume with a few millimetres to spare at the front. At full resolution (blur ≤ 2 px) the sharp zone is 241–397 mm: product sides and tops in the middle of the volume are crisp, while the front-row tops and the floor beyond the middle of the shelf are slightly soft, which is acceptable for archiving and cropping.
 
 ### 4.6 Placement rules for products (single layer)
 
@@ -166,12 +166,12 @@ Tiles are joined by printed bow-tie keys pressed in from the rib side, columns p
 
 | ID | Part | Qty | Size, mm | Details |
 |---|---|---|---|---|
-| P1 | Floor tile | 2 + 2 mirrored | 200 × 160 × 12 | 3 mm deck, 8 mm rail on all four edges, 2 mm ribs at 40 mm pitch below. At the outer corner a 28 × 28 mm boss rising 15 mm above the deck, with a 20.4 × 20.4 mm socket 25 mm deep. Along the outer 200 mm edge a 3.4 mm wide, 6 mm deep groove, centred 5 mm from the edge. Two bow-tie pockets on each inner edge. Engraved 0.4 mm line marking the working area. Mirror two of them in the slicer. |
+| P1 | Floor tile | 2 + 2 mirrored | 200 × 160 × 12 | 3 mm deck, 8 mm rail on all four edges, 2 mm ribs at 40 mm pitch below. At the outer corner a 28 × 28 mm boss rising 15 mm above the deck, with a 20.4 × 20.4 mm socket 25 mm deep (3.8 mm wall). A Ø 4.0 mm hole in the outer wall of the boss for a short 3 mm M3 heat-set insert (section 3.3); the column lock screw goes through it into the socket. Along the outer 200 mm edge a 3.4 mm wide, 6 mm deep groove, centred 5 mm from the edge. Two bow-tie pockets on each inner edge. Engraved 0.4 mm line marking the working area. Mirror two of them in the slicer. |
 | P2 | Ceiling tile | 2 + 2 mirrored | 200 × 160 × 12 | Same as P1, mounted upside down (deck down, boss hanging down), plus a grid of Ø 3.4 mm holes at 20 mm pitch through the deck for mounting anything anywhere. |
 | P3 | Column segment | 8 | 20 × 20 × 220 | Square tube, 2.4 mm wall (inside 15.2 × 15.2). One column = two segments, total 440 mm, from z = −10 to z = 430. |
 | P4 | Column coupler | 4 | 14.8 × 14.8 × 40 | Solid; 20 mm goes into each segment. |
 | P5 | Back panel | 4 | 172 × 215 × 3 | Two wide × two high, front face at y = 303.3. Bottom edge sits in the floor groove, top edge in the ceiling groove (2 mm vertical play). 5 mm ribs on the rear side, stopping 8 mm short of the edges; eight bow-tie keys on the rear join the four pieces. |
-| P6 | Front lip / label strip | 2 | 172 × 30 × 3 | Sits in the front floor groove, 24 mm above the floor. Holds the printed shelf label (shelf ID and QR code). Does not block the camera: the lowest ray passes 66 mm above it. |
+| P6 | Front lip / label strip | 2 | 172 × 30 × 3 | Sits in the front floor groove, 24 mm above the floor. Holds the printed shelf label (shelf ID and QR code). Does not block the camera: the ray to the front edge of the floor crosses the lip line 66 mm above the floor, ≈ 43 mm above the top of the lip. |
 | P7 | Bow-tie key | 24 + 4 spare | 30 × 16 × 6, 8 mm waist | 8 for the floor, 8 for the ceiling, 8 for the back panel. |
 | P8 | Head unit | 1 | 110 × 150 × 4 plate + front arm | Sits on the ceiling ribs at x −55…55, y −40…110, bolted with 4 × M3 to both front ceiling tiles (also splices the front seam). M2.5 standoffs for the Pi (58 × 49 mm pattern), place for the 30 × 40 mm perfboard and the button. The front arm goes down over the ceiling edge to the camera bracket. |
 | P9 | Camera bracket | 1 | ≈ 35 × 30 × 15 | Holds the camera board at a fixed 30° to horizontal (axis 60° below horizontal), lens centre at y = −30, z = 400. M2 holes on the camera's 21 × 12.5 mm pattern. Fixed angle on purpose — nothing to knock out of alignment. |
@@ -214,14 +214,16 @@ Fit tolerances (tune with a test print of one socket and one key before printing
                                  │
                                [470µF]
                                  │                 LED bars −
- Pi GND (pin 6) ─────────────────┴──────┐              │
-                                        │          D ┌─┘
- Pi GPIO17 (pin 11) ──[100Ω]──┬─────────┼──────── G ─┤  IRLZ44N
-                              │         │          S └─┐
-                            [10k]       │              │
-                              │         │              │
-                              └─────────┴──────────────┘ GND
+                                 │                     │
+                                 │                 D ┌─┘
+ Pi GPIO17 (pin 11) ──[100Ω]──┬──│───────────── G ─┤  IRLZ44N
+                              │  │                 S └─┐
+                            [10k]│                     │
+                              │  │                     │
+ Pi GND (pin 6) ──────────────┴──┴─────────────────────┘ GND
 ```
+
+`│` crossing a line without a corner or a `┬`/`┴` is a crossing, not a connection: the gate is connected only to the 100 Ω and 10 kΩ resistors.
 
 ### 7.2 Layout
 
@@ -257,7 +259,7 @@ camera.configure(camera.create_still_configuration(
 ))
 camera.set_controls({
     "AfMode": controls.AfModeEnum.Manual,
-    "LensPosition": 2.63,         # 0.38 m, see section 4.5
+    "LensPosition": 3.33,         # 0.30 m, see section 4.5
     "AeEnable": False,
     "ExposureTime": 10_000,       # µs, starting value — tune in calibration
     "AnalogueGain": 2.0,          # starting value — tune in calibration
@@ -281,7 +283,7 @@ After capture the device uploads the image with `shelfId`, `deviceId` and `captu
 Done once after the first assembly, results saved on the device (e.g. `/etc/smart-shelf/calibration.json`). A reassembly only needs the quick check in step 5.
 
 1. **Orientation.** Take a photo; if it is upside down, set `hflip` and `vflip` to `True`.
-2. **Focus.** Put a printed page with small text in the middle and at the back of the shelf, compare sharpness for `LensPosition` 2.3–3.0 and keep the best value (expected ≈ 2.6).
+2. **Focus.** Put pages with small text on top of a 180 mm box in the front row, in the middle and at the back of the shelf, compare sharpness for `LensPosition` 2.8–3.8 and keep the value that keeps both the front-row tops and the back of the shelf sharp (expected ≈ 3.3).
 3. **Exposure and colour.** With the LEDs on and a grey card (or plain white paper) on the floor, run once with auto exposure and auto white balance, read `ExposureTime`, `AnalogueGain` and `ColourGains` from the capture metadata, and fix those values. Check that the histogram is not clipped on the brightest packaging.
 4. **Lens distortion.** Photograph an A4 checkerboard (9 × 6 squares of 25 mm) in 15–20 positions across the shelf and compute the camera matrix and distortion coefficients with OpenCV `calibrateCamera`. Images are undistorted before recognition.
 5. **Shelf position in the image.** Stick four 20 mm ArUco markers (`DICT_4X4_50`, ids 0–3) on top of the four corner bosses. From them the software finds the working area in every image (for cropping or a top-down rectified view) and notices if the camera was bumped — markers moved by more than a few pixels between photos means "check the assembly".
@@ -316,7 +318,7 @@ The module is defined by four inputs: working width, working depth, maximum prod
 python Documentation/hardware/shelf_fov.py --width 600 --depth 300 --height 180
 ```
 
-It prints the minimum lens height for each supported camera, checks the chosen position and tilt, and shows the pixel detail and focus range. Wider shelves need a higher camera (or two cameras side by side, each covering half); a deeper shelf mostly needs a flatter tilt. Keep the lens in front of the shelf and above the products, and keep the free frame margin at 5 % or more.
+It prints the minimum lens height for each supported camera, checks the chosen position and tilt, and shows the pixel detail and focus range. Wider shelves need a higher camera (or two cameras side by side, each covering half); a deeper shelf mostly needs a flatter tilt. Keep the lens in front of the shelf and above the products, and keep the free frame margin at the default `--margin 0.05` (5 % of the half-frame) or more.
 
 ## 12. Open items
 
