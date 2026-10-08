@@ -35,6 +35,7 @@ Smart-Warehouse/
 | Architecture decisions (ADRs) | [Documentation/adr/](Documentation/adr/README.md) |
 | Design docs for large changes (RFCs) | [Documentation/rfcs/](Documentation/rfcs/README.md) |
 | Operational runbooks | [Backend/runbooks/](Backend/runbooks/README.md) |
+| Shelf device hardware (demo shelf, camera, wiring) | [Documentation/hardware/SHELF_DEVICE.md](Documentation/hardware/SHELF_DEVICE.md) |
 
 ## Getting started
 

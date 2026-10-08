@@ -16,6 +16,13 @@ All documentation is Markdown, lives in this repository, and changes go through 
 | [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) | Product spec: goals, scope, domain model, requirements, architecture |
 | [MILESTONES.md](MILESTONES.md) | 12-week delivery plan |
 
+## Hardware
+
+| Document | Purpose |
+|---|---|
+| [hardware/SHELF_DEVICE.md](hardware/SHELF_DEVICE.md) | Demo shelf module: dimensions, camera placement, components, lighting, wiring, printing, transport |
+| [hardware/shelf_fov.py](hardware/shelf_fov.py) | Camera field-of-view calculator the shelf dimensions are derived from |
+
 ## Engineering conventions
 
 | Document | Purpose |
