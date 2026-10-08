@@ -5,6 +5,7 @@ from __future__ import annotations
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 
 
 def utc_now() -> datetime:
@@ -37,6 +38,8 @@ class Frame:
         event_id: Client-generated id; lets the backend deduplicate retried
             uploads (at-least-once delivery, see ADR-0009).
         ground_truth: Label of a test image, ``None`` for real camera frames.
+        source_path: Where the image is stored on the device. Sent as
+            ``imagePath`` by the ``image-events`` protocol.
     """
 
     data: bytes
@@ -45,3 +48,4 @@ class Frame:
     captured_at: datetime
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     ground_truth: GroundTruth | None = None
+    source_path: Path | None = None

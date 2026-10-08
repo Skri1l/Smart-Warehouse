@@ -114,3 +114,25 @@ def test_bundled_smoke_scenario_is_valid() -> None:
     assert all(
         frame.name in scenario.labels for s in scenario.shelves for frame in s.frames
     )
+
+
+def test_device_id_is_optional_and_registration_on_by_default(
+    scenario_file: Path,
+) -> None:
+    scenario_file.write_text(
+        SCENARIO.replace("device_id = 1\n", "").replace("device_id = 2\n", ""),
+        encoding="utf-8",
+    )
+
+    scenario = load_scenario(scenario_file)
+
+    assert scenario.shelf("A1").identity.device_id is None
+    assert scenario.register_devices is True
+
+
+def test_fails_when_two_shelves_share_a_device_key(scenario_file: Path) -> None:
+    text = SCENARIO.replace('device_key = "key-b1"', 'device_key = "emulator-A1"')
+    scenario_file.write_text(text, encoding="utf-8")
+
+    with pytest.raises(ConfigError, match="duplicate shelf device_key"):
+        load_scenario(scenario_file)

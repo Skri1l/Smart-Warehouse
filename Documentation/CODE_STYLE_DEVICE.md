@@ -27,11 +27,12 @@ The point of the package layout is that **the emulator cannot drift from the dev
 | `models.py`, `config.py` | stdlib | anything else in the package |
 | `camera/`, `trigger/` | `models` | `transport`, `agent`, `httpx` |
 | `transport/` | `models`, `config`, `httpx` | `camera`, `trigger`, `emulator` |
+| `registration.py` | `config`, `transport.client` | `httpx` directly, `agent`, `emulator` |
 | `agent.py` | the ports (`CameraSource`, `Trigger`, `Uploader`), `transport.outbox` | concrete hardware, `httpx` |
 | `device.py`, `emulator/` | everything above | each other |
 | `mock_server.py` | stdlib, `transport.client` constants | `agent`, `emulator` |
 
-- **`transport/client.py` is the only wire-protocol code.** Endpoint paths, field names, headers, timestamp format and retry classification live there and nowhere else. The emulator and `mock_server` never build a request by hand. A protocol change is one edit, and the emulator demo stays honest.
+- **`transport/client.py` is the only wire-protocol code.** Endpoint paths, field names, headers, timestamp format and retry classification live there and nowhere else. It follows the backend's published OpenAPI spec (`/v3/api-docs`). When a controller or DTO changes, update the client and `mock_server.py` together and check the shapes against Swagger, not against the RFC. The emulator and `mock_server` never build a request by hand. A protocol change is one edit, and the emulator demo stays honest.
 - **The agent depends on ports, not implementations.** `ShelfAgent` takes a `CameraSource`, an `Uploader` and an `Outbox`. A new camera or sensor is a new class in `camera/`/`trigger/` plus one branch in `device.build_camera`/`build_trigger`. The agent itself does not change.
 - **Hardware libraries are imported lazily**, inside the constructor of `Picamera2Source`/`GpioTrigger`, never at module top level. The package must import, and its tests must pass, on a PC without `picamera2`/`gpiozero`.
 - **Ground truth never crosses the wire.** `Frame.ground_truth` exists for console output and verification. `BackendClient` must not send it (there is a test for this), because the backend/ML side must not be able to "see the answer" ([ADR-0010](adr/0010-labelled-test-images-shared-by-emulator-and-ml.md)).
@@ -40,9 +41,10 @@ The point of the package layout is that **the emulator cannot drift from the dev
 
 These follow from NFR-02 and the stock-delta model ([ADR-0009](adr/0009-device-transport-http-with-outbox.md)):
 
+- **Device ids come from the backend.** Configure `device_key` + `shelf_id`; `registration.resolve_identity` looks the id up (`GET /devices`). Never invent ids in scenarios or configs, because they differ between databases.
 - **Never drop a frame silently.** A retryable failure goes to the outbox. A final (4xx) failure goes to `outbox/rejected/` with an `ERROR` log.
 - **Never reorder frames of one shelf.** While the outbox is non-empty, new frames queue behind it. Don't add "send the fresh one first" shortcuts.
-- **`captured_at` is set at capture time** and stays the same through retries. Timestamps are timezone-aware UTC. Naive datetimes are a bug (`format_timestamp` raises).
+- **`captured_at` is set at capture time** and stays the same through retries. Inside the agent, timestamps are always timezone-aware (UTC). Conversion to the wire format (zone-less `LocalDateTime` for `image-events`, `Z`-suffixed UTC for `multipart`) happens only in `transport/client.py`. A naive datetime reaching the client is a bug (the formatters raise).
 - **Classify errors in one place** (`BackendClient._send`). Callers branch on `BackendError.retryable`, never on status codes.
 - **Background loops stop on a `threading.Event`.** Use `stop.wait(timeout)` instead of `time.sleep` so `SIGTERM` (systemd) and Ctrl+C stop promptly.
 

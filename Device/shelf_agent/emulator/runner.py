@@ -11,6 +11,7 @@ from shelf_agent.agent import Delivery, ShelfAgent, TickResult, run_heartbeat
 from shelf_agent.camera.base import SourceExhausted
 from shelf_agent.camera.folder import FolderSource
 from shelf_agent.emulator.scenario import Scenario
+from shelf_agent.registration import connect
 from shelf_agent.transport.client import BackendClient
 from shelf_agent.transport.outbox import Outbox
 from shelf_agent.trigger.interval import IntervalTrigger
@@ -48,19 +49,45 @@ class Emulator:
         self._scenario = scenario
         self._output = output
         self._sources: dict[str, FolderSource] = {}
+        self._clients: dict[str, BackendClient] = {}
         self._agents: dict[str, ShelfAgent] = {}
         for shelf in scenario.shelves:
             source = FolderSource(shelf.frames, labels=scenario.labels, loop=shelf.loop)
+            client = BackendClient(
+                scenario.backend, shelf.identity, transport=transport
+            )
             self._sources[shelf.name] = source
+            self._clients[shelf.name] = client
             self._agents[shelf.name] = ShelfAgent(
                 name=shelf.name,
                 camera=source,
-                client=BackendClient(
-                    scenario.backend, shelf.identity, transport=transport
-                ),
+                client=client,
                 outbox=Outbox(scenario.outbox_dir / shelf.name),
             )
         self._cursor = 0
+
+    def connect(self) -> None:
+        """Look every shelf's device up in the backend (registering it if allowed).
+
+        Raises:
+            RegistrationError: A device contradicts the scenario.
+            BackendError: The backend refused a request or is unreachable for a
+                shelf without a configured ``device_id``.
+        """
+        never = threading.Event()
+        for name, client in self._clients.items():
+            connect(
+                client,
+                register=self._scenario.register_devices,
+                stop=never,
+                retry_s=0,
+                wait=False,
+            )
+            identity = client.identity
+            self._output(
+                f"  {name:<8} device key '{identity.device_key}' -> "
+                f"device id {identity.device_id}, shelf {identity.shelf_id}"
+            )
 
     @property
     def shelf_names(self) -> list[str]:
@@ -107,9 +134,10 @@ class Emulator:
         for shelf in self._scenario.shelves:
             source = self._sources[shelf.name]
             left = "loop" if shelf.loop else f"{source.remaining}/{source.total} left"
+            identity = self._clients[shelf.name].identity
             lines.append(
-                f"  {shelf.name:<8} device={shelf.identity.device_id} "
-                f"shelf={shelf.identity.shelf_id}  {left}, "
+                f"  {shelf.name:<8} device={identity.device_id} "
+                f"shelf={identity.shelf_id}  {left}, "
                 f"{self._agents[shelf.name].queued} queued"
             )
         return lines

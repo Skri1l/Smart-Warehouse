@@ -16,3 +16,4 @@ received/
 # *.example.toml templates are committed.
 config/*.toml
 !config/*.example.toml
+.captures/

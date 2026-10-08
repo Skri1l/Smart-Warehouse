@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from shelf_agent.config import BackendConfig, DeviceIdentity
+from shelf_agent.config import PROTOCOL_MULTIPART, BackendConfig, DeviceIdentity
 from shelf_agent.models import Frame, GroundTruth
 
 CAPTURED_AT = datetime(2026, 10, 7, 12, 30, 0, tzinfo=UTC)
@@ -19,7 +19,14 @@ def identity() -> DeviceIdentity:
 
 @pytest.fixture
 def backend_config() -> BackendConfig:
-    return BackendConfig(base_url="http://backend.test")
+    """Default protocol: ``image-events`` as published in Swagger."""
+    return BackendConfig(base_url="http://backend.test", timestamp_zone="utc")
+
+
+@pytest.fixture
+def multipart_config() -> BackendConfig:
+    """RFC-0001 multipart upload."""
+    return BackendConfig(base_url="http://backend.test", protocol=PROTOCOL_MULTIPART)
 
 
 @pytest.fixture
@@ -28,6 +35,7 @@ def make_frame() -> Callable[..., Frame]:
         name: str = "shot.jpg",
         data: bytes = b"\xff\xd8jpeg",
         truth: GroundTruth | None = None,
+        source_path: Path | None = Path("/data/captures/shot.jpg"),
     ) -> Frame:
         return Frame(
             data=data,
@@ -35,6 +43,7 @@ def make_frame() -> Callable[..., Frame]:
             content_type="image/jpeg",
             captured_at=CAPTURED_AT,
             ground_truth=truth,
+            source_path=source_path,
         )
 
     return factory

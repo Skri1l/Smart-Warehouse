@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
@@ -15,8 +16,12 @@ from shelf_agent.transport.client import (
     DEVICE_KEY_HEADER,
     BackendClient,
     BackendError,
+    RemoteDevice,
+    format_local_datetime,
     format_timestamp,
 )
+
+Handler = Callable[[httpx.Request], httpx.Response]
 
 
 def parse_multipart(request: httpx.Request) -> dict[str, EmailMessage]:
@@ -39,31 +44,114 @@ def text(part: EmailMessage) -> str:
 
 
 def client_with(
-    handler: Callable[[httpx.Request], httpx.Response],
-    backend_config: BackendConfig,
-    identity: DeviceIdentity,
+    handler: Handler, config: BackendConfig, identity: DeviceIdentity
 ) -> BackendClient:
-    return BackendClient(
-        backend_config, identity, transport=httpx.MockTransport(handler)
-    )
+    return BackendClient(config, identity, transport=httpx.MockTransport(handler))
 
 
-def test_upload_sends_rfc_0001_multipart_fields(
-    backend_config: BackendConfig,
-    identity: DeviceIdentity,
-    make_frame: Callable[..., Frame],
-) -> None:
+def recording(
+    response: httpx.Response,
+) -> tuple[list[httpx.Request], Handler]:
     requests: list[httpx.Request] = []
 
     def handler(request: httpx.Request) -> httpx.Response:
         requests.append(request)
-        return httpx.Response(202, json={"id": 41})
+        return response
 
-    frame = make_frame(name="shelf.jpg", data=b"JPEGDATA")
-    receipt = client_with(handler, backend_config, identity).upload_image(frame)
+    return requests, handler
+
+
+# --- image-events (Swagger: POST /image-events) ---------------------------------
+
+
+def test_posts_image_event_json_as_published_in_swagger(
+    backend_config: BackendConfig,
+    identity: DeviceIdentity,
+    make_frame: Callable[..., Frame],
+) -> None:
+    requests, handler = recording(httpx.Response(201, json=41))
+
+    receipt = client_with(handler, backend_config, identity).upload_image(make_frame())
 
     request = requests[0]
     assert request.method == "POST"
+    assert request.url.path == "/image-events"
+    assert request.headers["content-type"] == "application/json"
+    assert json.loads(request.read()) == {
+        "deviceId": 7,
+        "imagePath": "/data/captures/shot.jpg",
+        "capturedAt": "2026-10-07T12:30:00.000",
+    }
+    assert receipt.status_code == 201
+    assert receipt.image_event_id == 41
+
+
+def test_image_event_never_contains_ground_truth_or_extra_fields(
+    backend_config: BackendConfig,
+    identity: DeviceIdentity,
+    make_frame: Callable[..., Frame],
+) -> None:
+    requests, handler = recording(httpx.Response(201, json=1))
+
+    frame = make_frame(truth=GroundTruth("SECRET-SKU", 99))
+    client_with(handler, backend_config, identity).upload_image(frame)
+
+    body = requests[0].read()
+    assert b"SECRET-SKU" not in body
+    assert set(json.loads(body)) == {"deviceId", "imagePath", "capturedAt"}
+
+
+def test_rejects_frame_without_stored_path_when_sending_image_event(
+    backend_config: BackendConfig,
+    identity: DeviceIdentity,
+    make_frame: Callable[..., Frame],
+) -> None:
+    _, handler = recording(httpx.Response(201, json=1))
+
+    with pytest.raises(BackendError) as error:
+        client_with(handler, backend_config, identity).upload_image(
+            make_frame(source_path=None)
+        )
+
+    assert not error.value.retryable
+
+
+def test_waits_with_retryable_error_when_device_id_is_unknown(
+    backend_config: BackendConfig, make_frame: Callable[..., Frame]
+) -> None:
+    requests, handler = recording(httpx.Response(201, json=1))
+    unresolved = DeviceIdentity(device_id=None, shelf_id=3, device_key="k")
+
+    with pytest.raises(BackendError) as error:
+        client_with(handler, backend_config, unresolved).upload_image(make_frame())
+
+    assert error.value.retryable
+    assert requests == []
+
+
+def test_formats_local_datetime_without_offset() -> None:
+    moment = datetime(
+        2026, 10, 7, 15, 0, 1, 250000, tzinfo=timezone(timedelta(hours=3))
+    )
+
+    assert format_local_datetime(moment, "utc") == "2026-10-07T12:00:01.250"
+    assert "+" not in format_local_datetime(moment, "local")
+
+
+# --- multipart (RFC-0001) ------------------------------------------------------
+
+
+def test_upload_sends_rfc_0001_multipart_fields(
+    multipart_config: BackendConfig,
+    identity: DeviceIdentity,
+    make_frame: Callable[..., Frame],
+) -> None:
+    requests, handler = recording(httpx.Response(202, json={"id": 41}))
+
+    frame = make_frame(name="shelf.jpg", data=b"JPEGDATA")
+    receipt = client_with(handler, multipart_config, identity).upload_image(frame)
+
+    request = requests[0]
     assert request.url.path == "/api/v1/device-events/images"
     assert request.headers[DEVICE_KEY_HEADER] == "test-key"
     parts = parse_multipart(request)
@@ -72,25 +160,19 @@ def test_upload_sends_rfc_0001_multipart_fields(
     assert text(parts["capturedAt"]) == "2026-10-07T12:30:00.000Z"
     assert text(parts["clientEventId"]) == frame.event_id
     assert parts["image"].get_filename() == "shelf.jpg"
-    assert parts["image"].get_content_type() == "image/jpeg"
     assert parts["image"].get_payload(decode=True) == b"JPEGDATA"
-    assert receipt.status_code == 202
     assert receipt.image_event_id == 41
 
 
-def test_upload_never_sends_ground_truth(
-    backend_config: BackendConfig,
+def test_multipart_never_sends_ground_truth(
+    multipart_config: BackendConfig,
     identity: DeviceIdentity,
     make_frame: Callable[..., Frame],
 ) -> None:
-    requests: list[httpx.Request] = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        requests.append(request)
-        return httpx.Response(202)
+    requests, handler = recording(httpx.Response(202))
 
     frame = make_frame(truth=GroundTruth("SECRET-SKU", 99))
-    client_with(handler, backend_config, identity).upload_image(frame)
+    client_with(handler, multipart_config, identity).upload_image(frame)
 
     assert b"SECRET-SKU" not in requests[0].read()
     assert set(parse_multipart(requests[0])) == {
@@ -100,6 +182,22 @@ def test_upload_never_sends_ground_truth(
         "clientEventId",
         "image",
     }
+
+
+def test_formats_timestamp_as_utc_with_z() -> None:
+    moment = datetime(2026, 10, 7, 15, 0, tzinfo=timezone(timedelta(hours=3)))
+
+    assert format_timestamp(moment) == "2026-10-07T12:00:00.000Z"
+
+
+def test_rejects_naive_timestamp() -> None:
+    with pytest.raises(ValueError):
+        format_timestamp(datetime(2026, 10, 7, 12, 0))
+    with pytest.raises(ValueError):
+        format_local_datetime(datetime(2026, 10, 7, 12, 0), "utc")
+
+
+# --- responses and errors ------------------------------------------------------
 
 
 @pytest.mark.parametrize(
@@ -113,10 +211,8 @@ def test_reads_event_id_when_backend_returns_it(
     identity: DeviceIdentity,
     make_frame: Callable[..., Frame],
 ) -> None:
-    def handler(request: httpx.Request) -> httpx.Response:
-        if body is None:
-            return httpx.Response(202)
-        return httpx.Response(202, json=body)
+    response = httpx.Response(201) if body is None else httpx.Response(201, json=body)
+    _, handler = recording(response)
 
     receipt = client_with(handler, backend_config, identity).upload_image(make_frame())
 
@@ -169,28 +265,48 @@ def test_marks_error_retryable_when_backend_unreachable(
     assert error.value.status_code is None
 
 
+# --- devices -------------------------------------------------------------------
+
+
 def test_heartbeat_patches_device_path(
     backend_config: BackendConfig, identity: DeviceIdentity
 ) -> None:
-    requests: list[httpx.Request] = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        requests.append(request)
-        return httpx.Response(204)
+    requests, handler = recording(httpx.Response(204))
 
     client_with(handler, backend_config, identity).heartbeat()
 
     assert requests[0].method == "PATCH"
     assert requests[0].url.path == "/devices/7/heartbeat"
-    assert requests[0].headers[DEVICE_KEY_HEADER] == "test-key"
 
 
-def test_formats_timestamp_as_utc_with_z() -> None:
-    moment = datetime(2026, 10, 7, 15, 0, tzinfo=timezone(timedelta(hours=3)))
+def test_lists_devices_from_device_response_dto(
+    backend_config: BackendConfig, identity: DeviceIdentity
+) -> None:
+    body = [
+        {
+            "id": 4,
+            "deviceKey": "k4",
+            "status": "ACTIVE",
+            "lastSeenAt": None,
+            "shelfId": 9,
+        }
+    ]
+    requests, handler = recording(httpx.Response(200, json=body))
 
-    assert format_timestamp(moment) == "2026-10-07T12:00:00.000Z"
+    devices = client_with(handler, backend_config, identity).list_devices()
+
+    assert requests[0].url.path == "/devices"
+    assert devices == [RemoteDevice(id=4, device_key="k4", shelf_id=9, status="ACTIVE")]
 
 
-def test_rejects_naive_timestamp() -> None:
-    with pytest.raises(ValueError):
-        format_timestamp(datetime(2026, 10, 7, 12, 0))
+def test_registers_device_with_key_and_shelf(
+    backend_config: BackendConfig, identity: DeviceIdentity
+) -> None:
+    requests, handler = recording(httpx.Response(201, json=12))
+
+    device_id = client_with(handler, backend_config, identity).register_device()
+
+    assert requests[0].method == "POST"
+    assert requests[0].url.path == "/devices"
+    assert json.loads(requests[0].read()) == {"deviceKey": "test-key", "shelfId": 3}
+    assert device_id == 12

@@ -1,19 +1,27 @@
-"""HTTP client for the device-facing backend API (RFC-0001, ADR-0009).
+"""HTTP client for the backend's device-facing API.
 
 This is the single implementation of the wire protocol. The real device and
 the emulator both send through :class:`BackendClient`, so whatever the
 emulator demonstrates is exactly what the Raspberry Pi will send.
+
+Two upload protocols (``BackendConfig.protocol``, ADR-0009):
+
+* ``image-events`` (default) follows the backend's published OpenAPI spec:
+  ``POST /image-events`` with JSON ``{deviceId, imagePath, capturedAt}``.
+* ``multipart`` is the RFC-0001 upload of the image bytes, for when the
+  backend implements ``POST /api/v1/device-events/images``.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any
 
 import httpx
 
 from shelf_agent import __version__
-from shelf_agent.config import BackendConfig, DeviceIdentity
+from shelf_agent.config import PROTOCOL_MULTIPART, BackendConfig, DeviceIdentity
 from shelf_agent.models import Frame
 
 DEVICE_KEY_HEADER = "X-Device-Key"
@@ -28,7 +36,7 @@ class BackendError(Exception):
     Attributes:
         retryable: ``True`` for network errors, timeouts and 5xx/429 — the
             frame is kept in the outbox. ``False`` for other 4xx: the request
-            itself is wrong (unknown device, bad key) and repeating it won't help.
+            itself is wrong (unknown device, bad data) and repeating it won't help.
         status_code: HTTP status, or ``None`` if no response was received.
     """
 
@@ -48,6 +56,16 @@ class UploadReceipt:
     image_event_id: int | None
 
 
+@dataclass(frozen=True)
+class RemoteDevice:
+    """A ``DeviceResponseDto`` as returned by ``GET /devices``."""
+
+    id: int
+    device_key: str
+    shelf_id: int | None
+    status: str | None
+
+
 def format_timestamp(moment: datetime) -> str:
     """ISO-8601 in UTC with millisecond precision, e.g. ``2026-10-07T12:00:00.000Z``."""
     if moment.tzinfo is None:
@@ -57,12 +75,26 @@ def format_timestamp(moment: datetime) -> str:
     )
 
 
-class BackendClient:
-    """Sends images and heartbeats on behalf of one device.
+def format_local_datetime(moment: datetime, zone: str) -> str:
+    """Zone-less ISO-8601 for a Java ``LocalDateTime`` (``2026-10-07T15:00:00.000``).
 
     Args:
-        config: Backend address and endpoint paths.
-        identity: Device and shelf ids plus the device key.
+        moment: Timezone-aware capture time.
+        zone: ``local`` (this machine's zone) or ``utc``.
+    """
+    if moment.tzinfo is None:
+        raise ValueError("captured_at must be timezone-aware")
+    converted = moment.astimezone(UTC if zone == "utc" else None)
+    return converted.replace(tzinfo=None).isoformat(timespec="milliseconds")
+
+
+class BackendClient:
+    """Talks to the backend on behalf of one device.
+
+    Args:
+        config: Backend address, protocol and endpoint paths.
+        identity: Device key and shelf id; ``device_id`` may still be unknown
+            until :meth:`bind` is called after registration lookup.
         transport: Custom httpx transport; tests pass ``httpx.MockTransport``.
     """
 
@@ -89,25 +121,24 @@ class BackendClient:
     def identity(self) -> DeviceIdentity:
         return self._identity
 
-    def upload_image(self, frame: Frame) -> UploadReceipt:
-        """Upload one frame as ``multipart/form-data``.
+    def bind(self, identity: DeviceIdentity) -> None:
+        """Use a resolved identity (with the backend-generated ``device_id``)."""
+        self._identity = identity
 
-        Only the image and its device metadata are sent; a test image's ground
-        truth stays on the client.
+    def upload_image(self, frame: Frame) -> UploadReceipt:
+        """Report one captured frame to the backend.
+
+        Only device metadata (and, for ``multipart``, the image) is sent; a
+        test image's ground truth stays on the client.
 
         Raises:
-            BackendError: If the backend did not accept the image.
+            BackendError: If the backend did not accept the frame.
         """
-        fields = {
-            "deviceId": str(self._identity.device_id),
-            "shelfId": str(self._identity.shelf_id),
-            "capturedAt": format_timestamp(frame.captured_at),
-            "clientEventId": frame.event_id,
-        }
-        files = {"image": (frame.filename, frame.data, frame.content_type)}
-        response = self._send(
-            "POST", self._config.upload_path, data=fields, files=files
-        )
+        device_id = self._require_device_id()
+        if self._config.protocol == PROTOCOL_MULTIPART:
+            response = self._upload_multipart(frame, device_id)
+        else:
+            response = self._post_image_event(frame, device_id)
         return UploadReceipt(
             status_code=response.status_code,
             image_event_id=_parse_event_id(response),
@@ -119,15 +150,75 @@ class BackendClient:
         Raises:
             BackendError: If the heartbeat was not accepted.
         """
-        path = self._config.heartbeat_path.format(device_id=self._identity.device_id)
+        path = self._config.heartbeat_path.format(device_id=self._require_device_id())
         self._send("PATCH", path)
+
+    def list_devices(self) -> list[RemoteDevice]:
+        """All devices known to the backend (``GET /devices``)."""
+        body = self._send("GET", self._config.devices_path).json()
+        if not isinstance(body, list):
+            raise BackendError("GET /devices: expected a JSON array", retryable=False)
+        return [_parse_device(item) for item in body if isinstance(item, dict)]
+
+    def register_device(self) -> int:
+        """Create this device in the backend (``POST /devices``).
+
+        Returns:
+            The id the backend assigned.
+
+        Raises:
+            BackendError: ``404`` if the shelf does not exist, ``409`` if the key
+                is taken or the shelf already has a device.
+        """
+        payload = {
+            "deviceKey": self._identity.device_key,
+            "shelfId": self._identity.shelf_id,
+        }
+        response = self._send("POST", self._config.devices_path, json=payload)
+        device_id = _parse_event_id(response)
+        if device_id is None:
+            raise BackendError("POST /devices: response has no id", retryable=False)
+        return device_id
 
     def close(self) -> None:
         self._http.close()
 
-    def _send(self, method: str, path: str, **kwargs: object) -> httpx.Response:
+    def _post_image_event(self, frame: Frame, device_id: int) -> httpx.Response:
+        if frame.source_path is None:
+            raise BackendError(
+                f"{frame.filename}: no stored image path to report", retryable=False
+            )
+        payload = {
+            "deviceId": device_id,
+            "imagePath": frame.source_path.as_posix(),
+            "capturedAt": format_local_datetime(
+                frame.captured_at, self._config.timestamp_zone
+            ),
+        }
+        return self._send("POST", self._config.image_events_path, json=payload)
+
+    def _upload_multipart(self, frame: Frame, device_id: int) -> httpx.Response:
+        fields = {
+            "deviceId": str(device_id),
+            "shelfId": str(self._identity.shelf_id),
+            "capturedAt": format_timestamp(frame.captured_at),
+            "clientEventId": frame.event_id,
+        }
+        files = {"image": (frame.filename, frame.data, frame.content_type)}
+        return self._send("POST", self._config.upload_path, data=fields, files=files)
+
+    def _require_device_id(self) -> int:
+        if self._identity.device_id is None:
+            raise BackendError(
+                f"device '{self._identity.device_key}' has no id yet "
+                "(registration lookup has not succeeded)",
+                retryable=True,
+            )
+        return self._identity.device_id
+
+    def _send(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         try:
-            response = self._http.request(method, path, **kwargs)  # type: ignore[arg-type]
+            response = self._http.request(method, path, **kwargs)
         except httpx.TransportError as exc:
             raise BackendError(
                 f"{method} {path}: {type(exc).__name__}: {exc}", retryable=True
@@ -144,7 +235,7 @@ class BackendClient:
 
 
 def _parse_event_id(response: httpx.Response) -> int | None:
-    """Read the created ``ImageEvent`` id from either ``42`` or ``{"id": 42}``."""
+    """Read a created id from either ``42`` (current backend) or ``{"id": 42}``."""
     try:
         body = response.json()
     except ValueError:
@@ -154,3 +245,13 @@ def _parse_event_id(response: httpx.Response) -> int | None:
     if isinstance(body, int) and not isinstance(body, bool):
         return body
     return None
+
+
+def _parse_device(item: dict[str, Any]) -> RemoteDevice:
+    shelf_id = item.get("shelfId")
+    return RemoteDevice(
+        id=int(item["id"]),
+        device_key=str(item.get("deviceKey", "")),
+        shelf_id=int(shelf_id) if shelf_id is not None else None,
+        status=item.get("status"),
+    )

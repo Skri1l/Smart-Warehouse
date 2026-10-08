@@ -46,6 +46,7 @@ class Scenario:
     outbox_dir: Path
     interval_s: float = 10.0
     heartbeat_interval_s: float = 30.0
+    register_devices: bool = True
 
     def shelf(self, name: str) -> EmulatedShelf:
         for shelf in self.shelves:
@@ -89,6 +90,7 @@ def load_scenario(path: Path) -> Scenario:
         outbox_dir=resolve_path(base_dir, raw.get("outbox_dir", ".outbox")),
         interval_s=float(raw.get("interval_s", 10.0)),
         heartbeat_interval_s=float(raw.get("heartbeat_interval_s", 30.0)),
+        register_devices=bool(raw.get("register_devices", True)),
     )
 
 
@@ -128,7 +130,7 @@ def _parse_shelf(item: Any, images_dir: Path) -> EmulatedShelf:
         raise ConfigError("every shelf needs a 'name'")
     try:
         identity = DeviceIdentity(
-            device_id=int(item["device_id"]),
+            device_id=int(item["device_id"]) if "device_id" in item else None,
             shelf_id=int(item["shelf_id"]),
             device_key=str(item.get("device_key") or f"emulator-{name}"),
         )
@@ -160,14 +162,17 @@ def _expand_frames(name: str, patterns: Any, images_dir: Path) -> tuple[Path, ..
 
 
 def _check_unique(shelves: Sequence[EmulatedShelf]) -> None:
-    for attribute in ("name", "device_id", "shelf_id"):
+    columns: dict[str, list[object]] = {
+        "name": [s.name for s in shelves],
+        "device_key": [s.identity.device_key for s in shelves],
+        "shelf_id": [s.identity.shelf_id for s in shelves],
+        "device_id": [s.identity.device_id for s in shelves],
+    }
+    for attribute, values in columns.items():
         seen: set[object] = set()
-        for shelf in shelves:
-            value = (
-                shelf.name
-                if attribute == "name"
-                else getattr(shelf.identity, attribute)
-            )
+        for value in values:
+            if value is None:
+                continue
             if value in seen:
                 raise ConfigError(f"duplicate shelf {attribute}: {value}")
             seen.add(value)

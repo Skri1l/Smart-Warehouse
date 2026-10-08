@@ -65,6 +65,7 @@ class FolderSource:
             content_type=content_type,
             captured_at=self._clock(),
             ground_truth=self._labels.get(path.name),
+            source_path=path.resolve(),
         )
 
     def close(self) -> None:

@@ -100,3 +100,28 @@ def test_builds_interval_trigger_without_hardware(tmp_path: Path) -> None:
     config = load_device_config(write(tmp_path, MINIMAL), env={"SW_DEVICE_KEY": "k"})
 
     assert isinstance(build_trigger(config.trigger), IntervalTrigger)
+
+
+def test_uses_swagger_image_events_protocol_by_default(tmp_path: Path) -> None:
+    config = load_device_config(write(tmp_path, MINIMAL), env={"SW_DEVICE_KEY": "k"})
+
+    assert config.backend.protocol == "image-events"
+    assert config.backend.image_events_path == "/image-events"
+    assert config.backend.timestamp_zone == "local"
+    assert config.register is False
+    assert config.camera.capture_dir == (tmp_path / ".captures").resolve()
+
+
+def test_device_id_is_optional_because_backend_generates_it(tmp_path: Path) -> None:
+    text = MINIMAL.replace("device_id = 1\n", "")
+
+    config = load_device_config(write(tmp_path, text), env={"SW_DEVICE_KEY": "k"})
+
+    assert config.identity.device_id is None
+
+
+def test_fails_when_protocol_is_unknown(tmp_path: Path) -> None:
+    text = MINIMAL.replace("[device]", 'protocol = "mqtt"\n\n[device]')
+
+    with pytest.raises(ConfigError, match="protocol"):
+        load_device_config(write(tmp_path, text), env={"SW_DEVICE_KEY": "k"})

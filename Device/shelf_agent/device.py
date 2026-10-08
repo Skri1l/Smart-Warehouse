@@ -13,6 +13,7 @@ from shelf_agent.agent import ShelfAgent, run_heartbeat
 from shelf_agent.camera.base import CameraSource
 from shelf_agent.camera.folder import FolderSource
 from shelf_agent.config import CameraConfig, ConfigError, DeviceConfig, TriggerConfig
+from shelf_agent.registration import connect
 from shelf_agent.transport.client import BackendClient
 from shelf_agent.transport.outbox import Outbox
 from shelf_agent.trigger.base import Trigger
@@ -29,7 +30,9 @@ def build_camera(config: CameraConfig) -> CameraSource:
     if config.type == "picamera":
         from shelf_agent.camera.picamera import Picamera2Source
 
-        return Picamera2Source(config.width, config.height)
+        if config.capture_dir is None:
+            raise ConfigError("[camera] capture_dir is required for picamera")
+        return Picamera2Source(config.width, config.height, config.capture_dir)
     if config.type == "folder":
         if config.folder is None or not config.folder.is_dir():
             raise ConfigError(f"[camera] folder does not exist: {config.folder}")
@@ -55,10 +58,19 @@ def build_trigger(config: TriggerConfig) -> Trigger:
 
 def run_device(config: DeviceConfig, stop: threading.Event) -> None:
     """Run one shelf agent until ``stop`` is set or its source is exhausted."""
+    client = BackendClient(config.backend, config.identity)
+    if not connect(
+        client,
+        register=config.register,
+        stop=stop,
+        retry_s=config.heartbeat_interval_s,
+    ):
+        client.close()
+        return
     agent = ShelfAgent(
         name=f"shelf-{config.identity.shelf_id}",
         camera=build_camera(config.camera),
-        client=BackendClient(config.backend, config.identity),
+        client=client,
         outbox=Outbox(config.outbox_dir),
     )
     trigger = build_trigger(config.trigger)
@@ -69,10 +81,11 @@ def run_device(config: DeviceConfig, stop: threading.Event) -> None:
         daemon=True,
     )
     logger.info(
-        "device %s (shelf %s) -> %s",
-        config.identity.device_id,
+        "device %s (shelf %s) -> %s [%s]",
+        client.identity.device_id,
         config.identity.shelf_id,
         config.backend.base_url,
+        config.backend.protocol,
     )
     heartbeat.start()
     try:

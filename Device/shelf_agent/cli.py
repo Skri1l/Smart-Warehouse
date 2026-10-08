@@ -16,6 +16,8 @@ from pathlib import Path
 
 from shelf_agent import __version__
 from shelf_agent.config import ConfigError, load_device_config
+from shelf_agent.registration import RegistrationError
+from shelf_agent.transport.client import BackendError
 
 logger = logging.getLogger("shelf_agent")
 
@@ -30,9 +32,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         result: int = args.handler(args)
         return result
-    except ConfigError as exc:
+    except (ConfigError, RegistrationError) as exc:
         logger.error("%s", exc)
         return 2
+    except BackendError as exc:
+        logger.error("backend: %s", exc)
+        return 3
     except KeyboardInterrupt:
         return 130
 
@@ -64,6 +69,11 @@ def _build_parser() -> argparse.ArgumentParser:
     emulate.add_argument("--base-url", help="override [backend] base_url")
     emulate.add_argument(
         "--only", nargs="+", metavar="SHELF", help="emulate only these shelves"
+    )
+    emulate.add_argument(
+        "--no-register",
+        action="store_true",
+        help="fail instead of creating missing devices with POST /devices",
     )
     emulate.add_argument(
         "--reset-outbox",
@@ -108,6 +118,8 @@ def _cmd_emulate(args: argparse.Namespace) -> int:
             raise ConfigError(f"unknown shelf(s): {sorted(unknown)}")
         shelves = tuple(s for s in scenario.shelves if s.name in args.only)
         scenario = replace(scenario, shelves=shelves)
+    if args.no_register:
+        scenario = replace(scenario, register_devices=False)
     if args.reset_outbox:
         shutil.rmtree(scenario.outbox_dir, ignore_errors=True)
 
@@ -115,6 +127,7 @@ def _cmd_emulate(args: argparse.Namespace) -> int:
     stop = threading.Event()
     _stop_on_sigterm(stop)
     try:
+        emulator.connect()
         if args.auto:
             emulator.run_auto(stop, args.interval)
         else:
@@ -136,8 +149,8 @@ def _cmd_mock_server(args: argparse.Namespace) -> int:
     finally:
         server.server_close()
         logger.warning(
-            "received %d image(s), %d heartbeat(s)",
-            len(server.images),
+            "received %d image event(s), %d heartbeat(s)",
+            len(server.events),
             len(server.heartbeats),
         )
     return 0

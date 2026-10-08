@@ -87,6 +87,7 @@ def _write(directory: Path, frame: Frame) -> None:
         "content_type": frame.content_type,
         "captured_at": frame.captured_at.isoformat(),
         "event_id": frame.event_id,
+        "source_path": str(frame.source_path) if frame.source_path else None,
         "ground_truth": (
             {"sku": frame.ground_truth.sku, "count": frame.ground_truth.count}
             if frame.ground_truth
@@ -109,6 +110,7 @@ def _next_sequence(directory: Path) -> int:
 def _read(meta_path: Path) -> Frame:
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
     truth = meta.get("ground_truth")
+    source_path = meta.get("source_path")
     return Frame(
         data=meta_path.with_suffix(_DATA_SUFFIX).read_bytes(),
         filename=meta["filename"],
@@ -116,6 +118,7 @@ def _read(meta_path: Path) -> Frame:
         captured_at=datetime.fromisoformat(meta["captured_at"]),
         event_id=meta["event_id"],
         ground_truth=GroundTruth(**truth) if truth else None,
+        source_path=Path(source_path) if source_path else None,
     )
 
 

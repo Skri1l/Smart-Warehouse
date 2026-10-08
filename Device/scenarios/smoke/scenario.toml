@@ -17,14 +17,12 @@ base_url = "http://127.0.0.1:8080"
 
 [[shelves]]
 name = "A1"
-device_id = 1
 shelf_id = 1
 device_key = "emulator-a1"
 frames = ["a1_*.png"]
 
 [[shelves]]
 name = "B1"
-device_id = 2
 shelf_id = 2
 device_key = "emulator-b1"
 frames = ["b1_01.png", "b1_02.png"]
