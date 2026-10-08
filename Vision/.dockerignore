@@ -1,0 +1,6 @@
+*
+!Dockerfile
+!requirements-docker.txt
+!api.py
+!detect_yolo_tiled.py
+!yolov8x.pt
