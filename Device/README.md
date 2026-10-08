@@ -2,6 +2,8 @@
 
 Software for the shelf controller (Raspberry Pi 5 + camera), plus a PC emulator that pretends to be any number of shelves by replaying labelled test photos.
 
+> **New here? Start with the step-by-step [USER_GUIDE.md](USER_GUIDE.md):** first check without a backend, running against the real backend, the diploma demo and troubleshooting. This README is the technical reference.
+
 Both run **the same code**. The emulator only swaps two pieces:
 
 | | Real device | Emulator |

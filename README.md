@@ -92,7 +92,7 @@ python -m shelf_agent mock-server                                     # fake bac
 python -m shelf_agent emulate --scenario scenarios/smoke/scenario.toml
 ```
 
-See [Device/README.md](Device/README.md) for setup, scenarios and Raspberry Pi installation.
+Step-by-step usage (real backend, diploma demo, troubleshooting): [Device/USER_GUIDE.md](Device/USER_GUIDE.md). Technical reference: [Device/README.md](Device/README.md).
 
 ## Quality gates
 
