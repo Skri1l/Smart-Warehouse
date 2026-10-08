@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import sys
 import threading
 from dataclasses import dataclass
 from datetime import datetime
@@ -82,6 +83,10 @@ class MockBackend(ThreadingHTTPServer):
     """
 
     daemon_threads = True
+    # On Windows SO_REUSEADDR lets a second server bind a port that is already
+    # in use (e.g. by the real backend on 8080) and requests get split between
+    # them. Fail loudly instead.
+    allow_reuse_address = sys.platform != "win32"
 
     def __init__(self, address: tuple[str, int], out_dir: Path) -> None:
         super().__init__(address, _Handler)
@@ -107,7 +112,7 @@ class MockBackend(ThreadingHTTPServer):
                 if device.device_key == device_key:
                     raise ValueError(f"Device with key {device_key} already exists")
                 if device.shelf_id == shelf_id:
-                    raise ValueError(f"Shelf {shelf_id} already has a device")
+                    raise ValueError(f"Shelf with id {shelf_id} already has a device")
             device = MockDevice(len(self.devices) + 1, device_key, shelf_id)
             self.devices[device.id] = device
             return device

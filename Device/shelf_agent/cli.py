@@ -140,7 +140,17 @@ def _cmd_emulate(args: argparse.Namespace) -> int:
 def _cmd_mock_server(args: argparse.Namespace) -> int:
     from shelf_agent.mock_server import MockBackend
 
-    server = MockBackend((args.host, args.port), args.out)
+    try:
+        server = MockBackend((args.host, args.port), args.out)
+    except OSError as exc:
+        logger.error(
+            "cannot listen on %s:%s (%s). Is the backend or another mock already "
+            "running there? Use --port",
+            args.host,
+            args.port,
+            exc.strerror or exc,
+        )
+        return 3
     logger.warning(
         "mock backend on %s, saving images to %s", server.base_url, args.out.resolve()
     )
