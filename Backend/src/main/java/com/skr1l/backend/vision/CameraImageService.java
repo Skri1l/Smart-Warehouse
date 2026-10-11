@@ -1,12 +1,14 @@
 package com.skr1l.backend.vision;
 
 import com.skr1l.backend.device.repository.DeviceRepository;
+import com.skr1l.backend.exception.deviceExceptions.DeviceIsNotFoundException;
 import com.skr1l.backend.vision.dto.CameraImageResponseDto;
 import com.skr1l.backend.vision.dto.VisionResponseDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
@@ -24,9 +26,12 @@ public class CameraImageService {
   private final CameraStockService cameraStockService;
   private final DeviceRepository deviceRepository;
   private final Path imageDirectory;
+  private final long maxFileSize;
 
   public CameraImageService(VisionClient visionClient, CameraStockService cameraStockService,
-                            DeviceRepository deviceRepository, @Value("${vision.image-directory}") String imageDirectory) {
+                            DeviceRepository deviceRepository,
+                            @Value("${vision.image-directory}") String imageDirectory,
+                            @Value("${spring.servlet.multipart.max-file-size}") DataSize maxFileSize) {
 
     this.visionClient = visionClient;
     this.cameraStockService = cameraStockService;
@@ -34,6 +39,7 @@ public class CameraImageService {
     this.imageDirectory = Path.of(imageDirectory)
       .toAbsolutePath()
       .normalize();
+    this.maxFileSize = maxFileSize.toBytes();
   }
 
   public CameraImageResponseDto process(
@@ -44,15 +50,11 @@ public class CameraImageService {
     LocalDateTime receivedAt = LocalDateTime.now();
 
     if (!deviceRepository.existsById(deviceId)) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found");
+      throw new DeviceIsNotFoundException("Device not found: " + deviceId);
     }
 
     if (file.isEmpty()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image is empty");
-    }
-
-    if (file.getSize() > 10L * 1024 * 1024) {
-      throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Image exceeds 10 MB");
     }
 
     Path imagePath = imageDirectory.resolve(UUID.randomUUID() + ".image");

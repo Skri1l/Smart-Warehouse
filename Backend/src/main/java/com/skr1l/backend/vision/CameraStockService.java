@@ -3,6 +3,7 @@ package com.skr1l.backend.vision;
 import com.skr1l.backend.device.Device;
 import com.skr1l.backend.device.enums.DeviceStatus;
 import com.skr1l.backend.device.repository.DeviceRepository;
+import com.skr1l.backend.exception.deviceExceptions.DeviceIsNotFoundException;
 import com.skr1l.backend.imageEvent.ImageEvent;
 import com.skr1l.backend.imageEvent.enums.ImageProcessingStatus;
 import com.skr1l.backend.imageEvent.repository.ImageEventRepository;
@@ -44,7 +45,7 @@ public class CameraStockService {
     }
 
     Device device = deviceRepository.findById(deviceId)
-      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Device not found"));
+      .orElseThrow(() -> new DeviceIsNotFoundException("Device not found: " + deviceId));
 
     if (device.getStatus() != DeviceStatus.ACTIVE) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Device is inactive");
@@ -102,6 +103,7 @@ public class CameraStockService {
       movement.setType(StockMovementType.ADJUSTMENT);
       movement.setSource(StockMovementSource.CAMERA);
       movement.setCreatedAt(LocalDateTime.now());
+      movement.setImageEvent(event);
 
       stockMovementRepository.save(movement);
     }
