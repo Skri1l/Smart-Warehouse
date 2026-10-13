@@ -1,0 +1,50 @@
+name: Device CI
+
+on:
+  pull_request:
+    paths:
+      - "Device/**"
+      - ".github/workflows/device-ci.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "Device/**"
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 3.11 = Raspberry Pi OS Bookworm (the device), 3.12 = developer PCs.
+        python-version: ["3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: Device
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format check (black)
+        run: black --check .
+
+      - name: Type check (mypy)
+        run: mypy .
+
+      - name: Tests (pytest)
+        run: pytest
+
+      - name: Dependency license audit (pip-licenses)
+        run: |
+          pip-licenses \
+            --fail-on="GNU General Public License v2 (GPLv2);GNU General Public License v3 (GPLv3);GNU Affero General Public License v3"

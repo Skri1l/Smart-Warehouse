@@ -12,6 +12,7 @@ This is a monorepo. Each top-level directory is an independently buildable compo
 Smart-Warehouse/
 ├── Backend/          Java / Spring Boot REST API, business logic, persistence
 ├── Frontend/         Python / PySide6 desktop client
+├── Device/           Python shelf agent (Raspberry Pi 5) and its multi-shelf PC emulator
 ├── Documentation/     Product, process and engineering documentation
 ├── Website/          Static GitHub Pages site: installer download and how-to guide (ADR-0007)
 └── .github/          CI workflows, issue/PR templates, code ownership
@@ -21,6 +22,7 @@ Smart-Warehouse/
 |---|---|---|---|
 | `Backend/` | Java 21 | Spring Boot, Spring Data JPA, PostgreSQL | [CODE_STYLE_BACKEND.md](Documentation/CODE_STYLE_BACKEND.md) |
 | `Frontend/` | Python 3.12+ | PySide6 (Qt for Python), desktop | [CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
+| `Device/` | Python 3.11+ | httpx; picamera2/gpiozero on the Pi | [CODE_STYLE_DEVICE.md](Documentation/CODE_STYLE_DEVICE.md) |
 
 ## Engineering conventions
 
@@ -30,6 +32,7 @@ Smart-Warehouse/
 | Commit message format | [Documentation/COMMIT_CONVENTION.md](Documentation/COMMIT_CONVENTION.md) |
 | Backend (Java) code style | [Documentation/CODE_STYLE_BACKEND.md](Documentation/CODE_STYLE_BACKEND.md) |
 | Frontend (Python/PySide6) code style | [Documentation/CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
+| Device (shelf agent / emulator) code style | [Documentation/CODE_STYLE_DEVICE.md](Documentation/CODE_STYLE_DEVICE.md) |
 | REST API design & OpenAPI documentation | [Documentation/API_GUIDELINES.md](Documentation/API_GUIDELINES.md) |
 | How to contribute (PR process, review, DoD) | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Architecture decisions (ADRs) | [Documentation/adr/](Documentation/adr/README.md) |
@@ -44,6 +47,7 @@ Smart-Warehouse/
 - Maven (or use the bundled `./Backend/mvnw` wrapper)
 - PostgreSQL 15+ running locally, or via Docker
 - Python 3.12+ (for the frontend, once scaffolded — see [Frontend/README.md](Frontend/README.md))
+- Python 3.11+ (for the shelf agent / emulator — see [Device/README.md](Device/README.md))
 
 ### Backend
 
@@ -79,10 +83,22 @@ If you get **HTTP 403** or an unexpected page at that address, another applicati
 
 A minimal PySide6 desktop client is scaffolded in `Frontend/`; run `python -m app --demo` from that directory. See [Frontend/README.md](Frontend/README.md).
 
+### Shelf device / emulator
+
+The shelf agent in `Device/` runs on the Raspberry Pi 5 and, with the same code, as an emulator that sends labelled test photos from several virtual shelves. From `Device/`:
+
+```bash
+python -m shelf_agent mock-server                                     # fake backend device endpoints
+python -m shelf_agent emulate --scenario scenarios/smoke/scenario.toml
+```
+
+Step-by-step usage (real backend, diploma demo, troubleshooting): [Device/USER_GUIDE.md](Device/USER_GUIDE.md). Technical reference: [Device/README.md](Device/README.md).
+
 ## Quality gates
 
 - **Backend:** `./mvnw verify` runs unit/integration tests and checks code formatting (Spotless). Run `./mvnw spotless:apply` to auto-format before committing.
 - **Frontend:** `ruff check .`, `black --check .`, `mypy .` and a `pip-licenses` dependency audit (see [ADR-0006](Documentation/adr/0006-frontend-pyside6-desktop.md)) run from `Frontend/`. See [Frontend/pyproject.toml](Frontend/pyproject.toml).
+- **Device:** the same four checks plus `pytest`, run from `Device/`. See [Device/pyproject.toml](Device/pyproject.toml).
 - Both are enforced locally via [pre-commit](.pre-commit-config.yaml) hooks and in CI on every pull request (`.github/workflows/`).
 
 ## License

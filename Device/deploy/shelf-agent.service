@@ -1,0 +1,26 @@
+# systemd unit for the shelf agent on Raspberry Pi OS. See Device/README.md.
+#
+#   sudo cp deploy/shelf-agent.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now shelf-agent
+#   journalctl -u shelf-agent -f
+
+[Unit]
+Description=Smart Warehouse shelf agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=shelf
+WorkingDirectory=/opt/shelf-agent
+# Contains SW_DEVICE_KEY=...; chmod 600, owned by root.
+EnvironmentFile=/etc/shelf-agent.env
+ExecStart=/opt/shelf-agent/.venv/bin/python -m shelf_agent run --config /etc/shelf-agent/device.toml
+Restart=on-failure
+RestartSec=5
+# SIGTERM lets the agent finish the current upload; the outbox keeps the rest.
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

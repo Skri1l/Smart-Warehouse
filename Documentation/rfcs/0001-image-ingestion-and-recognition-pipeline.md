@@ -21,6 +21,10 @@ FR-05 through FR-08 require the backend to accept an image from a shelf device, 
 
 Request: `multipart/form-data` with fields `shelfId`, `deviceId`, `capturedAt` (ISO-8601), and the image file.
 
+Proposed additions from the device side ([ADR-0009](../adr/0009-device-transport-http-with-outbox.md), implemented in `Device/shelf_agent/transport/client.py`): an `X-Device-Key` header carrying `Device.deviceKey`; a `clientEventId` (UUID) field, unchanged across retries, for deduplication; `capturedAt` always in UTC with a `Z` suffix (parse as an instant, not `LocalDateTime`); image part named `image`. Devices retry `5xx`/`408`/`429`/network errors in capture order and do not retry other `4xx`.
+
+> **Current state (2026-10-08).** This upload endpoint is not implemented. The backend's published API (Swagger) has `POST /image-events` with JSON `{deviceId, imagePath, capturedAt}` (`LocalDateTime`), which records an event but not the image bytes. The shelf agent uses that endpoint by default and keeps this multipart upload behind `protocol = "multipart"` (see [ADR-0009](../adr/0009-device-transport-http-with-outbox.md)). Until this endpoint exists, recognition can only read images whose `imagePath` is local to the ML service.
+
 On receipt, the backend:
 1. Validates the device is registered and linked to the claimed shelf.
 2. Persists the image and creates an `ImageEvent` row with `processingStatus = RECEIVED`.

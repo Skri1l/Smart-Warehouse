@@ -62,6 +62,28 @@ Use `pyqtgraph` or `matplotlib` for charting instead.
 httpcore) from the pip-licenses report here once the project is scaffolded
 and requirements.txt reflects the actual installed set. -->
 
+## Device (shelf agent / emulator)
+
+### httpx — version 0.28.1
+
+Same component and license as listed under Frontend (BSD 3-Clause,
+`licenses/httpx-BSD-3-Clause.txt`).
+
+### picamera2 and gpiozero (Raspberry Pi only, not bundled)
+
+- picamera2 — BSD 2-Clause, Copyright Raspberry Pi Ltd —
+  https://github.com/raspberrypi/picamera2
+- gpiozero — BSD 3-Clause, Copyright Ben Nuttall and contributors —
+  https://github.com/gpiozero/gpiozero
+
+These are installed on the shelf controller from Raspberry Pi OS packages
+(`apt install python3-picamera2 python3-gpiozero`). They are not
+redistributed with this software and are not in `Device/requirements.txt`
+(see [ADR-0008](Documentation/adr/0008-shelf-agent-shared-core.md)).
+
+<!-- Add transitive Device dependencies (httpcore, h11, anyio, certifi, idna)
+from `pip-licenses` in the Device venv when the agent is packaged for release. -->
+
 ## Backend
 
 <!-- Paste the Maven/Gradle license report summary here: name, version, license, URL. -->
