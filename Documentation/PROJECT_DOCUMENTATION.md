@@ -595,3 +595,307 @@ Mitigation: support manually defined planned demand and generate synthetic histo
 
 Risk: multi-warehouse, advanced AI and purchasing integrations may exceed 12 weeks.  
 Mitigation: keep a strict MVP and treat integrations as extensions.
+
+## 16. How to run the application
+
+### Requirements
+
+Before running the backend, make sure the following software is installed:
+
+- Java 21;
+- Maven or Maven Wrapper;
+- Docker;
+- Docker Compose.
+
+The backend module is located in:
+
+```text
+Backend/
+```
+
+### Environment configuration
+
+The backend Docker configuration uses environment variables from the `.env` file.
+
+A template is provided in:
+
+```text
+Backend/.env.example
+```
+
+Example configuration:
+
+```env
+POSTGRES_DB=smart_warehouse
+POSTGRES_USER=smart_warehouse
+POSTGRES_PASSWORD=change_me
+
+POSTGRES_PORT=5432
+BACKEND_PORT=8080
+```
+
+Create a `.env` file inside the `Backend` directory and configure the required values before starting the application.
+
+### Run with Docker Compose
+
+The recommended way to run the backend and PostgreSQL database is Docker Compose.
+
+Navigate to the backend directory:
+
+```bash
+cd Backend
+```
+
+Build and start the application:
+
+```bash
+docker compose up --build
+```
+
+Docker Compose starts:
+
+- PostgreSQL 17;
+- Smart Warehouse backend;
+- persistent PostgreSQL storage.
+
+The backend starts only after PostgreSQL passes its health check.
+
+By default, the backend is available at:
+
+```text
+http://localhost:8080
+```
+
+PostgreSQL is available at:
+
+```text
+localhost:5432
+```
+
+The exact ports depend on the values configured in the `.env` file.
+
+To stop the application:
+
+```bash
+docker compose down
+```
+
+To stop the application and delete the PostgreSQL volume:
+
+```bash
+docker compose down -v
+```
+
+The `-v` option removes the database volume and deletes locally stored database data.
+
+### Run the backend without Docker
+
+The backend can also be started directly if PostgreSQL is already running.
+
+The default local database configuration is:
+
+```text
+URL: jdbc:postgresql://localhost:5432/smart_warehouse
+Username: smart_warehouse
+Password: smart_warehouse
+```
+
+The database configuration can be overridden using:
+
+```text
+SPRING_DATASOURCE_URL
+SPRING_DATASOURCE_USERNAME
+SPRING_DATASOURCE_PASSWORD
+SPRING_JPA_HIBERNATE_DDL_AUTO
+```
+
+Navigate to:
+
+```text
+Backend/
+```
+
+Run the application using Maven Wrapper.
+
+Linux/macOS:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Windows:
+
+```bash
+mvnw.cmd spring-boot:run
+```
+
+If Maven is installed globally:
+
+```bash
+mvn spring-boot:run
+```
+
+### Swagger / OpenAPI
+
+When the backend is running, Swagger UI is available at:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+The generated OpenAPI specification is available at:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+Swagger UI contains the implemented REST endpoints and allows developers to inspect and execute API requests.
+
+---
+
+## 17. How to run tests
+
+### Test requirements
+
+Backend tests use:
+
+- JUnit;
+- Mockito;
+- Spring Boot Test;
+- Spring MVC testing tools;
+- Spring Data JPA;
+- PostgreSQL.
+
+The test source code is located in:
+
+```text
+Backend/src/test/java/
+```
+
+The test configuration is located in:
+
+```text
+Backend/src/test/resources/application-test.properties
+```
+
+### Test database
+
+Repository integration tests use a real PostgreSQL database.
+
+The current test configuration is:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/smart_warehouse_test
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+spring.jpa.hibernate.ddl-auto=create-drop
+```
+
+Before running repository tests:
+
+1. PostgreSQL must be running.
+2. A database named `smart_warehouse_test` must exist.
+3. PostgreSQL must accept the credentials configured in `application-test.properties`.
+
+The test schema is created automatically when the test context starts and removed after the test execution because Hibernate uses:
+
+```properties
+spring.jpa.hibernate.ddl-auto=create-drop
+```
+
+### Run all backend tests
+
+Navigate to the backend directory:
+
+```bash
+cd Backend
+```
+
+Linux/macOS:
+
+```bash
+./mvnw test
+```
+
+Windows:
+
+```bash
+mvnw.cmd test
+```
+
+If Maven is installed globally:
+
+```bash
+mvn test
+```
+
+### Run a specific test class
+
+Linux/macOS:
+
+```bash
+./mvnw -Dtest=ProductServiceTest test
+```
+
+Windows:
+
+```bash
+mvnw.cmd -Dtest=ProductServiceTest test
+```
+
+With globally installed Maven:
+
+```bash
+mvn -Dtest=ProductServiceTest test
+```
+
+The test class name can be replaced with any existing backend test class.
+
+### Run a specific test method
+
+Linux/macOS:
+
+```bash
+./mvnw -Dtest=TestClassName#testMethodName test
+```
+
+Windows:
+
+```bash
+mvnw.cmd -Dtest=TestClassName#testMethodName test
+```
+
+### Run full Maven verification
+
+Linux/macOS:
+
+```bash
+./mvnw verify
+```
+
+Windows:
+
+```bash
+mvnw.cmd verify
+```
+
+With globally installed Maven:
+
+```bash
+mvn verify
+```
+
+Maven test reports are generated in:
+
+```text
+Backend/target/surefire-reports/
+```
+
+A successful test execution finishes with:
+
+```text
+BUILD SUCCESS
+```
