@@ -5,7 +5,7 @@ The project is divided into **8 milestones**. This gives enough checkpoints with
 ---
 
 ## Milestone 1 — Project foundation and architecture
-**Weeks:** 1
+**Weeks:** 1 (29.09.26 - 06.10.26)
 
 ### Goal
 Create the technical foundation and freeze the MVP scope.
@@ -31,7 +31,7 @@ Create the technical foundation and freeze the MVP scope.
 ---
 
 ## Milestone 2 — Core warehouse and inventory backend
-**Weeks:** 2–3
+**Weeks:** 2–3 (06.10.26 - 20.10.26)
 
 ### Goal
 Implement the base business domain without computer vision.
@@ -57,7 +57,7 @@ Implement the base business domain without computer vision.
 ---
 
 ## Milestone 3 — Authentication, roles and basic frontend
-**Weeks:** 4
+**Weeks:** 4 (20.10.26 - 27.10.26)
 
 ### Goal
 Make the system usable by authenticated warehouse users.
@@ -80,7 +80,7 @@ Make the system usable by authenticated warehouse users.
 ---
 
 ## Milestone 4 — Shelf device and image-event pipeline
-**Weeks:** 5
+**Weeks:** 5 (27.10.26 - 03.11.26)
 
 ### Goal
 Connect shelf cameras/controllers to the backend independently from the final ML model.
@@ -104,7 +104,7 @@ Connect shelf cameras/controllers to the backend independently from the final ML
 ---
 
 ## Milestone 5 — Computer vision and automatic stock updates
-**Weeks:** 6–7
+**Weeks:** 6–7 (03.11.26 - 17.11.26)
 
 ### Goal
 Recognize supported products from shelf images and update inventory automatically.
@@ -130,7 +130,7 @@ Recognize supported products from shelf images and update inventory automaticall
 ---
 
 ## Milestone 6 — Product location and placement recommendations
-**Weeks:** 8
+**Weeks:** 8 (17.11.26 - 24.11.26)
 
 ### Goal
 Implement warehouse navigation features for workers.
@@ -152,7 +152,7 @@ Implement warehouse navigation features for workers.
 ---
 
 ## Milestone 7 — Demand planning, shelf life and replenishment
-**Weeks:** 9–10
+**Weeks:** 9–10 (24.11.26 - 08.12.26)
 
 ### Goal
 Implement the intelligent replenishment part of the diploma.
@@ -181,7 +181,7 @@ Implement the intelligent replenishment part of the diploma.
 ---
 
 ## Milestone 8 — Integration, cloud, testing and diploma demo
-**Weeks:** 11–12
+**Weeks:** 11–12 (08.12.26 - 22.12.26)
 
 ### Goal
 Turn the individual modules into a stable demonstrable system.
