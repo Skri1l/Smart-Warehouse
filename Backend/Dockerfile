@@ -20,6 +20,9 @@ COPY --from=build /app/target/*.jar app.jar
 
 RUN chown appuser:appuser app.jar
 
+RUN mkdir -p /app/uploads/camera \
+    && chown -R appuser:appuser /app/uploads
+
 USER appuser
 
 EXPOSE 8080

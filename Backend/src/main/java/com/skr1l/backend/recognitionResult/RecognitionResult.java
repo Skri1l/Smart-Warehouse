@@ -44,7 +44,7 @@ public class RecognitionResult {
     @Column(name = "quantity_delta")
     private Integer quantityDelta;
 
-    @Column(nullable = false)
+    @Column
     private Double confidence;
 
     @Enumerated(EnumType.STRING)

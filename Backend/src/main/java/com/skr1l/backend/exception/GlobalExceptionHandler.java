@@ -1,5 +1,6 @@
 package com.skr1l.backend.exception;
 
+import org.springframework.web.server.ResponseStatusException;
 import com.skr1l.backend.exception.ReplenishmentRecommendationExceptions.ReplenishmentRecommendationIsNotFoundException;
 import com.skr1l.backend.exception.demandPlanExceptions.DemandPlanIsNotFoundException;
 import com.skr1l.backend.exception.deviceExceptions.DeviceAlreadyExistsException;
@@ -55,4 +56,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(new ErrorResponse(HttpStatus.CONFLICT.value(), ex.getMessage()));
     }
+
+  @ExceptionHandler(ResponseStatusException.class)
+  public ResponseEntity<ErrorResponse> handleResponseStatus(
+    ResponseStatusException ex) {
+
+    return ResponseEntity.status(ex.getStatusCode())
+      .body(new ErrorResponse(ex.getStatusCode().value(), ex.getReason()));
+  }
 }

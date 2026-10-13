@@ -17,4 +17,7 @@ public interface ImageEventRepository extends JpaRepository<ImageEvent, Long> {
     List<ImageEvent> findByImageProcessingStatus(ImageProcessingStatus imageProcessingStatus);
 
     List<ImageEvent> findByCapturedAtBetween(LocalDateTime from, LocalDateTime to);
+
+    boolean existsByShelfIdAndImageProcessingStatusAndCapturedAtGreaterThanEqual(
+        Long shelfId, ImageProcessingStatus status, LocalDateTime capturedAt);
 }
