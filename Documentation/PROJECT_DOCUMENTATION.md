@@ -97,6 +97,8 @@ Automatic supplier ordering should be treated as an extension unless a stable su
 - detects a shelf event or captures an image on request;
 - sends an image and metadata to the backend.
 
+The physical demo shelf (dimensions, camera, lighting, wiring) is specified in [hardware/SHELF_DEVICE.md](hardware/SHELF_DEVICE.md).
+
 ### ML service
 
 - receives an image;
