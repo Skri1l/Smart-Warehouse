@@ -16,7 +16,9 @@ RUN pip install --no-cache-dir torch torchvision \
 
 RUN pip install --no-cache-dir -r requirements-docker.txt
 
-COPY api.py detect_yolo_tiled.py yolov8x.pt ./
+COPY api.py detect_yolo_tiled.py ./
+
+RUN python -c "from ultralytics import YOLO; YOLO('yolov8x.pt')"
 
 EXPOSE 8000
 
