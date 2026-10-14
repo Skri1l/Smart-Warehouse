@@ -1,5 +1,6 @@
 package com.skr1l.backend.stockMovement;
 
+import com.skr1l.backend.imageEvent.ImageEvent;
 import com.skr1l.backend.stockMovement.enums.StockMovementSource;
 import com.skr1l.backend.stockMovement.enums.StockMovementType;
 import com.skr1l.backend.product.Product;
@@ -52,4 +53,8 @@ public class StockMovement {
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "image_event_id")
+    private ImageEvent imageEvent;
 }
