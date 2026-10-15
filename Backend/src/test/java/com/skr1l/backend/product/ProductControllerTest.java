@@ -31,10 +31,8 @@ class ProductControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders
-                .standaloneSetup(
-                        new ProductController(productService)
-                )
-                .build();
+          .standaloneSetup(new ProductController(productService))
+          .build();
     }
 
     @Test
