@@ -4,9 +4,8 @@ from threading import Lock
 import cv2
 import numpy as np
 from fastapi import FastAPI, HTTPException, UploadFile
-from ultralytics import YOLO
 
-from detect_yolo_tiled import detect_products_tiled
+from detect_yolo_tiled import detect_products_tiled, load_model
 
 
 model_lock = Lock()
@@ -15,7 +14,7 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.model = YOLO("yolov8x.pt")
+    app.state.model = load_model()
     yield
     del app.state.model
 
