@@ -15,6 +15,7 @@ All documentation is Markdown, lives in this repository, and changes go through 
 |---|---|
 | [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) | Product spec: goals, scope, domain model, requirements, architecture |
 | [MILESTONES.md](MILESTONES.md) | 12-week delivery plan |
+| [BA_SUMMARY.md](BA_SUMMARY.md) | Summary of answers for the business analyst: vision, problem, goals, high-level solution |
 | [Device/USER_GUIDE.md](../Device/USER_GUIDE.md) | How to run the shelf emulator / device against the backend and for the demo |
 
 ## Hardware
