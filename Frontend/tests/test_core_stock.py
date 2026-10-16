@@ -1,8 +1,8 @@
 from app.core.stock import filter_products, is_low_stock
 from app.models.dto import Product
 
-MILK = Product(1, "SKU-1", "Milk", "Dairy", "pcs", 5, 10)
-RICE = Product(2, "SKU-2", "Rice", "Grocery", "pcs", 50, 10)
+MILK = Product(1, "SKU-1", "Milk", "Dairy", 5, 10)
+RICE = Product(2, "SKU-2", "Rice", "Grocery", 50, 10)
 
 
 def test_is_low_stock_when_quantity_below_minimum() -> None:
