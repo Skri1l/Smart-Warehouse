@@ -8,8 +8,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-public interface ReplenishmentRecommendationRepository extends JpaRepository<
-        ReplenishmentRecommendation, Long> {
+public interface ReplenishmentRecommendationRepository extends JpaRepository<ReplenishmentRecommendation, Long> {
 
     List<ReplenishmentRecommendation> findByProductId(Long productId);
 
