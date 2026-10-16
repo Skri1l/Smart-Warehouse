@@ -30,81 +30,8 @@ Create the technical foundation and freeze the MVP scope.
 
 ---
 
-## Milestone 2 — Core warehouse and inventory backend
+## Milestone 2 — Computer vision and automatic stock updates
 **Weeks:** 2–3 (06.10.26 - 20.10.26)
-
-### Goal
-Implement the base business domain without computer vision.
-
-### Deliverables
-- database migrations;
-- entities and repositories for warehouses, racks, shelves, products and stock;
-- CRUD API for products and warehouse structure;
-- inventory balance model;
-- stock movement history;
-- manual inventory adjustment endpoint;
-- validation and unified error handling;
-- backend unit/integration tests;
-- first Swagger/OpenAPI specification.
-
-### Acceptance criteria
-- products and shelves can be created;
-- stock can be manually added/removed;
-- every change creates history;
-- current quantity can be queried via API;
-- core API tests pass.
-
----
-
-## Milestone 3 — Authentication, roles and basic frontend
-**Weeks:** 4 (20.10.26 - 27.10.26)
-
-### Goal
-Make the system usable by authenticated warehouse users.
-
-### Deliverables
-- authentication;
-- roles: worker / manager-admin;
-- secured backend endpoints;
-- frontend login;
-- main layout/navigation;
-- product list;
-- shelf/stock view;
-- responsive base UI.
-
-### Acceptance criteria
-- unauthorized users cannot access protected resources;
-- role restrictions work;
-- user can log in and see current stock in the frontend.
-
----
-
-## Milestone 4 — Shelf device and image-event pipeline
-**Weeks:** 5 (27.10.26 - 03.11.26)
-
-### Goal
-Connect shelf cameras/controllers to the backend independently from the final ML model.
-
-### Deliverables
-- device registration/authentication;
-- endpoint for image upload;
-- shelf/device metadata validation;
-- image-event persistence;
-- image storage strategy;
-- event statuses: received / processing / processed / failed / review;
-- simple device simulator;
-- optional physical camera/controller prototype.
-
-### Acceptance criteria
-- a simulated or physical shelf sends an image;
-- backend knows which shelf produced it;
-- image/event can be traced in the database;
-- failed uploads do not modify inventory.
-
----
-
-## Milestone 5 — Computer vision and automatic stock updates
-**Weeks:** 6–7 (03.11.26 - 17.11.26)
 
 ### Goal
 Recognize supported products from shelf images and update inventory automatically.
@@ -129,8 +56,8 @@ Recognize supported products from shelf images and update inventory automaticall
 
 ---
 
-## Milestone 6 — Product location and placement recommendations
-**Weeks:** 8 (17.11.26 - 24.11.26)
+## Milestone 3 — Product location and placement recommendations
+**Weeks:** 4 (20.10.26 - 27.10.26)
 
 ### Goal
 Implement warehouse navigation features for workers.
@@ -148,6 +75,79 @@ Implement warehouse navigation features for workers.
 - worker can search for a product and see its shelf;
 - system recommends a valid shelf for incoming goods;
 - recommendation respects configured capacity/basic placement rules.
+
+---
+
+## Milestone 4 — Core warehouse and inventory backend
+**Weeks:** 5–6 (27.10.26 - 10.11.26)
+
+### Goal
+Implement the base business domain without computer vision.
+
+### Deliverables
+- database migrations;
+- entities and repositories for warehouses, racks, shelves, products and stock;
+- CRUD API for products and warehouse structure;
+- inventory balance model;
+- stock movement history;
+- manual inventory adjustment endpoint;
+- validation and unified error handling;
+- backend unit/integration tests;
+- first Swagger/OpenAPI specification.
+
+### Acceptance criteria
+- products and shelves can be created;
+- stock can be manually added/removed;
+- every change creates history;
+- current quantity can be queried via API;
+- core API tests pass.
+
+---
+
+## Milestone 5 — Authentication, roles and basic frontend
+**Weeks:** 7 (10.11.26 - 17.11.26)
+
+### Goal
+Make the system usable by authenticated warehouse users.
+
+### Deliverables
+- authentication;
+- roles: worker / manager-admin;
+- secured backend endpoints;
+- frontend login;
+- main layout/navigation;
+- product list;
+- shelf/stock view;
+- responsive base UI.
+
+### Acceptance criteria
+- unauthorized users cannot access protected resources;
+- role restrictions work;
+- user can log in and see current stock in the frontend.
+
+---
+
+## Milestone 6 — Shelf device and image-event pipeline
+**Weeks:** 8 (17.11.26 - 24.11.26)
+
+### Goal
+Connect shelf cameras/controllers to the backend independently from the final ML model.
+
+### Deliverables
+- device registration/authentication;
+- endpoint for image upload;
+- shelf/device metadata validation;
+- image-event persistence;
+- image storage strategy;
+- event statuses: received / processing / processed / failed / review;
+- simple device simulator;
+- optional physical camera/controller prototype.
+
+### Acceptance criteria
+- a simulated or physical shelf sends an image;
+- backend knows which shelf produced it;
+- image/event can be traced in the database;
+- failed uploads do not modify inventory.
 
 ---
 
@@ -222,11 +222,11 @@ The system is deployed and accessible for diploma demonstration.
 | Week | Main focus |
 |---|---|
 | 1 | Foundation and architecture |
-| 2–3 | Warehouse + inventory backend |
-| 4 | Security + basic frontend |
-| 5 | Camera/device/image pipeline |
-| 6–7 | Computer vision + automatic inventory |
-| 8 | Product location + placement |
+| 2–3 | Computer vision + automatic inventory |  
+| 4 | Product location + placement | 
+| 5-6 | Warehouse + inventory backend | 
+| 7 | Security + basic frontend |
+| 8 | Camera/device/image pipeline |
 | 9–10 | Forecasting + replenishment |
 | 11–12 | Integration + cloud + testing + demo |
 
