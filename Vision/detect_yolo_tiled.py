@@ -1,16 +1,12 @@
 import os
+import sys
+
 import cv2
 import numpy as np
-from ultralytics import YOLO
+from ultralytics import YOLOWorld
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-INPUT_DIR = os.path.join(
-    BASE_DIR,
-    "product_front_facing_detection",
-    "input_images"
-)
 
 OUTPUT_DIR = os.path.join(
     BASE_DIR,
@@ -18,53 +14,62 @@ OUTPUT_DIR = os.path.join(
     "detect_yolo_tiled"
 )
 
-MODEL_PATH = "yolov8x.pt"   # stronger than yolov8n.pt
+# COCO-trained YOLO has no "can" class: it saw cans as low-confidence
+# "bottle"/"cup" and counted 1 of 25 labelled photos correctly. YOLO-World
+# is open-vocabulary, so the product is described with a text prompt.
+MODEL_PATH = "yolov8x-worldv2.pt"
+PRODUCT_PROMPTS = ["soda can"]
 CONFIDENCE = 0.10
-TILE_SIZE = 640
-OVERLAP = 0.30
+IMAGE_SIZE = 1280
+NMS_IOU = 0.5
 
-PRODUCT_CLASSES = {
-    "bottle",
-    "cup",
-    "wine glass"
-}
+# A box that covers most of two or more other boxes is a whole group of
+# cans detected as one object, not another can.
+GROUP_COVERAGE = 0.8
 
 
-def create_directory(path):
-    os.makedirs(path, exist_ok=True)
+def load_model(model_path=MODEL_PATH):
+    model = YOLOWorld(model_path)
+    model.set_classes(PRODUCT_PROMPTS)
+    return model
 
 
-def nms_boxes(detections, iou_threshold=0.4):
-    if not detections:
-        return []
+def coverage(inner, outer):
+    """Share of the ``inner`` box area that lies inside ``outer``."""
+    x1 = max(inner[0], outer[0])
+    y1 = max(inner[1], outer[1])
+    x2 = min(inner[2], outer[2])
+    y2 = min(inner[3], outer[3])
 
-    boxes = []
-    scores = []
+    intersection = max(0, x2 - x1) * max(0, y2 - y1)
+    area = (inner[2] - inner[0]) * (inner[3] - inner[1])
+
+    return intersection / area if area > 0 else 0.0
+
+
+def remove_group_boxes(detections):
+    result = []
 
     for d in detections:
-        x1, y1, x2, y2 = d["bbox"]
-        boxes.append([x1, y1, x2 - x1, y2 - y1])
-        scores.append(d["confidence"])
+        covered = sum(
+            1 for other in detections
+            if other is not d
+            and coverage(other["bbox"], d["bbox"]) >= GROUP_COVERAGE
+        )
 
-    indexes = cv2.dnn.NMSBoxes(
-        boxes,
-        scores,
-        score_threshold=CONFIDENCE,
-        nms_threshold=iou_threshold
-    )
+        if covered < 2:
+            result.append(d)
 
-    if len(indexes) == 0:
-        return []
-
-    indexes = indexes.flatten()
-    return [detections[i] for i in indexes]
+    return result
 
 
-def detect_on_tile(model, tile, offset_x, offset_y):
-    results = model(
-        tile,
+def detect(model, image):
+    results = model.predict(
+        image,
         conf=CONFIDENCE,
-        imgsz=1280,
+        iou=NMS_IOU,
+        imgsz=IMAGE_SIZE,
+        agnostic_nms=True,
         verbose=False
     )[0]
 
@@ -78,25 +83,15 @@ def detect_on_tile(model, tile, offset_x, offset_y):
     classes = results.boxes.cls.cpu().numpy().astype(int)
 
     for box, conf, cls_id in zip(boxes, confs, classes):
-        class_name = results.names[cls_id]
-
-        if class_name not in PRODUCT_CLASSES:
-            continue
-
         x1, y1, x2, y2 = box.astype(int)
 
         detections.append({
-            "bbox": (
-                x1 + offset_x,
-                y1 + offset_y,
-                x2 + offset_x,
-                y2 + offset_y
-            ),
-            "class_name": class_name,
+            "bbox": (x1, y1, x2, y2),
+            "class_name": results.names[cls_id],
             "confidence": float(conf)
         })
 
-    return detections
+    return remove_group_boxes(detections)
 
 
 def detect_products_tiled(image_path, model):
@@ -108,9 +103,7 @@ def detect_products_tiled(image_path, model):
     if image is None:
         raise ValueError("Cannot read image")
 
-    detections = detect_on_tile(model, image, 0, 0)
-
-    return image, nms_boxes(detections)
+    return image, detect(model, image)
 
 
 def draw_detections(image, detections):
@@ -136,21 +129,30 @@ def draw_detections(image, detections):
 
 
 def main():
-    create_directory(OUTPUT_DIR)
+    """Usage: python detect_yolo_tiled.py <image or folder>"""
+    if len(sys.argv) != 2:
+        sys.exit(main.__doc__)
 
-    model = YOLO(MODEL_PATH)
+    source = sys.argv[1]
 
-    image_files = [
-        file for file in os.listdir(INPUT_DIR)
-        if file.lower().endswith((".png", ".jpg", ".jpeg"))
-    ]
+    if os.path.isdir(source):
+        image_paths = [
+            os.path.join(source, file)
+            for file in sorted(os.listdir(source))
+            if file.lower().endswith((".png", ".jpg", ".jpeg"))
+        ]
+    else:
+        image_paths = [source]
 
-    for image_name in image_files:
-        image_path = os.path.join(INPUT_DIR, image_name)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    model = load_model()
+
+    for image_path in image_paths:
         image, detections = detect_products_tiled(image_path, model)
         output_image = draw_detections(image, detections)
 
+        image_name = os.path.basename(image_path)
         name_without_ext = os.path.splitext(image_name)[0]
         output_path = os.path.join(
             OUTPUT_DIR,
@@ -159,7 +161,7 @@ def main():
 
         cv2.imwrite(output_path, output_image)
 
-        print(f"{image_name}: detected {len(detections)} product-like objects")
+        print(f"{image_name}: detected {len(detections)} products")
 
     print("Done.")
 

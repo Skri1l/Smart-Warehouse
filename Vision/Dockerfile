@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 \
+    && apt-get install -y --no-install-recommends git libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements-docker.txt .
@@ -18,7 +18,8 @@ RUN pip install --no-cache-dir -r requirements-docker.txt
 
 COPY api.py detect_yolo_tiled.py ./
 
-RUN python -c "from ultralytics import YOLO; YOLO('yolov8x.pt')"
+# Downloads the YOLO-World weights and the CLIP text encoder into the image.
+RUN python -c "from detect_yolo_tiled import load_model; load_model()"
 
 EXPOSE 8000
 
