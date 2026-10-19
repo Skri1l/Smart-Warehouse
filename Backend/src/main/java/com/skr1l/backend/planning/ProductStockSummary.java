@@ -1,4 +1,8 @@
 package com.skr1l.backend.planning;
 
-public class ProductStockSummary {
+public interface ProductStockSummary {
+
+  String getProductSKU();
+
+  Long getTotalQuantity();
 }

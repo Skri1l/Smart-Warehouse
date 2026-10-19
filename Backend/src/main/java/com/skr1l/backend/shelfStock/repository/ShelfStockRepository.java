@@ -1,9 +1,12 @@
 package com.skr1l.backend.shelfStock.repository;
 
+import com.skr1l.backend.planning.ProductStockSummary;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import com.skr1l.backend.shelfStock.ShelfStock;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
@@ -21,4 +24,14 @@ public interface ShelfStockRepository extends JpaRepository<ShelfStock, Long> {
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   List<ShelfStock> findAllByShelfId(Long shelfId);
+
+  @Query(value = """
+    SELECT p.sku AS productSku,
+           COALESCE(SUM(s.quantity), 0) AS totalQuantity
+    FROM products p
+    LEFT JOIN shelf_stock s ON s.product_id = p.id
+    WHERE p.sku IN (:skus)
+    GROUP BY p.sku
+    """, nativeQuery = true)
+  List<ProductStockSummary> findStockTotalsBySkus(@Param("skus") List<String> skus);
 }

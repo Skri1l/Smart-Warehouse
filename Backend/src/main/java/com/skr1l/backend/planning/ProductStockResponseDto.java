@@ -1,4 +1,7 @@
 package com.skr1l.backend.planning;
 
-public class ProductStockResponseDto {
+public record ProductStockResponseDto(
+  String productSKU,
+  int productRemains
+) {
 }
