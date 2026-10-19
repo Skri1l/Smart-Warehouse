@@ -1,4 +1,4 @@
-package com.skr1l.planning;
+package com.skr1l.planning.exceptions;
 
 public class GlobalExceptionHandler {
 }

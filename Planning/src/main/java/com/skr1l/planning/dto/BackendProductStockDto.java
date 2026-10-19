@@ -1,4 +1,4 @@
-package com.skr1l.planning;
+package com.skr1l.planning.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
