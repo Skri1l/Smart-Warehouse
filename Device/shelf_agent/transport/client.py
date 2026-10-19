@@ -8,6 +8,9 @@ Two upload protocols (``BackendConfig.protocol``, ADR-0009):
 
 * ``image-events`` (default) follows the backend's published OpenAPI spec:
   ``POST /image-events`` with JSON ``{deviceId, imagePath, capturedAt}``.
+* ``device-images`` uploads the image to ``POST /devices/{id}/images``
+  (``file`` part, ``capturedAt`` query parameter). The backend sends it to the
+  Vision service and writes the counted quantity to the shelf stock.
 * ``multipart`` is the RFC-0001 upload of the image bytes, for when the
   backend implements ``POST /api/v1/device-events/images``.
 """
@@ -21,7 +24,12 @@ from typing import Any
 import httpx
 
 from shelf_agent import __version__
-from shelf_agent.config import PROTOCOL_MULTIPART, BackendConfig, DeviceIdentity
+from shelf_agent.config import (
+    PROTOCOL_DEVICE_IMAGES,
+    PROTOCOL_MULTIPART,
+    BackendConfig,
+    DeviceIdentity,
+)
 from shelf_agent.models import Frame
 
 DEVICE_KEY_HEADER = "X-Device-Key"
@@ -50,10 +58,16 @@ class BackendError(Exception):
 
 @dataclass(frozen=True)
 class UploadReceipt:
-    """Backend's answer to an accepted upload."""
+    """Backend's answer to an accepted upload.
+
+    Attributes:
+        quantity: Stock quantity the backend recognised in the image
+            (``device-images`` only), ``None`` otherwise.
+    """
 
     status_code: int
     image_event_id: int | None
+    quantity: int | None = None
 
 
 @dataclass(frozen=True)
@@ -137,11 +151,14 @@ class BackendClient:
         device_id = self._require_device_id()
         if self._config.protocol == PROTOCOL_MULTIPART:
             response = self._upload_multipart(frame, device_id)
+        elif self._config.protocol == PROTOCOL_DEVICE_IMAGES:
+            response = self._upload_device_image(frame, device_id)
         else:
             response = self._post_image_event(frame, device_id)
         return UploadReceipt(
             status_code=response.status_code,
             image_event_id=_parse_event_id(response),
+            quantity=_parse_quantity(response),
         )
 
     def heartbeat(self) -> None:
@@ -197,6 +214,16 @@ class BackendClient:
         }
         return self._send("POST", self._config.image_events_path, json=payload)
 
+    def _upload_device_image(self, frame: Frame, device_id: int) -> httpx.Response:
+        path = self._config.device_images_path.format(device_id=device_id)
+        params = {
+            "capturedAt": format_local_datetime(
+                frame.captured_at, self._config.timestamp_zone
+            )
+        }
+        files = {"file": (frame.filename, frame.data, frame.content_type)}
+        return self._send("POST", path, params=params, files=files)
+
     def _upload_multipart(self, frame: Frame, device_id: int) -> httpx.Response:
         fields = {
             "deviceId": str(device_id),
@@ -235,15 +262,29 @@ class BackendClient:
 
 
 def _parse_event_id(response: httpx.Response) -> int | None:
-    """Read a created id from either ``42`` (current backend) or ``{"id": 42}``."""
+    """Read a created id from ``42``, ``{"id": 42}`` or ``{"imageEventId": 42}``."""
+    body = _json(response)
+    if isinstance(body, dict):
+        body = body.get("imageEventId", body.get("id"))
+    return _as_int(body)
+
+
+def _parse_quantity(response: httpx.Response) -> int | None:
+    """Recognised quantity from a ``CameraImageResponseDto``, if present."""
+    body = _json(response)
+    return _as_int(body.get("quantity")) if isinstance(body, dict) else None
+
+
+def _json(response: httpx.Response) -> Any:
     try:
-        body = response.json()
+        return response.json()
     except ValueError:
         return None
-    if isinstance(body, dict):
-        body = body.get("id")
-    if isinstance(body, int) and not isinstance(body, bool):
-        return body
+
+
+def _as_int(value: Any) -> int | None:
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
     return None
 
 

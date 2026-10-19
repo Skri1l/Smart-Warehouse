@@ -147,6 +147,18 @@ Content-Type: application/json
 - `5xx`, `408`, `429` or no connection: the frame stays in the outbox and is retried in order. Any later frame waits behind it.
 - Other `4xx`: the frame goes to `<outbox>/rejected/` and is never retried. Fix the config or the device registration, then re-send manually if needed.
 
+**Per frame** (`protocol = "device-images"`, used by `scenarios/demo`): the image itself, which the backend recognises and turns into a stock update.
+
+```text
+POST /devices/1/images?capturedAt=2026-10-08T19:56:34.239
+Content-Type: multipart/form-data   (part "file" = the image)
+
+200 {"imageEventId": 5, "recognitionResultId": 5, "shelfId": 2,
+     "previousQuantity": 13, "quantity": 12, "quantityDelta": -1}
+```
+
+The backend forwards the image to the Vision service (`POST /recognize`) and sets the shelf's single `ShelfStock.quantity` to the count. Recognition takes several seconds on CPU, so the demo sets `timeout_s = 180`. The shelf must have exactly one stock record, and a frame captured before the last processed one is rejected with `409`.
+
 `protocol = "multipart"` switches to the RFC-0001 upload of the image itself (`POST /api/v1/device-events/images`, `X-Device-Key` header, `clientEventId`, UTC `capturedAt`). The mock server supports it; the backend does not yet.
 
 ## Running on the Raspberry Pi 5

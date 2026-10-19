@@ -20,6 +20,12 @@ heartbeat_interval_s = 30
 
 [backend]
 base_url = "http://127.0.0.1:8080"
+# Upload the photo itself: the backend asks the Vision service for the count
+# and writes it to the shelf's ShelfStock (POST /devices/{id}/images).
+protocol = "device-images"
+# Recognition on CPU takes several seconds per photo; a timeout would retry a
+# frame the backend already processed.
+timeout_s = 180
 # upload_path = "/api/v1/device-events/images"
 # heartbeat_path = "/devices/{device_id}/heartbeat"
 

@@ -138,6 +138,52 @@ def test_formats_local_datetime_without_offset() -> None:
     assert "+" not in format_local_datetime(moment, "local")
 
 
+# --- device-images (POST /devices/{id}/images) --------------------------------
+
+
+def test_uploads_image_to_device_images_endpoint(
+    device_images_config: BackendConfig,
+    identity: DeviceIdentity,
+    make_frame: Callable[..., Frame],
+) -> None:
+    body = {
+        "imageEventId": 41,
+        "recognitionResultId": 9,
+        "shelfId": 3,
+        "previousQuantity": 16,
+        "quantity": 15,
+        "quantityDelta": -1,
+    }
+    requests, handler = recording(httpx.Response(200, json=body))
+
+    frame = make_frame(name="5.jpg", data=b"JPEGDATA")
+    receipt = client_with(handler, device_images_config, identity).upload_image(frame)
+
+    request = requests[0]
+    assert request.method == "POST"
+    assert request.url.path == "/devices/7/images"
+    assert request.url.params["capturedAt"] == "2026-10-07T12:30:00.000"
+    parts = parse_multipart(request)
+    assert set(parts) == {"file"}
+    assert parts["file"].get_filename() == "5.jpg"
+    assert parts["file"].get_payload(decode=True) == b"JPEGDATA"
+    assert (receipt.image_event_id, receipt.quantity) == (41, 15)
+
+
+def test_device_images_never_sends_ground_truth(
+    device_images_config: BackendConfig,
+    identity: DeviceIdentity,
+    make_frame: Callable[..., Frame],
+) -> None:
+    requests, handler = recording(httpx.Response(200, json={"imageEventId": 1}))
+
+    frame = make_frame(truth=GroundTruth("SECRET-SKU", 99))
+    client_with(handler, device_images_config, identity).upload_image(frame)
+
+    assert b"SECRET-SKU" not in requests[0].read()
+    assert b"SECRET-SKU" not in str(requests[0].url).encode()
+
+
 # --- multipart (RFC-0001) ------------------------------------------------------
 
 
@@ -202,7 +248,13 @@ def test_rejects_naive_timestamp() -> None:
 
 @pytest.mark.parametrize(
     ("body", "expected"),
-    [({"id": 5}, 5), (5, 5), ({"other": 1}, None), (None, None)],
+    [
+        ({"id": 5}, 5),
+        ({"imageEventId": 5}, 5),
+        (5, 5),
+        ({"other": 1}, None),
+        (None, None),
+    ],
 )
 def test_reads_event_id_when_backend_returns_it(
     body: object,

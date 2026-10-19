@@ -6,7 +6,12 @@ from pathlib import Path
 
 import pytest
 
-from shelf_agent.config import PROTOCOL_MULTIPART, BackendConfig, DeviceIdentity
+from shelf_agent.config import (
+    PROTOCOL_DEVICE_IMAGES,
+    PROTOCOL_MULTIPART,
+    BackendConfig,
+    DeviceIdentity,
+)
 from shelf_agent.models import Frame, GroundTruth
 
 CAPTURED_AT = datetime(2026, 10, 7, 12, 30, 0, tzinfo=UTC)
@@ -27,6 +32,16 @@ def backend_config() -> BackendConfig:
 def multipart_config() -> BackendConfig:
     """RFC-0001 multipart upload."""
     return BackendConfig(base_url="http://backend.test", protocol=PROTOCOL_MULTIPART)
+
+
+@pytest.fixture
+def device_images_config() -> BackendConfig:
+    """Image upload to ``POST /devices/{id}/images`` (recognition + stock)."""
+    return BackendConfig(
+        base_url="http://backend.test",
+        protocol=PROTOCOL_DEVICE_IMAGES,
+        timestamp_zone="utc",
+    )
 
 
 @pytest.fixture

@@ -5,6 +5,8 @@ Mirrors what the backend publishes in Swagger (``/v3/api-docs``) for devices:
 * ``GET /devices``, ``GET /devices/{id}``, ``POST /devices`` (201 + id)
 * ``PATCH /devices/{id}/heartbeat`` (204)
 * ``POST /image-events`` with JSON ``{deviceId, imagePath, capturedAt}`` (201 + id)
+* ``POST /devices/{id}/images?capturedAt=...`` with a multipart ``file`` (200);
+  the mock stores the image but does not recognise it, so ``quantity`` is null
 
 plus the RFC-0001 multipart upload (``POST /api/v1/device-events/images``),
 which the backend does not have yet. Unknown devices get ``404`` with the
@@ -26,6 +28,7 @@ from email.policy import HTTP
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlsplit
 
 from shelf_agent.transport.client import DEVICE_KEY_HEADER
 
@@ -34,6 +37,7 @@ logger = logging.getLogger(__name__)
 DEVICES_ROUTE = re.compile(r"^/devices/?$")
 DEVICE_ROUTE = re.compile(r"^/devices/(?P<id>\d+)/?$")
 HEARTBEAT_ROUTE = re.compile(r"^/devices/(?P<id>\d+)/heartbeat/?$")
+DEVICE_IMAGES_ROUTE = re.compile(r"^/devices/(?P<id>\d+)/images/?$")
 IMAGE_EVENTS_ROUTE = re.compile(r"^/image-events/?$")
 UPLOAD_ROUTE = re.compile(r"^/api/v1/device-events/images/?$")
 MULTIPART_FIELDS = ("deviceId", "shelfId", "capturedAt")
@@ -168,6 +172,8 @@ class _Handler(BaseHTTPRequestHandler):
                 self._create_image_event(body)
             elif UPLOAD_ROUTE.match(self.path):
                 self._upload_multipart(body)
+            elif match := DEVICE_IMAGES_ROUTE.match(urlsplit(self.path).path):
+                self._upload_device_image(int(match["id"]), body)
             else:
                 self._not_found(self.path)
         except (ValueError, KeyError, TypeError) as exc:
@@ -220,6 +226,50 @@ class _Handler(BaseHTTPRequestHandler):
         )
         self._reply(201, event.id)
 
+    def _upload_device_image(self, device_id: int, body: bytes) -> None:
+        device = self.server.devices.get(device_id)
+        if device is None:
+            self._not_found(f"Device not found: {device_id}")
+            return
+        captured_at = parse_qs(urlsplit(self.path).query)["capturedAt"][0]
+        if datetime.fromisoformat(captured_at).tzinfo is not None:
+            raise ValueError("capturedAt is a LocalDateTime and must have no offset")
+        _, image = self._parse_multipart(body, file_field="file")
+        if image is None:
+            raise ValueError("missing field(s): ['file']")
+        data = image.get_payload(decode=True)
+        assert isinstance(data, bytes)
+        path = self._save_image(device_id, image.get_filename(), data)
+        event = self.server.add_event(
+            device_id=device.id,
+            shelf_id=device.shelf_id,
+            image_path=str(path),
+            captured_at=captured_at,
+            protocol="device-images",
+            device_key=self.headers.get(DEVICE_KEY_HEADER, ""),
+            size=len(data),
+        )
+        self._reply(
+            200,
+            {
+                "imageEventId": event.id,
+                "recognitionResultId": None,
+                "shelfId": device.shelf_id,
+                "previousQuantity": None,
+                "quantity": None,
+                "quantityDelta": None,
+            },
+        )
+
+    def _save_image(
+        self, device_id: int | str, filename: str | None, data: bytes
+    ) -> Path:
+        folder = self.server.out_dir / f"device-{device_id}"
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder / f"{len(self.server.events) + 1:04d}_{filename}"
+        path.write_bytes(data)
+        return path
+
     def _upload_multipart(self, body: bytes) -> None:
         device_key = self.headers.get(DEVICE_KEY_HEADER, "")
         if not device_key:
@@ -232,10 +282,7 @@ class _Handler(BaseHTTPRequestHandler):
         datetime.fromisoformat(fields["capturedAt"])
         data = image.get_payload(decode=True)
         assert isinstance(data, bytes)
-        folder = self.server.out_dir / f"device-{fields['deviceId']}"
-        folder.mkdir(parents=True, exist_ok=True)
-        path = folder / f"{len(self.server.events) + 1:04d}_{image.get_filename()}"
-        path.write_bytes(data)
+        path = self._save_image(fields["deviceId"], image.get_filename(), data)
         event = self.server.add_event(
             device_id=int(fields["deviceId"]),
             shelf_id=int(fields["shelfId"]),
@@ -249,7 +296,7 @@ class _Handler(BaseHTTPRequestHandler):
         self._reply(202, {"id": event.id, "processingStatus": "RECEIVED"})
 
     def _parse_multipart(
-        self, body: bytes
+        self, body: bytes, file_field: str = "image"
     ) -> tuple[dict[str, str], EmailMessage | None]:
         content_type = self.headers.get("Content-Type", "")
         if not content_type.startswith("multipart/form-data"):
@@ -265,7 +312,7 @@ class _Handler(BaseHTTPRequestHandler):
             name = part.get_param("name", header="content-disposition")
             if not isinstance(name, str):
                 continue
-            if name == "image":
+            if name == file_field:
                 image = part
             else:
                 payload = part.get_payload(decode=True)

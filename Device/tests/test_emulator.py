@@ -10,7 +10,12 @@ from pathlib import Path
 import pytest
 
 from shelf_agent.agent import Delivery
-from shelf_agent.config import PROTOCOL_MULTIPART, BackendConfig, DeviceIdentity
+from shelf_agent.config import (
+    PROTOCOL_DEVICE_IMAGES,
+    PROTOCOL_MULTIPART,
+    BackendConfig,
+    DeviceIdentity,
+)
 from shelf_agent.emulator.runner import Emulator
 from shelf_agent.emulator.scenario import EmulatedShelf, Scenario
 from shelf_agent.mock_server import MockBackend
@@ -191,4 +196,18 @@ def test_multipart_protocol_uploads_the_image_bytes(
     assert event.protocol == "multipart"
     assert event.device_key == "key-a1"
     assert event.captured_at.endswith("Z")
+    assert Path(event.image_path).read_bytes() == b"a_01.jpg"
+
+
+def test_device_images_protocol_uploads_the_image_to_the_device(
+    scenario: Scenario, server: MockBackend
+) -> None:
+    device_images = replace(scenario.backend, protocol=PROTOCOL_DEVICE_IMAGES)
+    emulator = connected(replace(scenario, backend=device_images))
+
+    emulator.step("A1")
+
+    (event,) = server.events
+    assert (event.protocol, event.device_id, event.shelf_id) == ("device-images", 1, 11)
+    assert "Z" not in event.captured_at and "+" not in event.captured_at
     assert Path(event.image_path).read_bytes() == b"a_01.jpg"

@@ -127,6 +127,15 @@ Devices are created by the emulator automatically, but **the shelves they sit on
 
 A shelf can hold **only one device**. Plan one shelf per emulated shelf, plus one for the physical prototype.
 
+The demo scenario uploads the photos for recognition (`protocol = "device-images"`). The backend writes the counted quantity to the shelf's stock record, so every emulated shelf also needs **exactly one** `ShelfStock` with the product on it:
+
+| Step | Endpoint | Request body | Returns |
+|---|---|---|---|
+| 5 | `POST /products` | `{"sku": "COCA-COLA", "name": "Coca-Cola can 0.33 l"}` | product id, e.g. `1` |
+| 6 | `POST /shelf-stock` | `{"shelfId": 2, "productId": 1, "quantity": 1, "expirationDate": "2027-12-31"}` | stock id |
+
+`quantity` must be positive; the first photo overwrites it with the recognised count.
+
 The same with `curl` (bash or Git Bash):
 
 ```bash
@@ -134,7 +143,11 @@ curl -X POST localhost:8080/warehouses -H "Content-Type: application/json" -d '{
 curl -X POST localhost:8080/racks/warehouse/1 -H "Content-Type: application/json" -d '{"label":"A","warehouseId":1}'
 curl -X POST localhost:8080/shelves -H "Content-Type: application/json" -d '{"label":"A-1","capacity":20,"rackId":1}'
 curl -X POST localhost:8080/shelves -H "Content-Type: application/json" -d '{"label":"A-2","capacity":20,"rackId":1}'
+curl -X POST localhost:8080/products -H "Content-Type: application/json" -d '{"sku":"COCA-COLA","name":"Coca-Cola can 0.33 l"}'
+curl -X POST localhost:8080/shelf-stock -H "Content-Type: application/json" -d '{"shelfId":2,"productId":1,"quantity":1,"expirationDate":"2027-12-31"}'
 ```
+
+The Vision service must be running too (`http://127.0.0.1:8000/docs`, see [Vision/README.md](../Vision/README.md)). With Docker Compose it starts together with the backend.
 
 ### 4.3 Point the scenario at your shelves
 
@@ -172,7 +185,16 @@ Send a few frames with **Enter**.
 | The events of this device | `GET /image-events/device/{deviceId}` |
 | All events | `GET /image-events` |
 
-Each event has `imagePath` (the photo file on your PC), `capturedAt`, `receivedAt` and `processingStatus = RECEIVED`.
+| The recognised quantity of the shelf | `GET /shelf-stock/shelf/{shelfId}` |
+| Detected count per photo | `GET /recognition-results` |
+
+With `protocol = "device-images"` every event is `PROCESSED`, `imagePath` is the copy saved by the backend, and the console shows the recognised count next to the label:
+
+```text
+  [A2] 5.jpg -> sent, imageEvent #5, recognised x12 | expected COCA-COLA x12
+```
+
+After the whole demo scenario the shelf stock is `3` (the label of `25.jpg`).
 
 ## 5. Running the diploma demo
 
@@ -308,12 +330,15 @@ Exit codes: `0` ok, `2` configuration or registration problem, `3` backend unrea
 | `-> REJECTED: ...` | Backend refused this photo for good (4xx) | The reason follows the colon. The photo is kept in `.outbox/<shelf>/rejected/` |
 | `all shelves are out of frames` | Every photo was sent | `q` and start again, or set `loop = true` |
 | `cannot listen on 127.0.0.1:8080 ...` (mock server) | Port taken, often by the backend | `mock-server --port 8099` + `emulate --base-url http://127.0.0.1:8099` |
+| `-> REJECTED: ... HTTP 409 ... exactly one stock record on the shelf` | The shelf has no `ShelfStock`, or more than one | Create one stock record for the shelf (section 4.2, step 6) |
+| `-> REJECTED: ... HTTP 409 ... same or a later capture time was already processed` | A newer photo of this shelf is already in the database | Expected when re-sending old frames; send newer ones |
+| `-> queued ... HTTP 502 ... Vision service request failed` | Vision service is not running | Start it, then `flush` |
 | `capturedAt` looks shifted by some hours | PC and backend use different time zones | Set `timestamp_zone = "utc"` in `[backend]` if the backend runs in UTC (e.g. in a container) |
 
 ## 10. FAQ
 
 **Does the photo itself reach the server?**
-Not yet. The backend's API (`POST /image-events`) accepts only the **path** to the photo (`imagePath`), not the file. So recognition can open the photo only on the machine where the file is, e.g. the demo laptop running backend, ML service and emulator together. When the backend gets an upload endpoint (RFC-0001), set `protocol = "multipart"` in `[backend]` and the photos themselves are sent. Nothing else changes.
+Yes, with `protocol = "device-images"` in `[backend]` (set in `scenarios/demo`). The photo is uploaded to `POST /devices/{id}/images`, the backend sends it to the Vision service and writes the count to the shelf stock. The default `image-events` protocol sends only the **path** to the photo (`imagePath`) and does not trigger recognition.
 
 **How do I start the demo from a clean state?**
 `--reset-outbox` clears the emulator's own queue. Events already in the database stay there. Delete them with `DELETE /image-events/{id}`, or reset the whole database with `docker compose down -v` in `Backend/`. **That command deletes all data**, including shelves, so you then repeat section 4.2.
