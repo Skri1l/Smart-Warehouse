@@ -157,7 +157,7 @@ Content-Type: multipart/form-data   (part "file" = the image)
      "previousQuantity": 13, "quantity": 12, "quantityDelta": -1}
 ```
 
-The backend forwards the image to the Vision service (`POST /recognize`) and sets the shelf's single `ShelfStock.quantity` to the count. Recognition takes several seconds on CPU, so the demo sets `timeout_s = 180`. The shelf must have exactly one stock record, and a frame captured before the last processed one is rejected with `409`.
+The backend forwards the image to the Vision service (`POST /recognize`) and sets the shelf's single `ShelfStock.quantity` to the count. Recognition takes several seconds on CPU and the backend waits up to 180 s for Vision, so the demo sets `timeout_s = 210`: longer than the backend, so the agent never disconnects before the backend answers. Errors: `502` if Vision fails or times out (retried, the frame stays queued); `409` for an inactive device, a shelf without exactly one stock record, or a frame captured no later than the last processed one (dropped, since resending cannot fix it). The mock server reproduces the `502` (`--vision-failures N`) and the inactive/stale `409`s.
 
 `protocol = "multipart"` switches to the RFC-0001 upload of the image itself (`POST /api/v1/device-events/images`, `X-Device-Key` header, `clientEventId`, UTC `capturedAt`). The mock server supports it; the backend does not yet.
 

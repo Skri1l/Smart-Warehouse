@@ -6,7 +6,10 @@ Mirrors what the backend publishes in Swagger (``/v3/api-docs``) for devices:
 * ``PATCH /devices/{id}/heartbeat`` (204)
 * ``POST /image-events`` with JSON ``{deviceId, imagePath, capturedAt}`` (201 + id)
 * ``POST /devices/{id}/images?capturedAt=...`` with a multipart ``file`` (200);
-  the mock stores the image but does not recognise it, so ``quantity`` is null
+  the mock stores the image but does not recognise it, so ``quantity`` is null.
+  Like the backend it answers ``502`` when recognition fails (simulated with
+  ``vision_failures``) and ``409`` for an inactive device or a frame captured
+  no later than the shelf's last processed one
 
 plus the RFC-0001 multipart upload (``POST /api/v1/device-events/images``),
 which the backend does not have yet. Unknown devices get ``404`` with the
@@ -98,6 +101,10 @@ class MockBackend(ThreadingHTTPServer):
         self.devices: dict[int, MockDevice] = {}
         self.events: list[ReceivedEvent] = []
         self.heartbeats: list[int] = []
+        # The next N device-images uploads fail as if the Vision service were
+        # down (backend: 502 "Vision service request failed").
+        self.vision_failures = 0
+        self._last_processed: dict[int, datetime] = {}
         self._lock = threading.Lock()
 
     @property
@@ -128,6 +135,22 @@ class MockBackend(ThreadingHTTPServer):
                 return False
             device.last_seen_at = datetime.now().isoformat(timespec="seconds")
             self.heartbeats.append(device_id)
+            return True
+
+    def take_vision_failure(self) -> bool:
+        with self._lock:
+            if self.vision_failures <= 0:
+                return False
+            self.vision_failures -= 1
+            return True
+
+    def mark_processed(self, shelf_id: int, captured_at: datetime) -> bool:
+        """Record a processed frame; ``False`` if the shelf already has a later one."""
+        with self._lock:
+            last = self._last_processed.get(shelf_id)
+            if last is not None and captured_at <= last:
+                return False
+            self._last_processed[shelf_id] = captured_at
             return True
 
     def add_event(self, **fields: Any) -> ReceivedEvent:
@@ -232,11 +255,25 @@ class _Handler(BaseHTTPRequestHandler):
             self._not_found(f"Device not found: {device_id}")
             return
         captured_at = parse_qs(urlsplit(self.path).query)["capturedAt"][0]
-        if datetime.fromisoformat(captured_at).tzinfo is not None:
+        captured = datetime.fromisoformat(captured_at)
+        if captured.tzinfo is not None:
             raise ValueError("capturedAt is a LocalDateTime and must have no offset")
         _, image = self._parse_multipart(body, file_field="file")
         if image is None:
             raise ValueError("missing field(s): ['file']")
+        # Same order as the backend: recognition runs before the stock checks.
+        if self.server.take_vision_failure():
+            self._error(502, "Vision service request failed")
+            return
+        if device.status != "ACTIVE":
+            self._error(409, "Device is inactive")
+            return
+        if not self.server.mark_processed(device.shelf_id, captured):
+            self._error(
+                409,
+                "An image with the same or a later capture time was already processed",
+            )
+            return
         data = image.get_payload(decode=True)
         assert isinstance(data, bytes)
         path = self._save_image(device_id, image.get_filename(), data)
@@ -321,7 +358,10 @@ class _Handler(BaseHTTPRequestHandler):
         return fields, image
 
     def _not_found(self, message: str) -> None:
-        self._reply(404, {"status": 404, "message": message})
+        self._error(404, message)
+
+    def _error(self, status: int, message: str) -> None:
+        self._reply(status, {"status": status, "message": message})
 
     def _reply(self, status: int, body: object) -> None:
         payload = b"" if body is None else json.dumps(body).encode()

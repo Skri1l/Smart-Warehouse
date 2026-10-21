@@ -88,6 +88,13 @@ def _build_parser() -> argparse.ArgumentParser:
     mock.add_argument(
         "--out", type=Path, default=Path("received"), help="where to save images"
     )
+    mock.add_argument(
+        "--vision-failures",
+        type=int,
+        default=0,
+        metavar="N",
+        help="answer the first N device-images uploads with 502 (Vision down)",
+    )
     mock.set_defaults(handler=_cmd_mock_server)
     return parser
 
@@ -142,6 +149,7 @@ def _cmd_mock_server(args: argparse.Namespace) -> int:
 
     try:
         server = MockBackend((args.host, args.port), args.out)
+        server.vision_failures = args.vision_failures
     except OSError as exc:
         logger.error(
             "cannot listen on %s:%s (%s). Is the backend or another mock already "

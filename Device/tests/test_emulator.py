@@ -19,9 +19,9 @@ from shelf_agent.config import (
 from shelf_agent.emulator.runner import Emulator
 from shelf_agent.emulator.scenario import EmulatedShelf, Scenario
 from shelf_agent.mock_server import MockBackend
-from shelf_agent.models import GroundTruth
+from shelf_agent.models import Frame, GroundTruth
 from shelf_agent.registration import RegistrationError
-from shelf_agent.transport.client import BackendError
+from shelf_agent.transport.client import BackendClient, BackendError
 
 
 @pytest.fixture
@@ -211,3 +211,66 @@ def test_device_images_protocol_uploads_the_image_to_the_device(
     assert (event.protocol, event.device_id, event.shelf_id) == ("device-images", 1, 11)
     assert "Z" not in event.captured_at and "+" not in event.captured_at
     assert Path(event.image_path).read_bytes() == b"a_01.jpg"
+
+
+def device_images_client(server: MockBackend, shelf_id: int = 11) -> BackendClient:
+    device = server.add_device(f"key-{shelf_id}", shelf_id)
+    config = BackendConfig(
+        base_url=server.base_url, timeout_s=2, protocol=PROTOCOL_DEVICE_IMAGES
+    )
+    return BackendClient(config, DeviceIdentity(device.id, shelf_id, device.device_key))
+
+
+def test_device_images_queues_frame_when_vision_fails(
+    scenario: Scenario, server: MockBackend
+) -> None:
+    server.vision_failures = 1
+    device_images = replace(scenario.backend, protocol=PROTOCOL_DEVICE_IMAGES)
+    emulator = connected(replace(scenario, backend=device_images))
+
+    first = emulator.step("A1")
+
+    assert first is not None and first.delivery is Delivery.QUEUED
+    assert server.events == []
+    emulator.step("A1")  # the queued frame goes first
+    assert server.events[0].image_path.endswith("a_01.jpg")
+
+
+def test_device_images_vision_failure_is_retryable_502(
+    server: MockBackend, make_frame: Callable[..., Frame]
+) -> None:
+    server.vision_failures = 1
+    client = device_images_client(server)
+
+    with pytest.raises(BackendError) as failed:
+        client.upload_image(make_frame())
+
+    assert (failed.value.status_code, failed.value.retryable) == (502, True)
+    client.upload_image(make_frame())
+    assert len(server.events) == 1
+
+
+def test_device_images_rejects_frame_not_newer_than_processed_one(
+    server: MockBackend, make_frame: Callable[..., Frame]
+) -> None:
+    client = device_images_client(server)
+    client.upload_image(make_frame())
+
+    with pytest.raises(BackendError) as failed:
+        client.upload_image(make_frame())  # same capturedAt, e.g. a retry
+
+    assert (failed.value.status_code, failed.value.retryable) == (409, False)
+    assert len(server.events) == 1
+
+
+def test_device_images_rejects_inactive_device(
+    server: MockBackend, make_frame: Callable[..., Frame]
+) -> None:
+    client = device_images_client(server)
+    server.devices[1].status = "INACTIVE"
+
+    with pytest.raises(BackendError) as failed:
+        client.upload_image(make_frame())
+
+    assert (failed.value.status_code, failed.value.retryable) == (409, False)
+    assert server.events == []
