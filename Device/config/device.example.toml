@@ -11,12 +11,16 @@ timeout_s = 10
 # "image-events": POST /image-events {deviceId, imagePath, capturedAt}, as in
 #                 the backend's Swagger (/swagger-ui.html). The image stays in
 #                 [camera] capture_dir; its path is sent.
+# "device-images": uploads the image to POST /devices/{id}/images; the backend
+#                 recognises it and updates the shelf stock. Raise timeout_s:
+#                 recognition takes several seconds.
 # "multipart":    RFC-0001 upload of the image itself, once the backend has it.
 protocol = "image-events"
 # capturedAt is a LocalDateTime (no zone): "local" matches the backend's own
 # receivedAt clock when both run in the same timezone; "utc" otherwise.
 timestamp_zone = "local"
 # image_events_path = "/image-events"
+# device_images_path = "/devices/{device_id}/images"
 # devices_path = "/devices"
 # heartbeat_path = "/devices/{device_id}/heartbeat"
 # upload_path = "/api/v1/device-events/images"

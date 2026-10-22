@@ -225,6 +225,8 @@ def describe(name: str, result: TickResult) -> str:
     frame = result.frame
     if result.delivery is Delivery.SENT and result.receipt is not None:
         outcome = f"sent, imageEvent #{result.receipt.image_event_id}"
+        if result.receipt.quantity is not None:
+            outcome += f", recognised x{result.receipt.quantity}"
     elif result.delivery is Delivery.QUEUED:
         outcome = "queued (backend unreachable, will retry)"
     else:

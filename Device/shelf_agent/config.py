@@ -17,13 +17,16 @@ from typing import Any
 DEFAULT_IMAGE_EVENTS_PATH = "/image-events"
 DEFAULT_DEVICES_PATH = "/devices"
 DEFAULT_HEARTBEAT_PATH = "/devices/{device_id}/heartbeat"
+# Image upload that runs recognition and updates the shelf stock.
+DEFAULT_DEVICE_IMAGES_PATH = "/devices/{device_id}/images"
 # RFC-0001 multipart upload; not implemented by the backend yet.
 DEFAULT_UPLOAD_PATH = "/api/v1/device-events/images"
 DEFAULT_DEVICE_KEY_ENV = "SW_DEVICE_KEY"
 
 PROTOCOL_IMAGE_EVENTS = "image-events"
+PROTOCOL_DEVICE_IMAGES = "device-images"
 PROTOCOL_MULTIPART = "multipart"
-PROTOCOLS = (PROTOCOL_IMAGE_EVENTS, PROTOCOL_MULTIPART)
+PROTOCOLS = (PROTOCOL_IMAGE_EVENTS, PROTOCOL_DEVICE_IMAGES, PROTOCOL_MULTIPART)
 TIMESTAMP_ZONES = ("local", "utc")
 
 
@@ -39,13 +42,19 @@ class BackendConfig:
         base_url: Backend origin, e.g. ``http://192.168.1.10:8080``.
         protocol: ``image-events`` sends JSON to ``POST /image-events`` as
             published in Swagger (the image stays on the device, its path is
-            sent). ``multipart`` uploads the file itself (RFC-0001), once the
-            backend implements that endpoint.
+            sent). ``device-images`` uploads the file to
+            ``POST /devices/{id}/images``: the backend runs recognition and
+            writes the counted quantity to the shelf stock. ``multipart``
+            uploads the file itself (RFC-0001), once the backend implements
+            that endpoint.
         image_events_path: ``POST`` endpoint for ``image-events``.
+        device_images_path: ``POST`` endpoint for ``device-images``;
+            ``{device_id}`` is substituted.
         upload_path: ``POST`` endpoint for ``multipart``.
         devices_path: Device collection, used to look the device up by key.
         heartbeat_path: Heartbeat endpoint; ``{device_id}`` is substituted.
-        timestamp_zone: Zone of ``capturedAt`` for ``image-events``. The
+        timestamp_zone: Zone of ``capturedAt`` for ``image-events`` and
+            ``device-images``. The
             backend stores a ``LocalDateTime`` and stamps ``receivedAt`` with
             its own local clock, so ``local`` keeps both comparable.
         timeout_s: Per-request timeout in seconds.
@@ -54,6 +63,7 @@ class BackendConfig:
     base_url: str
     protocol: str = PROTOCOL_IMAGE_EVENTS
     image_events_path: str = DEFAULT_IMAGE_EVENTS_PATH
+    device_images_path: str = DEFAULT_DEVICE_IMAGES_PATH
     upload_path: str = DEFAULT_UPLOAD_PATH
     devices_path: str = DEFAULT_DEVICES_PATH
     heartbeat_path: str = DEFAULT_HEARTBEAT_PATH
@@ -179,6 +189,9 @@ def parse_backend(table: Mapping[str, Any]) -> BackendConfig:
         protocol=protocol,
         image_events_path=str(
             table.get("image_events_path", DEFAULT_IMAGE_EVENTS_PATH)
+        ),
+        device_images_path=str(
+            table.get("device_images_path", DEFAULT_DEVICE_IMAGES_PATH)
         ),
         upload_path=str(table.get("upload_path", DEFAULT_UPLOAD_PATH)),
         devices_path=str(table.get("devices_path", DEFAULT_DEVICES_PATH)),
