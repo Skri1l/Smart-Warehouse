@@ -66,7 +66,7 @@ When mock data is in use, the login window title ends with **[mock data]**.
 ### Signing in
 
 - **Mock mode:** username `worker` (warehouse worker) or `manager` (manager / administrator), any non-empty password. Managers see the extra *Purchase recommendations* section.
-- **Backend mode:** use an account created in the backend. The client calls `POST /api/v1/auth/login` and `GET /api/v1/products` (see [API_GUIDELINES.md](../Documentation/API_GUIDELINES.md)).
+- **Backend mode:** the backend uses HTTP Basic auth. Until real users are implemented, sign in with `APP_USER` / `APP_PASSWORD` from `Backend/.env` (see `Backend/.env.example`; the backend reads the BCrypt hash in `APP_PASSWORD_BCRYPT`). There is no login endpoint, so the client checks the credentials with `GET /users` and takes the role from the matching user (accounts not in the list, like `user`, get `WORKER`). Products come from `GET /products`; quantities are the sum of `ACTIVE` entries from `GET /shelf-stock`. The backend has no per-product minimum yet, so the dashboard's low-stock list shows only products with zero stock. API reference: `http://localhost:8080/swagger-ui.html`.
 
 ## 4. Lint, type-check and test
 

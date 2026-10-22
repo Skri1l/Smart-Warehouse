@@ -6,22 +6,30 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QLabel,
     QLineEdit,
+    QPushButton,
     QVBoxLayout,
 )
 
 from app.models.dto import Session
+from app.ui.forms import RegisterDialog
 from app.viewmodels.login_viewmodel import LoginViewModel
+from app.viewmodels.register_viewmodel import RegisterViewModel
 
 
 class LoginDialog(QDialog):
     """Collects credentials and accepts once the backend returns a session."""
 
-    def __init__(self, viewmodel: LoginViewModel) -> None:
+    def __init__(
+        self,
+        viewmodel: LoginViewModel,
+        register_viewmodel: RegisterViewModel | None = None,
+    ) -> None:
         super().__init__()
         self.setWindowTitle("Smart Warehouse — Sign in")
         self.setMinimumWidth(320)
         self.session: Session | None = None
         self._vm = viewmodel
+        self._register_vm = register_viewmodel
 
         self.username_edit = QLineEdit()
         self.password_edit = QLineEdit()
@@ -34,6 +42,11 @@ class LoginDialog(QDialog):
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
         self.buttons.button(QDialogButtonBox.StandardButton.Ok).setText("Sign in")
+        self.register_button = QPushButton("Create account…")
+        self.register_button.setVisible(register_viewmodel is not None)
+        self.buttons.addButton(
+            self.register_button, QDialogButtonBox.ButtonRole.ActionRole
+        )
 
         form = QFormLayout()
         form.addRow("Username", self.username_edit)
@@ -45,13 +58,26 @@ class LoginDialog(QDialog):
 
         self.buttons.accepted.connect(self._submit)
         self.buttons.rejected.connect(self.reject)
+        self.register_button.clicked.connect(self._open_register)
         self._vm.busyChanged.connect(self._set_busy)
         self._vm.loggedIn.connect(self._on_logged_in)
         self._vm.loginFailed.connect(self.error_label.setText)
 
     def _submit(self) -> None:
+        self.error_label.setStyleSheet("color: #c62828;")
         self.error_label.clear()
         self._vm.login(self.username_edit.text().strip(), self.password_edit.text())
+
+    def _open_register(self) -> None:
+        if self._register_vm is None:
+            return
+        dialog = RegisterDialog(self._register_vm)
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.registered_username:
+            self.username_edit.setText(dialog.registered_username)
+            self.password_edit.clear()
+            self.password_edit.setFocus()
+            self.error_label.setStyleSheet("color: #2e7d32;")
+            self.error_label.setText("Account created. Sign in with your password.")
 
     def _set_busy(self, busy: bool) -> None:
         self.buttons.setEnabled(not busy)
