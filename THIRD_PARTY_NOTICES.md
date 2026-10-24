@@ -81,6 +81,15 @@ These are installed on the shelf controller from Raspberry Pi OS packages
 redistributed with this software and are not in `Device/requirements.txt`
 (see [ADR-0008](Documentation/adr/0008-shelf-agent-shared-core.md)).
 
+### opencv-python — version 4.10.0.84 (PC webcam emulation only, optional)
+
+- License: Apache License 2.0 (OpenCV) and MIT (the `opencv-python` wheel
+  packaging) — https://github.com/opencv/opencv-python
+- Copyright: OpenCV team and contributors
+- Installed only from `Device/requirements-webcam.txt` to let the emulator use
+  a PC webcam; not needed on the shelf controller. Pulls in `numpy`
+  (BSD 3-Clause).
+
 <!-- Add transitive Device dependencies (httpcore, h11, anyio, certifi, idna)
 from `pip-licenses` in the Device venv when the agent is packaged for release. -->
 

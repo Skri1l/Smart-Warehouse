@@ -40,8 +40,8 @@ heartbeat_interval_s = 30
 outbox_dir = "../.outbox"
 
 [camera]
-# "picamera" on the Raspberry Pi; "folder" replays images from `folder`,
-# which runs this exact entry point on a PC.
+# "picamera" on the Raspberry Pi; on a PC "webcam" (OpenCV camera `index`,
+# see webcam.example.toml) or "folder", which replays images from `folder`.
 type = "picamera"
 width = 2304
 height = 1296

@@ -26,6 +26,7 @@ How to send shelf photos to the backend as if they came from real shelf devices.
 | Check that everything works, no backend needed | `mock-server` + emulator | [3](#3-quick-check-without-a-backend-2-minutes) |
 | Fill the real backend with image events | Backend + emulator | [4](#4-emulator-against-the-real-backend) |
 | Show several shelves at the defense | Backend + emulator (+ the physical shelf) | [5](#5-running-the-diploma-demo) |
+| Play a real shelf with a PC webcam, no Pi needed | Backend + emulator or `run` with a webcam | [6.4](#64-live-webcam-instead-of-photos) |
 | Run a real shelf | Raspberry Pi 5 + camera | [7](#7-the-real-raspberry-pi-shelf) |
 
 The emulator and the Raspberry Pi run **the same program**. The only difference is where pictures come from: files on disk or the camera. So everything the emulator sends is exactly what a real shelf will send.
@@ -276,6 +277,37 @@ loop = false                  # true = start over after the last photo
 
 Run only some shelves with `--only A2 A3`.
 
+### 6.4 Live webcam instead of photos
+
+No Raspberry Pi yet? A PC webcam can play the shelf camera. Put products in front of it, press Enter, change them, press Enter again: every press takes a fresh photo and sends it through exactly the same code as the device (registration, heartbeat, queue and retries, upload to `POST /devices/{id}/images`). The photos are also kept in `.captures/`.
+
+Install OpenCV once:
+
+```powershell
+.venv\Scripts\python -m pip install -r requirements-webcam.txt
+```
+
+Create a shelf with one stock record for it in the backend (section 4.2; the bundled scenario uses `shelf_id = 3`), then either:
+
+**a) Emulator console**, a ready scenario with one webcam shelf `W1`:
+
+```powershell
+python -m shelf_agent emulate --scenario scenarios/webcam/scenario.toml
+```
+
+A live window opens so you can aim the camera; it flashes green on every capture. Type `W1` or press Enter to take a photo, then `status`, `q` as usual. `--auto --interval 20` takes photos on a timer instead.
+
+Any scenario can switch to the webcam: `--webcam` (camera 0) or `--webcam 1` (a second, e.g. USB, camera) makes every shelf photograph instead of replaying its files. `--no-preview` hides the window. In your own scenario, give a shelf `webcam = 0` instead of `frames`; several shelves may share one camera.
+
+**b) The device program itself**: `run`, as on the Pi, only with `[camera] type = "webcam"`:
+
+```powershell
+copy config\webcam.example.toml config\webcam.toml
+python -m shelf_agent -v run --config config/webcam.toml
+```
+
+`[trigger] type = "manual"` takes a photo on Enter, like the shelf sensor firing; `"interval"` takes one every `interval_s` seconds.
+
 ## 7. The real Raspberry Pi shelf
 
 Full installation steps are in [README.md → Running on the Raspberry Pi 5](README.md#running-on-the-raspberry-pi-5). In short:
@@ -291,7 +323,7 @@ Full installation steps are in [README.md → Running on the Raspberry Pi 5](REA
 
 5. When the photos look right, switch `[trigger]` to `gpio` (shelf sensor) or `interval`, and install the systemd service.
 
-You can test a device config on a PC without a camera: set `[camera] type = "folder"` and `folder = "../scenarios/demo/images"`.
+You can test a device config on a PC without the Pi camera: set `[camera] type = "webcam"` (see 6.4), or `type = "folder"` and `folder = "../scenarios/demo/images"`.
 
 ## 8. Command reference
 
@@ -311,9 +343,11 @@ python -m shelf_agent run --config FILE
 | `--only A2 B1` | Emulate only these shelves |
 | `--no-register` | Don't create missing devices; stop with an error instead |
 | `--reset-outbox` | Throw away photos still queued from a previous run |
+| `--webcam [N]` | Every shelf photographs with webcam N (default 0) instead of replaying files |
+| `--no-preview` | Don't open the live webcam window |
 | `-v` / `-vv` | More logs / debug logs (put before the command: `python -m shelf_agent -v emulate ...`) |
 
-Exit codes: `0` ok, `2` configuration or registration problem, `3` backend unreachable or refused a request.
+Exit codes: `0` ok, `2` configuration or registration problem, `3` backend unreachable or refused a request, `4` webcam could not be opened.
 
 ## 9. Troubleshooting
 
@@ -333,6 +367,8 @@ Exit codes: `0` ok, `2` configuration or registration problem, `3` backend unrea
 | `-> REJECTED: ... HTTP 409 ... exactly one stock record on the shelf` | The shelf has no `ShelfStock`, or more than one | Create one stock record for the shelf (section 4.2, step 6) |
 | `-> REJECTED: ... HTTP 409 ... same or a later capture time was already processed` | A newer photo of this shelf is already in the database | Expected when re-sending old frames; send newer ones |
 | `-> queued ... HTTP 502 ... Vision service request failed` | Vision service is not running | Start it, then `flush` |
+| `camera: webcam needs OpenCV` | OpenCV not installed | `pip install -r requirements-webcam.txt` |
+| `camera: cannot open webcam 0 ...` | No camera, another app (Zoom, Teams, a browser) holds it, or Windows blocks it | Close the other app; Settings → Privacy & security → Camera → allow desktop apps; try `--webcam 1` |
 | `capturedAt` looks shifted by some hours | PC and backend use different time zones | Set `timestamp_zone = "utc"` in `[backend]` if the backend runs in UTC (e.g. in a container) |
 
 ## 10. FAQ

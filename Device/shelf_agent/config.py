@@ -87,7 +87,10 @@ class DeviceIdentity:
 
 @dataclass(frozen=True)
 class CameraConfig:
-    """Image source. ``type`` is ``picamera`` on the device, ``folder`` on a PC."""
+    """Image source: ``picamera`` on the device; ``webcam`` or ``folder`` on a PC.
+
+    ``index`` and ``preview`` apply to ``webcam`` only.
+    """
 
     type: str = "picamera"
     width: int = 2304
@@ -95,6 +98,8 @@ class CameraConfig:
     folder: Path | None = None
     loop: bool = False
     capture_dir: Path | None = None
+    index: int = 0
+    preview: bool = False
 
 
 @dataclass(frozen=True)
@@ -161,6 +166,8 @@ def load_device_config(
             folder=resolve_path(base_dir, folder) if folder else None,
             loop=bool(camera.get("loop", False)),
             capture_dir=resolve_path(base_dir, capture_dir),
+            index=int(camera.get("index", 0)),
+            preview=bool(camera.get("preview", False)),
         ),
         trigger=TriggerConfig(
             type=str(trigger.get("type", "interval")),

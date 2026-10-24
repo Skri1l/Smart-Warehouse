@@ -1,0 +1,40 @@
+# A full shelf device on a PC: the webcam replaces the Pi camera, everything
+# else (device lookup, heartbeat, outbox, retries) is the device code itself.
+# Copy to config/webcam.toml (gitignored) and edit.
+#
+#   pip install -r requirements-webcam.txt
+#   python -m shelf_agent run --config config/webcam.toml -v
+#
+# Relative paths are resolved against this file's directory.
+
+[backend]
+base_url = "http://127.0.0.1:8080"
+# Upload the photo; the backend recognises it and updates the shelf stock.
+protocol = "device-images"
+timeout_s = 210
+
+[device]
+# Must exist in the backend. Shelf 1 is the physical device.
+shelf_id = 3
+# Read from SW_DEVICE_KEY if set; this fallback keeps a PC test one command.
+device_key = "webcam-w1"
+# Create the device with POST /devices if the key is unknown.
+register = true
+heartbeat_interval_s = 30
+outbox_dir = "../.outbox/webcam"
+
+[camera]
+type = "webcam"
+# OpenCV camera index: 0 = default webcam.
+index = 0
+width = 1280
+height = 720
+# Live window to aim the camera; flashes green on every capture.
+preview = true
+capture_dir = "../.captures"
+
+[trigger]
+# "manual"   - press Enter in the console (like the shelf sensor firing)
+# "interval" - every `interval_s` seconds, unattended
+type = "manual"
+interval_s = 30

@@ -2,6 +2,7 @@
 
 A scenario is a TOML file next to an ``images/`` folder and a ``labels.csv``
 with the ground truth of every image (see ADR-0010 and Device/README.md).
+A shelf may take live pictures from a PC webcam instead (``webcam = 0``).
 """
 
 from __future__ import annotations
@@ -28,12 +29,27 @@ LABEL_COLUMNS = ("file", "sku", "count")
 
 @dataclass(frozen=True)
 class EmulatedShelf:
-    """One virtual shelf device."""
+    """One virtual shelf device.
+
+    ``webcam`` is the OpenCV camera index of a shelf that photographs a real
+    scene; such a shelf has no ``frames`` and never runs out.
+    """
 
     name: str
     identity: DeviceIdentity
     frames: tuple[Path, ...]
     loop: bool = False
+    webcam: int | None = None
+
+
+@dataclass(frozen=True)
+class WebcamSettings:
+    """``[webcam]`` table: shared by every shelf with ``webcam`` set."""
+
+    capture_dir: Path = Path(".captures")
+    width: int = 1280
+    height: int = 720
+    preview: bool = True
 
 
 @dataclass(frozen=True)
@@ -47,6 +63,7 @@ class Scenario:
     interval_s: float = 10.0
     heartbeat_interval_s: float = 30.0
     register_devices: bool = True
+    webcam: WebcamSettings = WebcamSettings()
 
     def shelf(self, name: str) -> EmulatedShelf:
         for shelf in self.shelves:
@@ -91,6 +108,7 @@ def load_scenario(path: Path) -> Scenario:
         interval_s=float(raw.get("interval_s", 10.0)),
         heartbeat_interval_s=float(raw.get("heartbeat_interval_s", 30.0)),
         register_devices=bool(raw.get("register_devices", True)),
+        webcam=_parse_webcam(raw.get("webcam", {}), base_dir),
     )
 
 
@@ -136,8 +154,28 @@ def _parse_shelf(item: Any, images_dir: Path) -> EmulatedShelf:
         )
     except KeyError as exc:
         raise ConfigError(f"shelf '{name}': {exc.args[0]} is required") from exc
+    webcam = item.get("webcam")
+    if webcam is not None and webcam is not False:
+        if "frames" in item:
+            raise ConfigError(f"shelf '{name}': use either 'webcam' or 'frames'")
+        # `webcam = true` means the default camera.
+        index = 0 if webcam is True else webcam
+        if not isinstance(index, int) or index < 0:
+            raise ConfigError(f"shelf '{name}': 'webcam' must be a camera index")
+        return EmulatedShelf(name, identity, (), webcam=index)
     frames = _expand_frames(name, item.get("frames"), images_dir)
     return EmulatedShelf(name, identity, frames, loop=bool(item.get("loop", False)))
+
+
+def _parse_webcam(table: Any, base_dir: Path) -> WebcamSettings:
+    if not isinstance(table, Mapping):
+        raise ConfigError("[webcam] must be a table")
+    return WebcamSettings(
+        capture_dir=resolve_path(base_dir, table.get("capture_dir", ".captures")),
+        width=int(table.get("width", 1280)),
+        height=int(table.get("height", 720)),
+        preview=bool(table.get("preview", True)),
+    )
 
 
 def _expand_frames(name: str, patterns: Any, images_dir: Path) -> tuple[Path, ...]:

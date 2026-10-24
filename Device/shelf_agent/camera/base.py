@@ -11,6 +11,10 @@ class SourceExhausted(Exception):
     """Raised by a finite source (a folder of test images) that has no frames left."""
 
 
+class CameraError(RuntimeError):
+    """The camera could not be opened or stopped delivering pictures."""
+
+
 class CameraSource(Protocol):
     """Produces shelf images. Implemented by the real camera and by the emulator."""
 
