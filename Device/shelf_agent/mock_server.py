@@ -48,8 +48,10 @@ DEVICE_IMAGES_ROUTE = re.compile(r"^/devices/(?P<id>\d+)/images/?$")
 IMAGE_EVENTS_ROUTE = re.compile(r"^/image-events/?$")
 UPLOAD_ROUTE = re.compile(r"^/api/v1/device-events/images/?$")
 MULTIPART_FIELDS = ("deviceId", "shelfId", "capturedAt")
-# The backend's VisionConfig read timeout.
-VISION_TIMEOUT_S = 180
+# A little over the backend's VisionConfig (5 s connect + 180 s read), so the
+# mock never gives up on Vision before the real backend would; still below
+# the 210 s the scenarios' timeout_s waits for the whole upload.
+VISION_TIMEOUT_S = 190
 
 
 @dataclass
