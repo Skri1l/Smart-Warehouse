@@ -2,3 +2,5 @@
 /Vision/yolov8x.pt
 # Model weights downloaded by Ultralytics/CLIP on first use (hundreds of MB).
 weights/
+# Logs and pid files of scripts/pipeline.sh.
+.pipeline/

@@ -4,6 +4,8 @@ How to send shelf photos to the backend as if they came from real shelf devices.
 
 [README.md](README.md) is the technical reference (architecture, protocol, configuration). This guide is the step-by-step version.
 
+On macOS or Linux, [scripts/pipeline.sh](../scripts/pipeline.sh) automates sections 4 and 6.4 (backend, database, seeding, Vision). See [Documentation/PIPELINE_RUN.md](../Documentation/PIPELINE_RUN.md).
+
 ## Contents
 
 1. [What you can do](#1-what-you-can-do)
