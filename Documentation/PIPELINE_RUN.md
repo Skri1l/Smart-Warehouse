@@ -18,7 +18,7 @@ The backend and PostgreSQL run in Docker. The Vision service runs directly on th
 - Docker. On a Mac without Docker Desktop:
 
   ```bash
-  brew install colima docker docker-compose
+  brew install colima docker docker-compose docker-buildx
   ```
 
   For `docker compose` to find the plugin, put this in `~/.docker/config.json`:
@@ -29,9 +29,38 @@ The backend and PostgreSQL run in Docker. The Vision service runs directly on th
 
 The script creates `Device/.venv` and `Vision/.venv` on the first run. Vision needs 1-2 GB of packages. On its first start it downloads about 500 MB of model weights into `weights/` and `Vision/`, both gitignored.
 
-## Run
+## Run everything with one command
 
 From the repository root:
+
+```bash
+scripts/pipeline.sh start          # live webcam -> shelf 3
+scripts/pipeline.sh start demo     # the 25 labelled Coca-Cola photos -> shelf 2
+```
+
+`start` runs `up` (below), picks the camera and prints a summary before the emulator starts: the Swagger links, and which shelf the photos are registered on, with its warehouse, rack, device and current stock:
+
+```text
+Smart Warehouse pipeline
+  Backend Swagger  http://127.0.0.1:8080/swagger-ui.html
+  Vision Swagger   http://127.0.0.1:8000/docs
+  Counts per photo http://127.0.0.1:8080/recognition-results
+  All devices      http://127.0.0.1:8080/devices
+
+Shelves of scenarios/webcam (webcam 0):
+  W1 -> shelf #3 A-3  (rack A, Main warehouse, Minsk)
+      device   'webcam-w1' = device #2 on shelf 3, ACTIVE
+      stock    COCA-COLA: quantity 1
+      quantity  http://127.0.0.1:8080/shelf-stock/shelf/3
+      history   http://127.0.0.1:8080/stock-movements/shelf/3
+      photos    http://127.0.0.1:8080/image-events/device/2
+```
+
+On the very first start the device is not in the database yet. The summary then says `not registered yet, the emulator registers it`, and the emulator's first line confirms the registration (`W1  device key 'webcam-w1' -> device id 2, shelf 3`).
+
+Then press **Enter** to take a photo, `status` for the queue, `q` to quit. The services keep running after `q`. `scripts/pipeline.sh webcam` or `demo` starts the emulator again with the same summary, and `scripts/pipeline.sh down` stops everything.
+
+## Run step by step
 
 ```bash
 scripts/pipeline.sh up
@@ -52,7 +81,8 @@ Then, in a second terminal, send photos:
 
 ```bash
 scripts/pipeline.sh demo          # the 25 labelled Coca-Cola photos, Enter = next photo
-scripts/pipeline.sh webcam 1      # live webcam 1 photographs shelf 3, Enter = take a photo
+scripts/pipeline.sh webcam        # live webcam photographs shelf 3, Enter = take a photo
+scripts/pipeline.sh webcam 1      # the same with camera 1
 ```
 
 Each Enter prints a line like this:
@@ -67,7 +97,11 @@ Arguments after `demo` / `webcam` go to the emulator, e.g. `scripts/pipeline.sh 
 
 ### Which webcam number
 
-OpenCV numbers cameras in its own order. On a Mac with an iPhone nearby, **camera 0 is often the iPhone (Continuity Camera) and delivers black frames**, while the built-in FaceTime camera is 1. If every photo counts 0, look at the photo in `Device/scenarios/webcam/.captures/`: an all-black image means the wrong camera. Try another number, or turn off Continuity Camera on the iPhone (Settings → General → AirPlay & Continuity). `WEBCAM_INDEX=1 scripts/pipeline.sh webcam` sets the number without an argument.
+OpenCV numbers cameras in its own order, and the order changes with the devices around. On a Mac with an iPhone nearby, **camera 0 is often the iPhone (Continuity Camera), which delivers black frames**. The built-in FaceTime camera is then 1; without the iPhone it is 0.
+
+So `start` and `webcam` without a number run [scripts/find_webcam.py](../scripts/find_webcam.py). It opens cameras 0, 1, 2… and takes the first one that delivers a picture rather than black, printing e.g. `camera 0: black`, `camera 1: picture`. To choose yourself, pass the number (`webcam 1`) or set `WEBCAM_INDEX=1`.
+
+If every photo counts 0, open the latest photo in `Device/scenarios/webcam/.captures/`. An all-black image means the wrong camera. A picture taken from your phone's angle means the iPhone was picked: pass the other number, or turn off Continuity Camera on the iPhone (Settings → General → AirPlay & Continuity).
 
 On macOS there is no live preview window: OpenCV can open windows only from the main thread, so the emulator turns the preview off and keeps every photo in `.captures/`.
 

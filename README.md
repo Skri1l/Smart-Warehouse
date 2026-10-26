@@ -97,7 +97,7 @@ Step-by-step usage (real backend, diploma demo, troubleshooting): [Device/USER_G
 
 ### Whole pipeline in one command
 
-On macOS or Linux, `scripts/pipeline.sh up` starts Vision, PostgreSQL and the backend and seeds the shelves. `scripts/pipeline.sh demo` (or `webcam 1`) then sends photos, and `scripts/pipeline.sh status` shows what the backend stored. Guide: [Documentation/PIPELINE_RUN.md](Documentation/PIPELINE_RUN.md).
+On macOS or Linux, `scripts/pipeline.sh start` starts Vision, PostgreSQL and the backend and seeds the shelves. It then prints the Swagger links and the shelf the photos go to, and starts the webcam emulator (`start demo` uses the labelled photos instead). `scripts/pipeline.sh status` shows what the backend stored. Guide: [Documentation/PIPELINE_RUN.md](Documentation/PIPELINE_RUN.md).
 
 ## Quality gates
 

@@ -3,9 +3,12 @@
 # emulator or webcam -> backend (Docker) -> Vision (host) -> PostgreSQL (Docker).
 # Step-by-step guide: Documentation/PIPELINE_RUN.md
 #
+#   scripts/pipeline.sh start       everything in one go: up, then the webcam on shelf 3
+#   scripts/pipeline.sh start demo  the same with the labelled photos on shelf 2
 #   scripts/pipeline.sh up          start Vision, PostgreSQL and the backend, seed shelves
 #   scripts/pipeline.sh demo        emulator with the labelled Coca-Cola photos (shelf 2)
-#   scripts/pipeline.sh webcam [N]  webcam N photographs shelf 3 (default WEBCAM_INDEX or 0)
+#   scripts/pipeline.sh webcam [N]  webcam N photographs shelf 3 (default: WEBCAM_INDEX,
+#                                   else the first camera that is not black)
 #   scripts/pipeline.sh status      devices, shelf stock and the last recognitions
 #   scripts/pipeline.sh mock        no Docker: mock backend + Vision on port 8080
 #   scripts/pipeline.sh seed        create the warehouse, shelves and stock again
@@ -13,7 +16,9 @@
 #   scripts/pipeline.sh down        stop everything, keep the database
 #   scripts/pipeline.sh reset       stop everything and DELETE the database
 #
-# Extra arguments of demo/webcam go to the emulator, e.g. `demo --auto --interval 10`.
+# Before the emulator starts, the shelf it sends to (warehouse, rack, shelf, device),
+# its stock and the Swagger links are printed. Extra arguments of start/demo/webcam
+# go to the emulator, e.g. `demo --auto --interval 10`.
 
 set -euo pipefail
 
@@ -90,6 +95,21 @@ backend_port_free() {
     ! curl -s -o /dev/null "$BACKEND_URL" 2>/dev/null
 }
 
+# shelf_info SCENARIO [WEBCAM_INDEX]
+shelf_info() {
+    python3 "$ROOT/scripts/pipeline_info.py" "$ROOT/Device/$1" \
+        --base-url "$BACKEND_URL" --vision-url "$VISION_URL" ${2:+--webcam "$2"}
+}
+
+find_webcam() {
+    if [[ -n ${WEBCAM_INDEX:-} ]]; then
+        echo "$WEBCAM_INDEX"
+        return
+    fi
+    say "Looking for a camera that delivers a picture (set WEBCAM_INDEX to skip)" >&2
+    "$DEVICE_PY" "$ROOT/scripts/find_webcam.py"
+}
+
 cmd_up() {
     start_docker
     [[ -f $ROOT/Backend/.env ]] || cp "$ROOT/Backend/.env.example" "$ROOT/Backend/.env"
@@ -100,12 +120,23 @@ cmd_up() {
         ! backend_port_free; then
         die "port 8080 is taken (a running mock-server?); stop it first"
     fi
-    say "Building and starting the backend"
-    compose up -d --build --no-deps backend
+    say "Building the backend image (the first build takes a few minutes)"
+    compose build -q backend
+    say "Starting the backend"
+    compose up -d --no-deps backend
     wait_for "$BACKEND_URL/v3/api-docs" backend 300
     cmd_seed
     say "Ready. Swagger UI: $BACKEND_URL/swagger-ui.html"
-    echo "    next: scripts/pipeline.sh demo   or   scripts/pipeline.sh webcam 1"
+}
+
+cmd_start() {
+    local mode=webcam
+    if [[ ${1:-} == demo || ${1:-} == webcam ]]; then
+        mode=$1
+        shift
+    fi
+    cmd_up
+    "cmd_$mode" "$@"
 }
 
 cmd_seed() {
@@ -114,18 +145,24 @@ cmd_seed() {
 
 cmd_demo() {
     device_venv
+    shelf_info scenarios/demo/scenario.toml
     cd "$ROOT/Device"
     exec "$DEVICE_PY" -m shelf_agent emulate --scenario scenarios/demo/scenario.toml \
         --base-url "$BACKEND_URL" "$@"
 }
 
 cmd_webcam() {
-    local index=${WEBCAM_INDEX:-0}
+    device_venv
+    local index
     if [[ ${1:-} =~ ^[0-9]+$ ]]; then
         index=$1
         shift
+    else
+        index=$(find_webcam) || die "no working camera found; pass its number: webcam N"
     fi
-    device_venv
+    shelf_info scenarios/webcam/scenario.toml "$index"
+    say "Webcam $index -> shelf 3. Enter = take a photo, status, q = quit." \
+        "Photos: Device/scenarios/webcam/.captures/"
     cd "$ROOT/Device"
     exec "$DEVICE_PY" -m shelf_agent emulate --scenario scenarios/webcam/scenario.toml \
         --webcam "$index" --base-url "$BACKEND_URL" "$@"
@@ -182,13 +219,13 @@ cmd_reset() {
 }
 
 case ${1:-} in
-    up | seed | demo | webcam | mock | status | logs | down | reset)
+    start | up | seed | demo | webcam | mock | status | logs | down | reset)
         command=$1
         shift
         "cmd_$command" "$@"
         ;;
     *)
-        sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+        sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
         exit 1
         ;;
 esac
