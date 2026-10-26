@@ -9,7 +9,9 @@ Mirrors what the backend publishes in Swagger (``/v3/api-docs``) for devices:
   the mock stores the image but does not recognise it, so ``quantity`` is null.
   Like the backend it answers ``502`` when recognition fails (simulated with
   ``vision_failures``) and ``409`` for an inactive device or a frame captured
-  no later than the shelf's last processed one
+  no later than the shelf's last processed one. With ``vision_url`` set, the
+  image is forwarded to the Vision service (``POST /recognize``) like the
+  backend does, and its count comes back as ``quantity``
 
 plus the RFC-0001 multipart upload (``POST /api/v1/device-events/images``),
 which the backend does not have yet. Unknown devices get ``404`` with the
@@ -23,6 +25,7 @@ import logging
 import re
 import sys
 import threading
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from email.message import EmailMessage
@@ -32,6 +35,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlsplit
+from urllib.request import Request, urlopen
 
 from shelf_agent.transport.client import DEVICE_KEY_HEADER
 
@@ -44,6 +48,8 @@ DEVICE_IMAGES_ROUTE = re.compile(r"^/devices/(?P<id>\d+)/images/?$")
 IMAGE_EVENTS_ROUTE = re.compile(r"^/image-events/?$")
 UPLOAD_ROUTE = re.compile(r"^/api/v1/device-events/images/?$")
 MULTIPART_FIELDS = ("deviceId", "shelfId", "capturedAt")
+# The backend's VisionConfig read timeout.
+VISION_TIMEOUT_S = 180
 
 
 @dataclass
@@ -104,7 +110,10 @@ class MockBackend(ThreadingHTTPServer):
         # The next N device-images uploads fail as if the Vision service were
         # down (backend: 502 "Vision service request failed").
         self.vision_failures = 0
+        # Vision service base URL; ``None`` leaves ``quantity`` null.
+        self.vision_url: str | None = None
         self._last_processed: dict[int, datetime] = {}
+        self._quantities: dict[int, int] = {}
         self._lock = threading.Lock()
 
     @property
@@ -152,6 +161,44 @@ class MockBackend(ThreadingHTTPServer):
                 return False
             self._last_processed[shelf_id] = captured_at
             return True
+
+    def recognize(self, filename: str, content_type: str, data: bytes) -> int:
+        """Count the products in an image with the Vision service.
+
+        Raises:
+            OSError: Vision is unreachable, timed out or answered an error.
+            ValueError: Vision answered without a numeric ``count``.
+        """
+        assert self.vision_url is not None
+        boundary = uuid.uuid4().hex
+        safe_name = filename.replace('"', "")
+        body = (
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="file"; filename="{safe_name}"\r\n'
+                f"Content-Type: {content_type}\r\n\r\n"
+            ).encode()
+            + data
+            + f"\r\n--{boundary}--\r\n".encode()
+        )
+        request = Request(
+            f"{self.vision_url}/recognize",
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+        with urlopen(request, timeout=VISION_TIMEOUT_S) as response:
+            count = json.load(response).get("count")
+        if not isinstance(count, int):
+            raise ValueError(f"Vision answered without a count: {count!r}")
+        return count
+
+    def set_quantity(self, shelf_id: int, quantity: int) -> int | None:
+        """Store the shelf's recognised quantity; returns the previous one."""
+        with self._lock:
+            previous = self._quantities.get(shelf_id)
+            self._quantities[shelf_id] = quantity
+            return previous
 
     def add_event(self, **fields: Any) -> ReceivedEvent:
         with self._lock:
@@ -261,10 +308,22 @@ class _Handler(BaseHTTPRequestHandler):
         _, image = self._parse_multipart(body, file_field="file")
         if image is None:
             raise ValueError("missing field(s): ['file']")
+        data = image.get_payload(decode=True)
+        assert isinstance(data, bytes)
         # Same order as the backend: recognition runs before the stock checks.
         if self.server.take_vision_failure():
             self._error(502, "Vision service request failed")
             return
+        quantity: int | None = None
+        if self.server.vision_url is not None:
+            try:
+                quantity = self.server.recognize(
+                    image.get_filename() or "image.jpg", image.get_content_type(), data
+                )
+            except (OSError, ValueError) as exc:
+                logger.warning("Vision request failed: %s", exc)
+                self._error(502, "Vision service request failed")
+                return
         if device.status != "ACTIVE":
             self._error(409, "Device is inactive")
             return
@@ -274,8 +333,6 @@ class _Handler(BaseHTTPRequestHandler):
                 "An image with the same or a later capture time was already processed",
             )
             return
-        data = image.get_payload(decode=True)
-        assert isinstance(data, bytes)
         path = self._save_image(device_id, image.get_filename(), data)
         event = self.server.add_event(
             device_id=device.id,
@@ -286,15 +343,26 @@ class _Handler(BaseHTTPRequestHandler):
             device_key=self.headers.get(DEVICE_KEY_HEADER, ""),
             size=len(data),
         )
+        previous: int | None = None
+        delta: int | None = None
+        if quantity is not None:
+            previous = self.server.set_quantity(device.shelf_id, quantity)
+            delta = None if previous is None else quantity - previous
+            logger.info(
+                "shelf %d: Vision counted %d (was %s)",
+                device.shelf_id,
+                quantity,
+                "unknown" if previous is None else previous,
+            )
         self._reply(
             200,
             {
                 "imageEventId": event.id,
                 "recognitionResultId": None,
                 "shelfId": device.shelf_id,
-                "previousQuantity": None,
-                "quantity": None,
-                "quantityDelta": None,
+                "previousQuantity": previous,
+                "quantity": quantity,
+                "quantityDelta": delta,
             },
         )
 

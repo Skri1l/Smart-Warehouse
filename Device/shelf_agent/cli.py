@@ -115,6 +115,12 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="N",
         help="answer the first N device-images uploads with 502 (Vision down)",
     )
+    mock.add_argument(
+        "--vision-url",
+        metavar="URL",
+        help="count device-images uploads with this Vision service, "
+        "e.g. http://127.0.0.1:8000",
+    )
     mock.set_defaults(handler=_cmd_mock_server)
     return parser
 
@@ -178,6 +184,8 @@ def _cmd_mock_server(args: argparse.Namespace) -> int:
     try:
         server = MockBackend((args.host, args.port), args.out)
         server.vision_failures = args.vision_failures
+        if args.vision_url:
+            server.vision_url = args.vision_url.rstrip("/")
     except OSError as exc:
         logger.error(
             "cannot listen on %s:%s (%s). Is the backend or another mock already "
@@ -190,6 +198,8 @@ def _cmd_mock_server(args: argparse.Namespace) -> int:
     logger.warning(
         "mock backend on %s, saving images to %s", server.base_url, args.out.resolve()
     )
+    if server.vision_url:
+        logger.warning("counting device-images uploads with %s", server.vision_url)
     try:
         server.serve_forever()
     finally:

@@ -328,7 +328,7 @@ You can test a device config on a PC without the Pi camera: set `[camera] type =
 ## 8. Command reference
 
 ```text
-python -m shelf_agent mock-server [--host 127.0.0.1] [--port 8080] [--out received]
+python -m shelf_agent mock-server [--host 127.0.0.1] [--port 8080] [--out received] [--vision-url URL]
 python -m shelf_agent emulate --scenario FILE [options]
 python -m shelf_agent run --config FILE
 ```
@@ -346,6 +346,8 @@ python -m shelf_agent run --config FILE
 | `--webcam [N]` | Every shelf photographs with webcam N (default 0) instead of replaying files |
 | `--no-preview` | Don't open the live webcam window |
 | `-v` / `-vv` | More logs / debug logs (put before the command: `python -m shelf_agent -v emulate ...`) |
+
+`mock-server --vision-url http://127.0.0.1:8000` sends every uploaded photo to a running Vision service and answers with its count, so the emulator shows `recognised xN` without the backend.
 
 Exit codes: `0` ok, `2` configuration or registration problem, `3` backend unreachable or refused a request, `4` webcam could not be opened.
 
