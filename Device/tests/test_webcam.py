@@ -191,6 +191,38 @@ def test_missing_opencv_is_a_camera_error(
         WebcamSource(0, tmp_path)
 
 
+def test_preview_is_off_on_macos(
+    fake_cv2: types.SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "darwin")
+    source = WebcamSource(0, tmp_path / "captures", preview=True, timeout_s=2)
+    try:
+        source.capture()
+    finally:
+        source.close()
+
+    assert fake_cv2.shown == []
+
+
+def test_failing_preview_does_not_stop_the_captures(
+    fake_cv2: types.SimpleNamespace, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    def broken_imshow(title: str, image: FakeImage) -> None:
+        raise RuntimeError("cannot open display")
+
+    fake_cv2.imshow = broken_imshow
+    source = WebcamSource(0, tmp_path / "captures", preview=True, timeout_s=2)
+    try:
+        first = source.capture()
+        second = source.capture()
+    finally:
+        source.close()
+
+    assert first.data != second.data
+
+
 def test_webcam_example_config_builds_the_device_camera(
     fake_cv2: types.SimpleNamespace,
 ) -> None:

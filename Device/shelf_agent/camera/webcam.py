@@ -64,6 +64,15 @@ class WebcamSource:
         self._index = index
         self._capture_dir = capture_dir
         self._capture_dir.mkdir(parents=True, exist_ok=True)
+        # Cocoa lets only the main thread open windows, and the preview is
+        # drawn from the reader thread, so on macOS it can never work.
+        if preview and sys.platform == "darwin":
+            logger.warning(
+                "webcam %d: no live preview on macOS; photos are kept in %s",
+                index,
+                capture_dir,
+            )
+            preview = False
         self._preview = preview
         self._title = title or f"webcam {index}"
         self._jpeg_quality = jpeg_quality
@@ -178,7 +187,13 @@ class WebcamSource:
                 self._sequence += 1
                 self._cond.notify_all()
             if self._preview:
-                self._show(image)
+                try:
+                    self._show(image)
+                except Exception as exc:  # noqa: BLE001 - any GUI failure
+                    # No display, or a GUI the reader thread may not use:
+                    # keep capturing without the window.
+                    logger.warning("webcam %d: preview disabled: %s", self._index, exc)
+                    self._preview = False
 
     def _show(self, image: Any) -> None:
         cv2 = self._cv2
