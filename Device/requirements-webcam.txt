@@ -1,0 +1,5 @@
+# Optional: live PC webcam for the emulator and `camera.type = "webcam"`.
+# Not needed on the Raspberry Pi (picamera2) or for the folder emulator.
+# OpenCV is Apache-2.0, already used by Vision (see ../THIRD_PARTY_NOTICES.md).
+-r requirements.txt
+opencv-python==4.10.0.84

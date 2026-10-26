@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import threading
 from collections.abc import Callable, Iterator
 from dataclasses import replace
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import pytest
@@ -273,4 +275,75 @@ def test_device_images_rejects_inactive_device(
         client.upload_image(make_frame())
 
     assert (failed.value.status_code, failed.value.retryable) == (409, False)
+    assert server.events == []
+
+
+class FakeVision(ThreadingHTTPServer):
+    """``POST /recognize`` answering ``counts`` in turn and keeping the uploads."""
+
+    def __init__(self, counts: list[int]) -> None:
+        super().__init__(("127.0.0.1", 0), _FakeVisionHandler)
+        self.counts = counts
+        self.uploads: list[bytes] = []
+
+    @property
+    def base_url(self) -> str:
+        host, port = self.server_address[:2]
+        return f"http://{host!s}:{port}"
+
+
+class _FakeVisionHandler(BaseHTTPRequestHandler):
+    server: FakeVision
+
+    def do_POST(self) -> None:
+        body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        self.server.uploads.append(body)
+        payload = json.dumps({"count": self.server.counts.pop(0)}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def log_message(self, format: str, *args: object) -> None:
+        pass
+
+
+@pytest.fixture
+def vision() -> Iterator[FakeVision]:
+    fake = FakeVision([16, 15])
+    thread = threading.Thread(target=fake.serve_forever, daemon=True)
+    thread.start()
+    yield fake
+    fake.shutdown()
+    fake.server_close()
+
+
+def test_device_images_returns_vision_count_as_quantity(
+    scenario: Scenario, server: MockBackend, vision: FakeVision
+) -> None:
+    server.vision_url = vision.base_url
+    device_images = replace(scenario.backend, protocol=PROTOCOL_DEVICE_IMAGES)
+    emulator = connected(replace(scenario, backend=device_images))
+
+    first = emulator.step("A1")
+    second = emulator.step("A1")
+
+    assert first is not None and first.receipt is not None
+    assert second is not None and second.receipt is not None
+    assert (first.receipt.quantity, second.receipt.quantity) == (16, 15)
+    assert b"a_01.jpg" in vision.uploads[0] and b"a_02.jpg" in vision.uploads[1]
+    assert server.set_quantity(11, 0) == 15
+
+
+def test_device_images_unreachable_vision_is_retryable_502(
+    server: MockBackend, make_frame: Callable[..., Frame]
+) -> None:
+    server.vision_url = "http://127.0.0.1:9"  # nothing listens on the discard port
+    client = device_images_client(server)
+
+    with pytest.raises(BackendError) as failed:
+        client.upload_image(make_frame())
+
+    assert (failed.value.status_code, failed.value.retryable) == (502, True)
     assert server.events == []

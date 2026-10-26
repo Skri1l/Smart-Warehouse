@@ -1,7 +1,7 @@
 """Wiring for a real shelf device: config -> camera, trigger, client, agent.
 
 Hardware modules are imported only for the ``type`` that is configured, so the
-same entry point runs on a PC with ``camera.type = "folder"``.
+same entry point runs on a PC with ``camera.type = "webcam"`` or ``"folder"``.
 """
 
 from __future__ import annotations
@@ -33,6 +33,18 @@ def build_camera(config: CameraConfig) -> CameraSource:
         if config.capture_dir is None:
             raise ConfigError("[camera] capture_dir is required for picamera")
         return Picamera2Source(config.width, config.height, config.capture_dir)
+    if config.type == "webcam":
+        from shelf_agent.camera.webcam import WebcamSource
+
+        if config.capture_dir is None:
+            raise ConfigError("[camera] capture_dir is required for webcam")
+        return WebcamSource(
+            config.index,
+            config.capture_dir,
+            width=config.width,
+            height=config.height,
+            preview=config.preview,
+        )
     if config.type == "folder":
         if config.folder is None or not config.folder.is_dir():
             raise ConfigError(f"[camera] folder does not exist: {config.folder}")

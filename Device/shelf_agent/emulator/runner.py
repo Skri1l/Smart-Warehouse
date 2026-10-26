@@ -3,18 +3,21 @@
 from __future__ import annotations
 
 import threading
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 import httpx
 
 from shelf_agent.agent import Delivery, ShelfAgent, TickResult, run_heartbeat
-from shelf_agent.camera.base import SourceExhausted
+from shelf_agent.camera.base import CameraError, CameraSource, SourceExhausted
 from shelf_agent.camera.folder import FolderSource
-from shelf_agent.emulator.scenario import Scenario
+from shelf_agent.emulator.scenario import EmulatedShelf, Scenario, WebcamSettings
 from shelf_agent.registration import connect
 from shelf_agent.transport.client import BackendClient
 from shelf_agent.transport.outbox import Outbox
 from shelf_agent.trigger.interval import IntervalTrigger
+
+# Opens the webcam shared by the shelves with one index; injectable for tests.
+WebcamFactory = Callable[[int, WebcamSettings, Sequence[str]], CameraSource]
 
 HELP = """\
   Enter        next frame from the next shelf (round-robin)
@@ -37,6 +40,7 @@ class Emulator:
         scenario: Loaded scenario.
         transport: Custom httpx transport for every client (tests).
         output: Line printer for the interactive console.
+        webcam_factory: Opens a webcam; :class:`WebcamSource` by default.
     """
 
     def __init__(
@@ -45,14 +49,22 @@ class Emulator:
         *,
         transport: httpx.BaseTransport | None = None,
         output: Callable[[str], None] = print,
+        webcam_factory: WebcamFactory | None = None,
     ) -> None:
         self._scenario = scenario
         self._output = output
-        self._sources: dict[str, FolderSource] = {}
+        self._sources: dict[str, CameraSource] = {}
         self._clients: dict[str, BackendClient] = {}
         self._agents: dict[str, ShelfAgent] = {}
+        webcams = _open_webcams(scenario, webcam_factory or _open_webcam)
         for shelf in scenario.shelves:
-            source = FolderSource(shelf.frames, labels=scenario.labels, loop=shelf.loop)
+            source: CameraSource
+            if shelf.webcam is not None:
+                source = webcams[shelf.webcam]
+            else:
+                source = FolderSource(
+                    shelf.frames, labels=scenario.labels, loop=shelf.loop
+                )
             client = BackendClient(
                 scenario.backend, shelf.identity, transport=transport
             )
@@ -133,7 +145,12 @@ class Emulator:
         lines = []
         for shelf in self._scenario.shelves:
             source = self._sources[shelf.name]
-            left = "loop" if shelf.loop else f"{source.remaining}/{source.total} left"
+            if not isinstance(source, FolderSource):
+                left = f"webcam {shelf.webcam}"
+            elif shelf.loop:
+                left = "loop"
+            else:
+                left = f"{source.remaining}/{source.total} left"
             identity = self._clients[shelf.name].identity
             lines.append(
                 f"  {shelf.name:<8} device={identity.device_id} "
@@ -182,6 +199,13 @@ class Emulator:
             agent.close()
 
     def _handle(self, command: str) -> bool:
+        try:
+            return self._dispatch(command)
+        except CameraError as exc:
+            self._output(f"  camera error: {exc}")
+            return True
+
+    def _dispatch(self, command: str) -> bool:
         lowered = command.lower()
         if lowered in {"q", "quit", "exit"}:
             return False
@@ -212,12 +236,45 @@ class Emulator:
         return True
 
     def _has_frames(self, name: str) -> bool:
-        return self._scenario.shelf(name).loop or self._sources[name].remaining > 0
+        source = self._sources[name]
+        if not isinstance(source, FolderSource):
+            return True
+        return self._scenario.shelf(name).loop or source.remaining > 0
 
     def _heartbeat(self, stop: threading.Event) -> _HeartbeatThread:
         return _HeartbeatThread(
             list(self._agents.values()), self._scenario.heartbeat_interval_s, stop
         )
+
+
+def _open_webcams(
+    scenario: Scenario, factory: WebcamFactory
+) -> dict[int, CameraSource]:
+    """Open each webcam once: shelves on the same index share the camera,
+    and each still sends its own frames as its own device."""
+    by_index: dict[int, list[EmulatedShelf]] = {}
+    for shelf in scenario.shelves:
+        if shelf.webcam is not None:
+            by_index.setdefault(shelf.webcam, []).append(shelf)
+    return {
+        index: factory(index, scenario.webcam, [s.name for s in shelves])
+        for index, shelves in by_index.items()
+    }
+
+
+def _open_webcam(
+    index: int, settings: WebcamSettings, shelf_names: Sequence[str]
+) -> CameraSource:
+    from shelf_agent.camera.webcam import WebcamSource
+
+    return WebcamSource(
+        index,
+        settings.capture_dir,
+        width=settings.width,
+        height=settings.height,
+        preview=settings.preview,
+        title=f"webcam {index}: shelf {', '.join(shelf_names)}",
+    )
 
 
 def describe(name: str, result: TickResult) -> str:

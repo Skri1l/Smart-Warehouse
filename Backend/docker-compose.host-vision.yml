@@ -1,0 +1,15 @@
+# Backend and PostgreSQL in Docker, the Vision service on the host.
+# Saves the 4-5 GB Vision image and lets Vision use the Mac GPU (MPS):
+#
+#   (cd ../Vision && .venv/bin/python -m uvicorn api:app --port 8000)
+#   docker compose -f docker-compose.yml -f docker-compose.host-vision.yml \
+#     up -d --build --no-deps postgres backend
+#
+# --no-deps keeps compose from building the vision service the backend
+# depends on. scripts/pipeline.sh does all of this.
+services:
+  backend:
+    environment:
+      VISION_BASE_URL: http://host.docker.internal:8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

@@ -20,8 +20,11 @@ jobs:
       - name: Check for broken links
         uses: lycheeverse/lychee-action@v2
         with:
+          # Local service URLs (Swagger on 127.0.0.1:8080, Vision on :8000)
+          # are documentation, not links CI can reach.
           args: >
             --no-progress
+            --exclude-loopback
             --exclude "http://localhost*"
             --exclude "https://localhost*"
             '**/*.md'

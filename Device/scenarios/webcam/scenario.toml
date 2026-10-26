@@ -1,0 +1,38 @@
+# Live webcam: a PC camera plays the shelf camera, so the whole chain runs
+# without the Raspberry Pi. Put products in front of the webcam, press Enter,
+# change them, press Enter again.
+#
+#   pip install -r requirements-webcam.txt
+#   python -m shelf_agent emulate --scenario scenarios/webcam/scenario.toml
+#
+# Every photo goes through the same ShelfAgent, outbox and HTTP client as on
+# the device. With "device-images" the photo itself is uploaded and the backend
+# turns the Vision count into a stock update.
+#
+# The shelf (shelf_id) must exist in the backend; the device is registered by
+# device_key on first start (disable with --no-register).
+
+interval_s = 15
+heartbeat_interval_s = 30
+
+[backend]
+base_url = "http://127.0.0.1:8080"
+protocol = "device-images"
+# Recognition takes several seconds; the backend waits up to 180 s for Vision.
+timeout_s = 210
+
+[webcam]
+# Photos are kept here as well, like [camera] capture_dir on the Pi.
+capture_dir = ".captures"
+width = 1280
+height = 720
+# Live window to aim the camera; it flashes green on every capture.
+preview = true
+
+# Shelf 1 is the physical device and 2 the demo emulator, so this one uses 3.
+[[shelves]]
+name = "W1"
+shelf_id = 3
+device_key = "webcam-w1"
+# OpenCV camera index: 0 = default webcam, 1 = a second (USB) camera.
+webcam = 0

@@ -136,3 +136,52 @@ def test_fails_when_two_shelves_share_a_device_key(scenario_file: Path) -> None:
 
     with pytest.raises(ConfigError, match="duplicate shelf device_key"):
         load_scenario(scenario_file)
+
+
+WEBCAM_SHELVES = """
+[webcam]
+width = 640
+preview = false
+
+[[shelves]]
+name = "W1"
+shelf_id = 5
+webcam = 1
+
+[[shelves]]
+name = "W2"
+shelf_id = 6
+webcam = true
+"""
+
+
+def test_webcam_shelves_have_a_camera_index_instead_of_frames(
+    scenario_file: Path,
+) -> None:
+    scenario_file.write_text(SCENARIO + WEBCAM_SHELVES, encoding="utf-8")
+
+    scenario = load_scenario(scenario_file)
+
+    assert (scenario.shelf("W1").webcam, scenario.shelf("W1").frames) == (1, ())
+    assert scenario.shelf("W2").webcam == 0
+    assert scenario.shelf("A1").webcam is None
+    assert (scenario.webcam.width, scenario.webcam.height) == (640, 720)
+    assert scenario.webcam.preview is False
+    assert scenario.webcam.capture_dir == scenario_file.parent / ".captures"
+
+
+def test_shelf_cannot_have_both_webcam_and_frames(scenario_file: Path) -> None:
+    scenario_file.write_text(
+        SCENARIO.replace('frames = ["a_*.jpg"]', 'frames = ["a_*.jpg"]\nwebcam = 0'),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ConfigError, match="either 'webcam' or 'frames'"):
+        load_scenario(scenario_file)
+
+
+def test_bundled_webcam_scenario_is_valid() -> None:
+    scenario = load_scenario(DEVICE_ROOT / "scenarios" / "webcam" / "scenario.toml")
+
+    assert [(s.name, s.webcam) for s in scenario.shelves] == [("W1", 0)]
+    assert scenario.backend.protocol == "device-images"

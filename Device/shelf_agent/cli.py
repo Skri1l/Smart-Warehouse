@@ -15,6 +15,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from shelf_agent import __version__
+from shelf_agent.camera.base import CameraError
 from shelf_agent.config import ConfigError, load_device_config
 from shelf_agent.registration import RegistrationError
 from shelf_agent.transport.client import BackendError
@@ -38,6 +39,9 @@ def main(argv: list[str] | None = None) -> int:
     except BackendError as exc:
         logger.error("backend: %s", exc)
         return 3
+    except CameraError as exc:
+        logger.error("camera: %s", exc)
+        return 4
     except KeyboardInterrupt:
         return 130
 
@@ -56,7 +60,9 @@ def _build_parser() -> argparse.ArgumentParser:
     run.add_argument("--config", type=Path, required=True, help="device TOML config")
     run.set_defaults(handler=_cmd_run)
 
-    emulate = commands.add_parser("emulate", help="emulate shelves from test images")
+    emulate = commands.add_parser(
+        "emulate", help="emulate shelves from test images or a webcam"
+    )
     emulate.add_argument("--scenario", type=Path, required=True, help="scenario TOML")
     emulate.add_argument(
         "--auto",
@@ -69,6 +75,20 @@ def _build_parser() -> argparse.ArgumentParser:
     emulate.add_argument("--base-url", help="override [backend] base_url")
     emulate.add_argument(
         "--only", nargs="+", metavar="SHELF", help="emulate only these shelves"
+    )
+    emulate.add_argument(
+        "--webcam",
+        type=int,
+        nargs="?",
+        const=0,
+        metavar="INDEX",
+        help="every shelf photographs with this webcam (default 0) instead of "
+        "replaying its frames",
+    )
+    emulate.add_argument(
+        "--no-preview",
+        action="store_true",
+        help="do not open the live webcam window",
     )
     emulate.add_argument(
         "--no-register",
@@ -94,6 +114,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default=0,
         metavar="N",
         help="answer the first N device-images uploads with 502 (Vision down)",
+    )
+    mock.add_argument(
+        "--vision-url",
+        metavar="URL",
+        help="count device-images uploads with this Vision service, "
+        "e.g. http://127.0.0.1:8000",
     )
     mock.set_defaults(handler=_cmd_mock_server)
     return parser
@@ -125,6 +151,14 @@ def _cmd_emulate(args: argparse.Namespace) -> int:
             raise ConfigError(f"unknown shelf(s): {sorted(unknown)}")
         shelves = tuple(s for s in scenario.shelves if s.name in args.only)
         scenario = replace(scenario, shelves=shelves)
+    if args.webcam is not None:
+        shelves = tuple(
+            replace(s, frames=(), loop=False, webcam=args.webcam)
+            for s in scenario.shelves
+        )
+        scenario = replace(scenario, shelves=shelves)
+    if args.no_preview:
+        scenario = replace(scenario, webcam=replace(scenario.webcam, preview=False))
     if args.no_register:
         scenario = replace(scenario, register_devices=False)
     if args.reset_outbox:
@@ -150,6 +184,8 @@ def _cmd_mock_server(args: argparse.Namespace) -> int:
     try:
         server = MockBackend((args.host, args.port), args.out)
         server.vision_failures = args.vision_failures
+        if args.vision_url:
+            server.vision_url = args.vision_url.rstrip("/")
     except OSError as exc:
         logger.error(
             "cannot listen on %s:%s (%s). Is the backend or another mock already "
@@ -162,6 +198,8 @@ def _cmd_mock_server(args: argparse.Namespace) -> int:
     logger.warning(
         "mock backend on %s, saving images to %s", server.base_url, args.out.resolve()
     )
+    if server.vision_url:
+        logger.warning("counting device-images uploads with %s", server.vision_url)
     try:
         server.serve_forever()
     finally:
