@@ -175,7 +175,8 @@ class MockBackend(ThreadingHTTPServer):
         body = (
             (
                 f"--{boundary}\r\n"
-                f'Content-Disposition: form-data; name="file"; filename="{safe_name}"\r\n'
+                'Content-Disposition: form-data; name="file"; '
+                f'filename="{safe_name}"\r\n'
                 f"Content-Type: {content_type}\r\n\r\n"
             ).encode()
             + data
