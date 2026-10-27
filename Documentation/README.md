@@ -46,6 +46,12 @@ All documentation is Markdown, lives in this repository, and changes go through 
 
 Rule of thumb: an **RFC** explores a problem and can change while in review; an **ADR** is the short, final, immutable record of the decision (often the accepted outcome of an RFC, or a smaller standalone choice). Routine day-to-day implementation choices need neither — a PR description is enough.
 
+## Analysis
+
+| Document | Purpose |
+|---|---|
+| [analysis/VISION_CONFIDENCE.md](analysis/VISION_CONFIDENCE.md) | Whether detection confidence can tell a bad photo from a good one and trigger a retake |
+
 ## Operations
 
 Runbooks (what to do when a specific alert/symptom happens) live next to the service they operate, not here: [Backend/runbooks/](../Backend/runbooks/). `Frontend/runbooks/` follows once the frontend is a deployed, operated service.
