@@ -16,6 +16,7 @@ class ProductsViewModel(QObject):
     productsChanged = Signal(list)
     lowStockChanged = Signal(list)
     errorOccurred = Signal(str)
+    created = Signal(str)
 
     def __init__(self, api: WarehouseApi, session: Session) -> None:
         super().__init__()
@@ -24,11 +25,23 @@ class ProductsViewModel(QObject):
         self._products: list[Product] = []
         self._query = ""
         self._pending: Any = None
+        self._create_pending: Any = None
 
     def refresh(self) -> None:
         self._pending = run_in_background(
             lambda: self._api.list_products(self._session),
             self._on_loaded,
+            self.errorOccurred.emit,
+        )
+
+    def create_product(self, sku: str, name: str, description: str) -> None:
+        def done(_: object) -> None:
+            self.created.emit(f"Product '{sku}' created.")
+            self.refresh()
+
+        self._create_pending = run_in_background(
+            lambda: self._api.create_product(self._session, sku, name, description),
+            done,
             self.errorOccurred.emit,
         )
 

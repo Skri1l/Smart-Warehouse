@@ -13,6 +13,8 @@ from app.ui.login_dialog import LoginDialog
 from app.ui.main_window import MainWindow
 from app.viewmodels.login_viewmodel import LoginViewModel
 from app.viewmodels.products_viewmodel import ProductsViewModel
+from app.viewmodels.register_viewmodel import RegisterViewModel
+from app.viewmodels.storage_viewmodel import StorageViewModel
 
 
 def main() -> int:
@@ -33,13 +35,16 @@ def main() -> int:
     app.setApplicationName("Smart Warehouse")
     api = create_api(args.api_mode, args.api_url)
 
-    dialog = LoginDialog(LoginViewModel(api))
+    dialog = LoginDialog(LoginViewModel(api), RegisterViewModel(api))
     if isinstance(api, MockApiClient):
         dialog.setWindowTitle(dialog.windowTitle() + " [mock data]")
     if dialog.exec() != QDialog.DialogCode.Accepted or dialog.session is None:
         return 0
 
-    window = MainWindow(dialog.session, ProductsViewModel(api, dialog.session))
+    session = dialog.session
+    window = MainWindow(
+        session, ProductsViewModel(api, session), StorageViewModel(api, session)
+    )
     window.show()
     return app.exec()
 
