@@ -40,6 +40,16 @@ Smart-Warehouse/
 | Operational runbooks | [Backend/runbooks/](Backend/runbooks/README.md) |
 | Shelf device hardware (demo shelf, camera, wiring) | [Documentation/hardware/SHELF_DEVICE.md](Documentation/hardware/SHELF_DEVICE.md) |
 
+## Database
+
+Smart Warehouse uses PostgreSQL 17 to store warehouse inventory, stock movements,
+recognition results, and procurement data. Liquibase applies database migrations
+when the backend starts.
+
+- [Database schema and ER diagrams](Documentation/database/Database-schema.md)
+- [Liquibase changelog](Backend/src/main/resources/db.changelog-master.yaml)
+- [Local setup instructions](#getting-started)
+
 ## Getting started
 
 ### Prerequisites
