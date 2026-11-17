@@ -118,4 +118,4 @@ public record ProductResponse(
 
 ## Frontend consumption
 
-The PySide6 desktop client must not hand-write request/response shapes from memory — hand-maintain a typed client (`app/api/client.py`, see [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md)) against the published `/v3/api-docs` schema, and re-check it whenever the backend OpenAPI spec changes. All network calls happen off the Qt UI thread (see CODE_STYLE_FRONTEND.md's threading rule) so a slow API response never freezes the window.
+The browser UI must not hand-write request/response shapes from memory — all REST calls live in `Frontend/src/api/` (see [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md)), written against the published `/v3/api-docs` schema and re-checked whenever the backend OpenAPI spec changes. UI and API are served from the same origin in production ([ADR-0011](adr/0011-hosted-server-deployment.md)), so the frontend always uses relative paths (`/api/v1/...`) and the backend needs no CORS configuration.

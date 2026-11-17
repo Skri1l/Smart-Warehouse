@@ -1,6 +1,6 @@
 # 0006. Use a PySide6 desktop client for the frontend
 
-Status: Accepted — supersedes [0003](0003-django-for-frontend.md)
+Status: Superseded by [ADR-0012](0012-browser-ui-javascript.md) (originally Accepted, superseding [0003](0003-django-for-frontend.md))
 Date: 2026-09-30
 
 ## Context

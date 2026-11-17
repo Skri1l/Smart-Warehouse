@@ -1,5 +1,7 @@
 # Frontend
 
+> **Being replaced.** Per [ADR-0012](../Documentation/adr/0012-browser-ui-javascript.md) the frontend becomes a responsive browser UI in JavaScript (React + Vite). The PySide6 prototype below is kept only until the new app is scaffolded; new work follows the updated [CODE_STYLE_FRONTEND.md](../Documentation/CODE_STYLE_FRONTEND.md).
+
 Python / PySide6 (Qt for Python) cross-platform desktop client for Smart Warehouse — see [ADR-0006](../Documentation/adr/0006-frontend-pyside6-desktop.md) for why it's a desktop app rather than a web app.
 
 Conventions (project layout, naming, typing, testing, threading, packaging) are defined in [../Documentation/CODE_STYLE_FRONTEND.md](../Documentation/CODE_STYLE_FRONTEND.md) — read it before writing the first widget.

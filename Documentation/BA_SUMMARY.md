@@ -28,11 +28,12 @@ To be updated based on what we manage to deliver.
 - An inventory accounting and warehouse management system for small and medium-sized warehouses
 - Automates receiving, storage, movement, and shipping of goods
 - Forecasts demand and suggests when to replenish stock
-- A cross-platform desktop client for employees and a central server with a database
+- A responsive browser UI for employees (phone, tablet, desktop) and a central server with a database, hosted by us: the customer only connects smart shelves
 
 ### Architecture / Integration Landscape
 
-- Desktop Client (Python) -> Backend (Java)
+- Smart shelves (HTTPS) -> Backend (Java)
+- Web UI (JavaScript, browser) -> Backend (Java)
 Backend <-> PostgreSQL
 Backend <-> ML Service (Python) (demand forecasting, replenishment recommendations)
 
