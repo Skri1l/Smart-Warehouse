@@ -118,7 +118,7 @@ Make the system usable by authenticated warehouse users.
 - main layout/navigation;
 - product list;
 - shelf/stock view;
-- responsive base UI.
+- responsive base UI in the browser (ADR-0012), checked at 360 / 768 / 1440 px.
 
 ### Acceptance criteria
 - unauthorized users cannot access protected resources;
@@ -187,7 +187,7 @@ Implement the intelligent replenishment part of the diploma.
 Turn the individual modules into a stable demonstrable system.
 
 ### Deliverables
-- cloud deployment;
+- hosted server deployment (ADR-0011): production compose stack, Caddy with TLS, web UI and `/api` on one origin, backups;
 - production-like database;
 - integrated frontend/backend/ML;
 - final OpenAPI documentation;

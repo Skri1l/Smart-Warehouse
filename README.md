@@ -11,17 +11,17 @@ This is a monorepo. Each top-level directory is an independently buildable compo
 ```text
 Smart-Warehouse/
 ├── Backend/          Java / Spring Boot REST API, business logic, persistence
-├── Frontend/         Python / PySide6 desktop client
+├── Frontend/         JavaScript / React responsive browser UI (ADR-0012)
 ├── Device/           Python shelf agent (Raspberry Pi 5) and its multi-shelf PC emulator
 ├── Documentation/     Product, process and engineering documentation
-├── Website/          Static GitHub Pages site: installer download and how-to guide (ADR-0007)
+├── Website/          Static GitHub Pages site: landing page and how-to guide
 └── .github/          CI workflows, issue/PR templates, code ownership
 ```
 
 | Component | Language | Framework | Docs |
 |---|---|---|---|
 | `Backend/` | Java 21 | Spring Boot, Spring Data JPA, PostgreSQL | [CODE_STYLE_BACKEND.md](Documentation/CODE_STYLE_BACKEND.md) |
-| `Frontend/` | Python 3.12+ | PySide6 (Qt for Python), desktop | [CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
+| `Frontend/` | JavaScript (Node 20+ for tooling) | React, Vite, browser | [CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
 | `Device/` | Python 3.11+ | httpx; picamera2/gpiozero on the Pi | [CODE_STYLE_DEVICE.md](Documentation/CODE_STYLE_DEVICE.md) |
 
 ## Engineering conventions
@@ -31,7 +31,7 @@ Smart-Warehouse/
 | Branching model, branch naming, merge strategy | [Documentation/BRANCHING.md](Documentation/BRANCHING.md) |
 | Commit message format | [Documentation/COMMIT_CONVENTION.md](Documentation/COMMIT_CONVENTION.md) |
 | Backend (Java) code style | [Documentation/CODE_STYLE_BACKEND.md](Documentation/CODE_STYLE_BACKEND.md) |
-| Frontend (Python/PySide6) code style | [Documentation/CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
+| Frontend (JavaScript/React) code style | [Documentation/CODE_STYLE_FRONTEND.md](Documentation/CODE_STYLE_FRONTEND.md) |
 | Device (shelf agent / emulator) code style | [Documentation/CODE_STYLE_DEVICE.md](Documentation/CODE_STYLE_DEVICE.md) |
 | REST API design & OpenAPI documentation | [Documentation/API_GUIDELINES.md](Documentation/API_GUIDELINES.md) |
 | How to contribute (PR process, review, DoD) | [CONTRIBUTING.md](CONTRIBUTING.md) |
@@ -92,7 +92,7 @@ If you get **HTTP 403** or an unexpected page at that address, another applicati
 
 ### Frontend
 
-A minimal PySide6 desktop client is scaffolded in `Frontend/`; run `python -m app --demo` from that directory. See [Frontend/README.md](Frontend/README.md).
+The frontend is being moved from the PySide6 desktop prototype to a responsive browser UI in JavaScript ([ADR-0012](Documentation/adr/0012-browser-ui-javascript.md)); in production it is served by our hosted server on the same address as the API ([ADR-0011](Documentation/adr/0011-hosted-server-deployment.md)). Until the new app is scaffolded, `Frontend/` still contains the old prototype (`python -m app --demo`). See [Frontend/README.md](Frontend/README.md).
 
 ### Shelf device / emulator
 
@@ -125,4 +125,4 @@ This repository is **proprietary and confidential**. See [LICENSE](LICENSE). No 
 | Name | Primary responsibility |
 |---|---|
 | Ivan Samal | Backend, database, ML/CV integration, forecasting logic |
-| Uladzislau Mikhayevich | Frontend, cross-platform desktop UI, cloud deployment, API documentation |
+| Uladzislau Mikhayevich | Frontend, responsive web UI, server deployment, API documentation |

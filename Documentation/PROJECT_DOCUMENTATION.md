@@ -3,7 +3,7 @@
 ## 1. Project overview
 
 **Project name:** Smart Warehouse: An Intelligent Resource Storage System  
-**Type:** diploma project / desktop client + backend + computer vision + forecasting system  
+**Type:** diploma project / responsive web UI + hosted backend + computer vision + forecasting system  
 **Team size:** 2 developers  
 **Planned duration:** 12 weeks
 
@@ -11,7 +11,7 @@ Smart Warehouse is an intelligent warehouse management system designed for shelv
 
 The system also stores stock history, product shelf-life information and planned future demand. A forecasting and replenishment module determines whether the current stock is sufficient for an upcoming date. If not, it creates a replenishment recommendation and, in the extended version of the project, can automatically create an order through an external supplier integration.
 
-A desktop client application (see [ADR-0006](adr/0006-frontend-pyside6-desktop.md)) allows warehouse staff to see current stock, locate products, receive placement recommendations, inspect stock changes and review replenishment recommendations.
+All server components are hosted by us, so a customer company only connects its smart shelves ([ADR-0011](adr/0011-hosted-server-deployment.md)). A responsive browser UI that works on phones, tablets and desktops (see [ADR-0012](adr/0012-browser-ui-javascript.md)) allows warehouse staff to see current stock, locate products, receive placement recommendations, inspect stock changes and review replenishment recommendations.
 
 ---
 
@@ -29,9 +29,9 @@ The main goal is to reduce manual warehouse inventory operations and improve sto
 - forecast future product demand;
 - take product shelf life into account when calculating replenishment;
 - generate replenishment recommendations;
-- provide a cross-platform desktop interface for warehouse workers and managers;
+- provide a responsive browser interface for warehouse workers and managers that works on phones, tablets and desktops;
 - expose documented REST APIs for frontend and device integration;
-- deploy the system to a cloud environment.
+- host the whole server side ourselves, so a customer only connects shelves and opens the web UI.
 
 ---
 
@@ -53,9 +53,9 @@ The main goal is to reduce manual warehouse inventory operations and improve sto
 12. Planned-demand management.
 13. Demand/replenishment calculation.
 14. Replenishment recommendations.
-15. Role-based desktop interface.
+15. Role-based responsive web interface.
 16. REST API documentation using OpenAPI/Swagger.
-17. Cloud deployment.
+17. Hosted server deployment (customer connects shelves only).
 
 ### Optional / extended scope
 
@@ -176,7 +176,7 @@ A manager shall be able to confirm, reject or modify a purchase recommendation.
 
 ### FR-17 Dashboard
 
-The desktop client shall show current stock, low-stock products, recent movements, recognition errors and purchase recommendations.
+The web UI shall show current stock, low-stock products, recent movements, recognition errors and purchase recommendations.
 
 ### FR-18 API documentation
 
@@ -215,9 +215,13 @@ The architecture should allow adding more shelves and devices without changing t
 
 Backend, frontend and ML responsibilities should be clearly separated and API contracts documented.
 
-### NFR-07 Cross-platform desktop support
+### NFR-07 Responsive (adaptive) web UI
 
-The UI shall run natively on Windows, macOS and Linux desktop environments (see [ADR-0006](adr/0006-frontend-pyside6-desktop.md)). Mobile/tablet access is out of scope for the diploma MVP following the move to a desktop client; revisit as an extended-scope item (e.g. a separate companion app) if floor-mobile access becomes a requirement.
+The UI shall run in current desktop and mobile browsers (Chrome, Edge, Firefox, Safari) without installation and shall be fully usable at any viewport width from 360 px (phone) to wide desktop monitors, with touch-friendly controls (see [ADR-0012](adr/0012-browser-ui-javascript.md) and the responsive rules in [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md)).
+
+### NFR-08 Hosted operation
+
+All server-side components (backend, ML, planning, database, web UI) are hosted and operated by the project team behind a single HTTPS entry point. A customer company needs no server and no installed software: shelves need only outbound HTTPS to the company URL (see [ADR-0011](adr/0011-hosted-server-deployment.md)).
 
 ---
 
@@ -268,10 +272,10 @@ Shelf Camera + Controller
 ### Recommended technology stack
 
 **Backend:** Java, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway/Liquibase, OpenAPI/Swagger.  
-**Frontend:** Python, PySide6 (Qt for Python) desktop client.  
+**Frontend:** JavaScript, React + Vite single-page app, responsive (mobile-first) layout.  
 **Shelf device:** Python shelf agent on Raspberry Pi 5 (`picamera2`, `gpiozero`). The same code runs on a PC as a multi-shelf emulator ([ADR-0008](adr/0008-shelf-agent-shared-core.md), [Device/README.md](../Device/README.md)).  
 **ML:** Python service with REST API; OpenCV + selected detection/counting model.  
-**Infrastructure:** Docker / Docker Compose for local development, cloud deployment for demo.  
+**Infrastructure:** Docker / Docker Compose locally and on a hosted Linux server; Caddy reverse proxy with automatic TLS serving the UI and `/api` on one origin.  
 **Testing:** JUnit, Mockito, integration tests with PostgreSQL/Testcontainers; frontend tests where appropriate.
 
 ---
@@ -560,9 +564,9 @@ Primary responsibility:
 
 Primary responsibility:
 
-- frontend desktop application (PySide6);
-- cross-platform desktop UI;
-- cloud/deployment work;
+- frontend web application (JavaScript, React);
+- responsive (adaptive) UI;
+- server hosting and deployment;
 - API documentation and frontend integration.
 
 Both developers participate in integration, testing and final demo preparation.

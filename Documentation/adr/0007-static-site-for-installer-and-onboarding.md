@@ -1,6 +1,6 @@
 # 0007. Use a static GitHub Pages site for installer download and onboarding
 
-Status: Accepted
+Status: Superseded by [ADR-0012](0012-browser-ui-javascript.md) — there are no installers anymore; the site remains as a landing page and how-to guide
 Date: 2026-10-03
 
 ## Context
