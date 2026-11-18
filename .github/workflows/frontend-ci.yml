@@ -11,7 +11,7 @@ on:
       - "Frontend/**"
 
 jobs:
-  lint-and-test:
+  lint-test-build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -19,54 +19,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: "3.12"
-          cache: pip
-
-      - name: Install Qt system libraries
-        # PySide6 wheels link against these even with QT_QPA_PLATFORM=offscreen;
-        # ubuntu-latest does not ship them (ImportError: libEGL.so.1).
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
 
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: npm ci
 
-      - name: Lint (ruff)
-        run: ruff check .
+      - name: Lint (ESLint)
+        run: npm run lint
 
-      - name: Format check (black)
-        run: black --check .
+      - name: Format check (Prettier)
+        run: npm run format:check
 
-      - name: Type check (mypy)
-        run: |
-          if find . -name "*.py" | grep -q .; then
-            mypy .
-          else
-            echo "No Python files yet — skipping."
-          fi
+      - name: Tests (Vitest)
+        run: npm test
 
-      - name: Tests (pytest)
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: |
-          if find . -name "test_*.py" -o -name "*_test.py" | grep -q .; then
-            pytest
-          else
-            echo "No tests yet — skipping."
-          fi
+      - name: Build
+        run: npm run build
 
-      - name: Dependency license audit (pip-licenses)
-        run: |
-          # PySide6/shiboken6 report a multi-license classifier
-          # ("LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only") because Qt is
-          # dual/triple-licensed; this project uses them under the LGPL-3.0
-          # branch (see ADR-0006 and THIRD_PARTY_NOTICES.md), so they are
-          # excluded from this automated check and reviewed manually instead.
-          # Anything else reporting GPL/AGPL fails the build.
-          pip-licenses --ignore-packages PySide6 shiboken6 \
-            --fail-on="GNU General Public License v2 (GPLv2);GNU General Public License v3 (GPLv3);GNU Affero General Public License v3"
+      - name: Dependency license audit (license-checker)
+        # Proprietary project: only permissive licenses in shipped (production) dependencies.
+        run: npm run licenses

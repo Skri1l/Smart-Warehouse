@@ -14,7 +14,7 @@ npm test               # Vitest + React Testing Library
 npm run build          # production build into dist/
 ```
 
-> The Vite project has not been scaffolded yet; `Frontend/` still contains the retired PySide6 client. The structure below is the target layout.
+> Until the backend implements `/api/v1` and authentication, `npm run dev` runs against a mock of the REST protocol (MSW, `src/mocks/`); see [Frontend/README.md](../Frontend/README.md#mocked-backend). `npm run dev:api` uses the real backend.
 
 ## Project structure
 
