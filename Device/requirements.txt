@@ -1,0 +1,9 @@
+# Runtime dependencies of the shelf agent and the emulator (see ADR-0008 and
+# ../Documentation/CODE_STYLE_DEVICE.md). Every entry must be checked against
+# ../THIRD_PARTY_NOTICES.md before it is added — GPL/AGPL-only packages are
+# rejected.
+#
+# Hardware libraries (picamera2, gpiozero) are NOT listed here: they are
+# installed from Raspberry Pi OS packages on the device itself and imported
+# lazily, so the emulator installs on any PC. See Device/README.md.
+httpx==0.28.1

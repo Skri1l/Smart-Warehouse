@@ -3,7 +3,7 @@
 ## 1. Project overview
 
 **Project name:** Smart Warehouse: An Intelligent Resource Storage System  
-**Type:** diploma project / web + backend + computer vision + forecasting system  
+**Type:** diploma project / responsive web UI + hosted backend + computer vision + forecasting system  
 **Team size:** 2 developers  
 **Planned duration:** 12 weeks
 
@@ -11,7 +11,7 @@ Smart Warehouse is an intelligent warehouse management system designed for shelv
 
 The system also stores stock history, product shelf-life information and planned future demand. A forecasting and replenishment module determines whether the current stock is sufficient for an upcoming date. If not, it creates a replenishment recommendation and, in the extended version of the project, can automatically create an order through an external supplier integration.
 
-A web application allows warehouse staff to see current stock, locate products, receive placement recommendations, inspect stock changes and review replenishment recommendations.
+All server components are hosted by us, so a customer company only connects its smart shelves ([ADR-0011](adr/0011-hosted-server-deployment.md)). A responsive browser UI that works on phones, tablets and desktops (see [ADR-0012](adr/0012-browser-ui-javascript.md)) allows warehouse staff to see current stock, locate products, receive placement recommendations, inspect stock changes and review replenishment recommendations.
 
 ---
 
@@ -29,9 +29,9 @@ The main goal is to reduce manual warehouse inventory operations and improve sto
 - forecast future product demand;
 - take product shelf life into account when calculating replenishment;
 - generate replenishment recommendations;
-- provide a responsive web interface for warehouse workers and managers;
+- provide a responsive browser interface for warehouse workers and managers that works on phones, tablets and desktops;
 - expose documented REST APIs for frontend and device integration;
-- deploy the system to a cloud environment.
+- host the whole server side ourselves, so a customer only connects shelves and opens the web UI.
 
 ---
 
@@ -53,9 +53,9 @@ The main goal is to reduce manual warehouse inventory operations and improve sto
 12. Planned-demand management.
 13. Demand/replenishment calculation.
 14. Replenishment recommendations.
-15. Role-based web interface.
+15. Role-based responsive web interface.
 16. REST API documentation using OpenAPI/Swagger.
-17. Cloud deployment.
+17. Hosted server deployment (customer connects shelves only).
 
 ### Optional / extended scope
 
@@ -96,6 +96,8 @@ Automatic supplier ordering should be treated as an extension unless a stable su
 - identifies itself by shelf/device ID;
 - detects a shelf event or captures an image on request;
 - sends an image and metadata to the backend.
+
+The physical demo shelf (dimensions, camera, lighting, wiring) is specified in [hardware/SHELF_DEVICE.md](hardware/SHELF_DEVICE.md).
 
 ### ML service
 
@@ -174,7 +176,7 @@ A manager shall be able to confirm, reject or modify a purchase recommendation.
 
 ### FR-17 Dashboard
 
-The web application shall show current stock, low-stock products, recent movements, recognition errors and purchase recommendations.
+The web UI shall show current stock, low-stock products, recent movements, recognition errors and purchase recommendations.
 
 ### FR-18 API documentation
 
@@ -213,9 +215,13 @@ The architecture should allow adding more shelves and devices without changing t
 
 Backend, frontend and ML responsibilities should be clearly separated and API contracts documented.
 
-### NFR-07 Responsiveness
+### NFR-07 Responsive (adaptive) web UI
 
-The UI shall support desktop and mobile/tablet layouts.
+The UI shall run in current desktop and mobile browsers (Chrome, Edge, Firefox, Safari) without installation and shall be fully usable at any viewport width from 360 px (phone) to wide desktop monitors, with touch-friendly controls (see [ADR-0012](adr/0012-browser-ui-javascript.md) and the responsive rules in [CODE_STYLE_FRONTEND.md](CODE_STYLE_FRONTEND.md)).
+
+### NFR-08 Hosted operation
+
+All server-side components (backend, ML, planning, database, web UI) are hosted and operated by the project team behind a single HTTPS entry point. A customer company needs no server and no installed software: shelves need only outbound HTTPS to the company URL (see [ADR-0011](adr/0011-hosted-server-deployment.md)).
 
 ---
 
@@ -266,9 +272,10 @@ Shelf Camera + Controller
 ### Recommended technology stack
 
 **Backend:** Java, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL, Flyway/Liquibase, OpenAPI/Swagger.  
-**Frontend:** React or another SPA framework selected by the frontend developer.  
+**Frontend:** JavaScript, React + Vite single-page app, responsive (mobile-first) layout.  
+**Shelf device:** Python shelf agent on Raspberry Pi 5 (`picamera2`, `gpiozero`). The same code runs on a PC as a multi-shelf emulator ([ADR-0008](adr/0008-shelf-agent-shared-core.md), [Device/README.md](../Device/README.md)).  
 **ML:** Python service with REST API; OpenCV + selected detection/counting model.  
-**Infrastructure:** Docker / Docker Compose for local development, cloud deployment for demo.  
+**Infrastructure:** Docker / Docker Compose locally and on a hosted Linux server; Caddy reverse proxy with automatic TLS serving the UI and `/api` on one origin.  
 **Testing:** JUnit, Mockito, integration tests with PostgreSQL/Testcontainers; frontend tests where appropriate.
 
 ---
@@ -278,8 +285,7 @@ Shelf Camera + Controller
 ### User
 
 - id
-- email
-- username
+- email / username
 - passwordHash
 - role
 - status
@@ -288,40 +294,39 @@ Shelf Camera + Controller
 
 - id
 - name
-- address
+- description
 
 ### Rack
 
 - id
-- label
 - warehouseId
+- label
 
 ### Shelf
 
 - id
+- rackId
 - label
 - capacity
 - status
-- rackId
 
 ### Device
 
 - id
+- shelfId
 - deviceKey
 - status
 - lastSeenAt
-- shelfId
-
-Each device is linked to exactly one shelf.
 
 ### Product
 
 - id
 - sku
 - name
-- description
-
-Shelf life is not stored directly in `Product`. Expiration information belongs to a concrete stock batch stored on a shelf.
+- category
+- unit
+- shelfLifeDays
+- minimumStock
 
 ### ShelfStock
 
@@ -329,10 +334,7 @@ Shelf life is not stored directly in `Product`. Expiration information belongs t
 - shelfId
 - productId
 - quantity
-- expirationDate
-- status
-
-`ShelfStock` represents a concrete product stock entry on a shelf. The same product may have multiple stock entries with different expiration dates.
+- updatedAt
 
 ### ImageEvent
 
@@ -344,15 +346,12 @@ Shelf life is not stored directly in `Product`. Expiration information belongs t
 - receivedAt
 - processingStatus
 
-The shelf is derived from the device linked to the event.
-
 ### RecognitionResult
 
 - id
 - imageEventId
 - productId
-- detectedQuantity
-- quantityDelta
+- detectedQuantity / quantityDelta
 - confidence
 - status
 
@@ -365,8 +364,6 @@ The shelf is derived from the device linked to the event.
 - type
 - source
 - createdAt
-
-`StockMovement` stores inventory change history independently from a concrete `ShelfStock` entity.
 
 ### DemandPlan
 
@@ -385,7 +382,7 @@ The shelf is derived from the device linked to the event.
 - status
 - createdAt
 
-### PurchaseOrder
+### PurchaseOrder / PurchaseRequest
 
 - id
 - recommendationId
@@ -394,7 +391,7 @@ The shelf is derived from the device linked to the event.
 - status
 - createdAt
 
-A purchase order is created from a replenishment recommendation. One recommendation can be associated with one purchase order.
+---
 
 ## 9. Key business flows
 
@@ -432,134 +429,42 @@ A purchase order is created from a replenishment recommendation. One recommendat
 
 ## 10. API outline
 
-The backend exposes REST endpoints for the main Smart Warehouse domain entities.
-
-### Users
+Suggested endpoint groups:
 
 ```text
-GET     /users
-GET     /users/{id}
-POST    /users
-PUT     /users/{id}
-PATCH   /users/{id}/block
-PATCH   /users/{id}/unblock
-DELETE  /users/{id}
+POST   /api/auth/login
+GET    /api/users
 
-GET     /warehouses
-GET     /warehouses/{id}
-POST    /warehouses
-PUT     /warehouses/{id}
-DELETE  /warehouses/{id}
+GET    /api/warehouses
+POST   /api/warehouses
+GET    /api/shelves
+POST   /api/shelves
+GET    /api/shelves/{id}/stock
 
-GET     /racks
-GET     /racks/{id}
-POST    /racks/warehouse/{warehouseId}
-PUT     /racks/{rackId}
-DELETE  /racks/{rackId}
+GET    /api/products
+POST   /api/products
+GET    /api/products/{id}/locations
 
-GET     /shelves
-GET     /shelves/{id}
-POST    /shelves
-PUT     /shelves/{id}
-PATCH   /shelves/{id}/activate
-PATCH   /shelves/{id}/deactivate
-DELETE  /shelves/{id}
+POST   /api/device-events/images
+GET    /api/image-events/{id}
+GET    /api/recognition-results/review
+PATCH  /api/recognition-results/{id}/confirm
 
-GET     /devices
-GET     /devices/{id}
-POST    /devices
-PUT     /devices/{id}
-PATCH   /devices/{id}/activate
-PATCH   /devices/{id}/deactivate
-PATCH   /devices/{id}/heartbeat
-DELETE  /devices/{id}
+GET    /api/inventory
+GET    /api/inventory/movements
+POST   /api/inventory/adjustments
 
-GET     /products
-GET     /products/{id}
-GET     /products/sku/{sku}
-GET     /products/search?name={name}
-POST    /products
-PUT     /products/{id}
-DELETE  /products/{id}
+GET    /api/placement/recommendations
 
-GET     /shelf-stock
-GET     /shelf-stock/{id}
-GET     /shelf-stock/shelf/{shelfId}
-GET     /shelf-stock/product/{productId}
-GET     /shelf-stock/expiration-date?date={date}
-GET     /shelf-stock/expired
-POST    /shelf-stock
-PUT     /shelf-stock/{id}
-DELETE  /shelf-stock/{id}
+GET    /api/demand-plans
+POST   /api/demand-plans
 
-GET     /stock-movements
-GET     /stock-movements/{id}
-GET     /stock-movements/product/{productId}
-GET     /stock-movements/shelf/{shelfId}
-GET     /stock-movements/type/{type}
-GET     /stock-movements/source/{source}
-GET     /stock-movements/date-range?from={from}&to={to}
-POST    /stock-movements
-DELETE  /stock-movements/{id}
+GET    /api/replenishment/recommendations
+POST   /api/replenishment/recalculate
+PATCH  /api/replenishment/recommendations/{id}
 
-GET     /image-events
-GET     /image-events/{id}
-GET     /image-events/device/{deviceId}
-GET     /image-events/shelf/{shelfId}
-GET     /image-events/status/{status}
-GET     /image-events/date-range?from={from}&to={to}
-POST    /image-events
-PATCH   /image-events/{id}/processing
-PATCH   /image-events/{id}/processed
-PATCH   /image-events/{id}/failed
-DELETE  /image-events/{id}
-
-GET     /recognition-results
-GET     /recognition-results/{id}
-GET     /recognition-results/image-event/{imageEventId}
-GET     /recognition-results/product/{productId}
-GET     /recognition-results/status/{status}
-GET     /recognition-results/confidence?min={min}
-POST    /recognition-results
-PATCH   /recognition-results/{id}/confirm
-PATCH   /recognition-results/{id}/reject
-PATCH   /recognition-results/{id}/failed
-DELETE  /recognition-results/{id}
-
-GET     /demand-plans
-GET     /demand-plans/{id}
-GET     /demand-plans/product/{productId}
-GET     /demand-plans/date/{requiredDate}
-GET     /demand-plans/date-range?from={from}&to={to}
-GET     /demand-plans/future
-POST    /demand-plans
-PUT     /demand-plans/{id}
-DELETE  /demand-plans/{id}
-
-GET     /replenishment-recommendations
-GET     /replenishment-recommendations/{id}
-GET     /replenishment-recommendations/product/{productId}
-GET     /replenishment-recommendations/status/{status}
-GET     /replenishment-recommendations/date/{requiredBy}
-GET     /replenishment-recommendations/date-range?from={from}&to={to}
-POST    /replenishment-recommendations
-PUT     /replenishment-recommendations/{id}
-PATCH   /replenishment-recommendations/{id}/approve
-PATCH   /replenishment-recommendations/{id}/reject
-PATCH   /replenishment-recommendations/{id}/ordered
-PATCH   /replenishment-recommendations/{id}/complete
-DELETE  /replenishment-recommendations/{id}
-
-GET     /purchase-orders
-GET     /purchase-orders/{id}
-GET     /purchase-orders/product/{productId}
-GET     /purchase-orders/recommendation/{recommendationId}
-GET     /purchase-orders/status/{status}
-POST    /purchase-orders
-PATCH   /purchase-orders/{id}/ordered
-PATCH   /purchase-orders/{id}/received
-PATCH   /purchase-orders/{id}/cancel
-DELETE  /purchase-orders/{id}
+GET    /api/purchase-requests
+POST   /api/purchase-requests/{id}/confirm
 ```
 
 Exact DTOs and contracts should be defined milestone by milestone.
@@ -659,9 +564,9 @@ Primary responsibility:
 
 Primary responsibility:
 
-- frontend web application;
-- responsive UI;
-- cloud/deployment work;
+- frontend web application (JavaScript, React);
+- responsive (adaptive) UI;
+- server hosting and deployment;
 - API documentation and frontend integration.
 
 Both developers participate in integration, testing and final demo preparation.
@@ -694,7 +599,6 @@ Mitigation: support manually defined planned demand and generate synthetic histo
 
 Risk: multi-warehouse, advanced AI and purchasing integrations may exceed 12 weeks.  
 Mitigation: keep a strict MVP and treat integrations as extensions.
-
 
 ## 16. How to run the application
 

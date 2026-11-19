@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.env
+
+Backend/target/
+
+*.log
+
+# Camera images saved by POST /devices/{id}/images (vision.image-directory)
+uploads/
+
+/liquibase.properties
+*.dump
+/src/main/resources/liquibase.properties

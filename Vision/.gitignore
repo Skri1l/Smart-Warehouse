@@ -1,0 +1,6 @@
+# Model weights are downloaded on first use / during the Docker build.
+*.pt
+.venv/
+__pycache__/
+.pytest_cache/
+outputs/

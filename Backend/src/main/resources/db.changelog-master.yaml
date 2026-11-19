@@ -1,0 +1,937 @@
+databaseChangeLog:
+  - logicalFilePath: db.changelog-master.yaml
+  - changeSet:
+      id: 1792673875334-1
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: demand_plan_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-2
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: demand_plans_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-3
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: devices_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-4
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: image_events_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-5
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: products_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-6
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: purchase_orders_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-7
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: racks_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-8
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: recognition_results_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-9
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: replenishment_recommendations_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-10
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: shelf_stock_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-11
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: shelves_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-12
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: stock_movements_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-13
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: users_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-14
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createSequence:
+            incrementBy: 1
+            sequenceName: warehouses_id_seq
+            startValue: 1
+  - changeSet:
+      id: 1792673875334-15
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: demand_plan_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: quantity
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: required_date
+                  type: date
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+            tableName: demand_plan
+  - changeSet:
+      id: 1792673875334-16
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: demand_plans_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: required_date
+                  type: date
+              - column:
+                  constraints:
+                    nullable: false
+                  name: required_quantity
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+            tableName: demand_plans
+  - changeSet:
+      id: 1792673875334-17
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: devices_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: device_key
+                  type: VARCHAR(255)
+              - column:
+                  name: last_seen_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: shelf_id
+                  type: BIGINT
+            tableName: devices
+  - changeSet:
+      id: 1792673875334-18
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: image_events_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: captured_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: image_path
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: processing_status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: received_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: device_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: shelf_id
+                  type: BIGINT
+            tableName: image_events
+  - changeSet:
+      id: 1792673875334-19
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: products_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: description
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: shelf_life_days
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: sku
+                  type: VARCHAR(255)
+            tableName: products
+  - changeSet:
+      id: 1792673875334-20
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: purchase_orders_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: quantity
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: recommendation_id
+                  type: BIGINT
+            tableName: purchase_orders
+  - changeSet:
+      id: 1792673875334-21
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: racks_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: label
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: warehouse_id
+                  type: BIGINT
+            tableName: racks
+  - changeSet:
+      id: 1792673875334-22
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: recognition_results_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: confidence
+                  type: DOUBLE precision
+              - column:
+                  name: detected_quantity
+                  type: INT
+              - column:
+                  name: quantity_delta
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: image_event_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+            tableName: recognition_results
+  - changeSet:
+      id: 1792673875334-23
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: replenishment_recommendations_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reason
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: recommended_quantity
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: required_by
+                  type: date
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+            tableName: replenishment_recommendations
+  - changeSet:
+      id: 1792673875334-24
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: shelf_stock_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: quantity
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: shelf_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: expiration_date
+                  type: date
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+            tableName: shelf_stock
+  - changeSet:
+      id: 1792673875334-25
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: shelves_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: capacity
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: label
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: rack_id
+                  type: BIGINT
+            tableName: shelves
+  - changeSet:
+      id: 1792673875334-26
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: stock_movements_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: created_at
+                  type: timestamp
+              - column:
+                  constraints:
+                    nullable: false
+                  name: quantity_delta
+                  type: INT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: source
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: type
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: product_id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: shelf_id
+                  type: BIGINT
+              - column:
+                  name: image_event_id
+                  type: BIGINT
+            tableName: stock_movements
+  - changeSet:
+      id: 1792673875334-27
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: users_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  constraints:
+                    nullable: false
+                  name: email
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: password_hash
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: role
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: status
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: username
+                  type: VARCHAR(255)
+            tableName: users
+  - changeSet:
+      id: 1792673875334-28
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: warehouses_pkey
+                  name: id
+                  type: BIGINT
+              - column:
+                  name: address
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: name
+                  type: VARCHAR(255)
+            tableName: warehouses
+  - changeSet:
+      id: 1792673875334-29
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: recommendation_id
+            constraintName: uk17bjiv3ap2vk7twjsdy9sfvev
+            tableName: purchase_orders
+  - changeSet:
+      id: 1792673875334-30
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: email
+            constraintName: uk6dotkott2kjsp8vw4d0m25fb7
+            tableName: users
+  - changeSet:
+      id: 1792673875334-31
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: image_event_id
+            constraintName: uk6u7eyr5itq7cn2mvw50wisq1n
+            tableName: recognition_results
+  - changeSet:
+      id: 1792673875334-32
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: sku
+            constraintName: ukfhmd06dsmj6k0n90swsh8ie9g
+            tableName: products
+  - changeSet:
+      id: 1792673875334-33
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: shelf_id
+            constraintName: ukisea6bsjrrfbsrfk6rv2g76a3
+            tableName: devices
+  - changeSet:
+      id: 1792673875334-34
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: name, address
+            constraintName: ukith2rs0524ge4mh4rbcdmtfvy
+            tableName: warehouses
+  - changeSet:
+      id: 1792673875334-35
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: shelf_id, product_id
+            constraintName: ukk3trf7j2x29t21vpi3713kxfn
+            tableName: shelf_stock
+  - changeSet:
+      id: 1792673875334-36
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: device_key
+            constraintName: ukoebuo05ukt6q88v99n5plyr5y
+            tableName: devices
+  - changeSet:
+      id: 1792673875334-37
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addUniqueConstraint:
+            columnNames: username
+            constraintName: ukr43af9ap4edm43mmtq01oddj6
+            tableName: users
+  - changeSet:
+      id: 1792673875334-38
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: shelf_stock
+            constraintName: fk5o6qpne2verolikhw0dv6o8k
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-39
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: recognition_results
+            constraintName: fka0g7j5nbm1ce8laor7q3grlm6
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-40
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: rack_id
+            baseTableName: shelves
+            constraintName: fkew23dvhwu8g1282ovj0ejpu6r
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: racks
+  - changeSet:
+      id: 1792673875334-41
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: shelf_id
+            baseTableName: image_events
+            constraintName: fkfn38rw5u8xxxyt0jo8ebqruff
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: shelves
+  - changeSet:
+      id: 1792673875334-42
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: purchase_orders
+            constraintName: fkh6winackew5b8ljk4se6f8hrg
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-43
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: stock_movements
+            constraintName: fkjcaag8ogfjxpwmqypi1wfdaog
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-44
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: replenishment_recommendations
+            constraintName: fkjegw4stk3xliwydaoy8v8ybcn
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-45
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: shelf_id
+            baseTableName: devices
+            constraintName: fkkf5ulqonxf2h6yvokgbkwwb07
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: shelves
+  - changeSet:
+      id: 1792673875334-46
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: shelf_id
+            baseTableName: shelf_stock
+            constraintName: fkl31kpmo0deykh4u4leeoaq2ry
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: shelves
+  - changeSet:
+      id: 1792673875334-47
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: shelf_id
+            baseTableName: stock_movements
+            constraintName: fklf5friex1yjgjl0i9bgbm64k5
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: shelves
+  - changeSet:
+      id: 1792673875334-48
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: image_event_id
+            baseTableName: stock_movements
+            constraintName: fklxvxggjth6it7s0pajqfvj7sd
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: image_events
+  - changeSet:
+      id: 1792673875334-49
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: demand_plan
+            constraintName: fkm0quwsbao3b9lsc74yu3v3r2v
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-50
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: device_id
+            baseTableName: image_events
+            constraintName: fkn0pqbppbl1nvgkwn22fkalhdi
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: devices
+  - changeSet:
+      id: 1792673875334-51
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: product_id
+            baseTableName: demand_plans
+            constraintName: fkn49ggaqxt9l6jfpnyhg016pf0
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: products
+  - changeSet:
+      id: 1792673875334-52
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: recommendation_id
+            baseTableName: purchase_orders
+            constraintName: fknqkl7x5wv4950wbxjwtp8bqi8
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: replenishment_recommendations
+  - changeSet:
+      id: 1792673875334-53
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: warehouse_id
+            baseTableName: racks
+            constraintName: fkoo2u7bvqv088jrxddv6q78950
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: warehouses
+  - changeSet:
+      id: 1792673875334-54
+      author: Киллер 228
+      objectQuotingStrategy: QUOTE_ONLY_RESERVED_WORDS
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: image_event_id
+            baseTableName: recognition_results
+            constraintName: fks2djegb8onn8fd2b0w4h0d9py
+            onDelete: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: image_events
+

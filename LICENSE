@@ -1,0 +1,46 @@
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 Ivan Samal and Uladzislau Mikhayevich. All rights reserved.
+
+This software and associated documentation files (the "Software"), including
+but not limited to the Backend, Frontend and Documentation directories of the
+"Smart Warehouse" repository, are the confidential and proprietary property of
+the copyright holders listed above.
+
+NO LICENSE IS GRANTED. No permission is given, express or implied, to any
+person to use, copy, modify, merge, publish, distribute, sublicense, host,
+deploy commercially, or sell copies of the Software, in whole or in part, in
+any form or by any means, without the prior written consent of the copyright
+holders.
+
+Permitted use without a separate written agreement is limited to:
+  1. Evaluation of the Software by academic staff and examiners for the sole
+     purpose of assessing the diploma/thesis project it accompanies; and
+  2. Use by the copyright holders themselves.
+
+Any other use — including but not limited to commercial use, redistribution,
+creation of derivative works, or incorporation into another product — requires
+a separate written license agreement executed by all copyright holders.
+
+THIRD-PARTY COMPONENTS
+
+The Software incorporates third-party components that are licensed under their
+own terms, as listed in THIRD_PARTY_NOTICES.md and the licenses/ directory.
+Those components are not the property of the copyright holders, and nothing in
+this license restricts or overrides the rights granted to you under their
+respective licenses. In particular, for components licensed under the GNU
+Lesser General Public License (including Qt and Qt for Python / PySide6), you
+may modify such components, replace them with modified versions, and reverse
+engineer the Software solely to the extent necessary to debug such
+modifications. The restrictions above apply only to the portions of the
+Software authored by the copyright holders.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+For licensing inquiries, contact the copyright holders directly.

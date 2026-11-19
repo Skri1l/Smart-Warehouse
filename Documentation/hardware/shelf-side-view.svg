@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 600" width="660" height="600" font-family="Helvetica, Arial, sans-serif" font-size="12">
+  <!-- Side section at x = 0, viewed from the left. 1 unit = 1 mm.
+       Mapping: X = 120 + y, Y = 500 - z  (y = into the shelf, z = up from floor top). -->
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="660" height="600" fill="#ffffff"/>
+  <text x="20" y="24" font-size="15" font-weight="bold" fill="#111">Demo shelf — side section at x = 0 (dimensions in mm)</text>
+
+  <!-- camera field of view (vertical 67°) -->
+  <polygon points="90,100 423.3,266.2 423.3,500 65.5,500" fill="#4c8ed9" fill-opacity="0.13"/>
+  <line x1="90" y1="100" x2="423.3" y2="266.2" stroke="#4c8ed9" stroke-width="1.2"/>
+  <line x1="90" y1="100" x2="64.8" y2="512" stroke="#4c8ed9" stroke-width="1.2"/>
+  <line x1="90" y1="100" x2="321" y2="500" stroke="#4c8ed9" stroke-width="1" stroke-dasharray="10 3 2 3"/>
+  <text x="165" y="150" fill="#2c6cb0" transform="rotate(26.5 165 150)">upper frame edge, 26.5° below horizontal</text>
+  <text x="250" y="390" fill="#2c6cb0" transform="rotate(60 250 390)">optical axis</text>
+  <text x="335" y="470" fill="#2c6cb0" text-anchor="end">axis → floor at y 201</text>
+
+  <!-- table -->
+  <line x1="20" y1="512" x2="640" y2="512" stroke="#999" stroke-width="1"/>
+
+  <!-- columns (at x = ±186, behind the section plane) -->
+  <rect x="114" y="70" width="20" height="440" fill="#e8e8e8" stroke="#aaa" stroke-dasharray="4 2"/>
+  <rect x="406" y="70" width="20" height="440" fill="#e8e8e8" stroke="#aaa" stroke-dasharray="4 2"/>
+
+  <!-- floor tiles -->
+  <rect x="110" y="500" width="320" height="12" fill="#c9cdd2" stroke="#555"/>
+  <!-- ceiling tiles -->
+  <rect x="110" y="68" width="320" height="12" fill="#c9cdd2" stroke="#555"/>
+  <!-- back panel (front face at y = 303.3) -->
+  <rect x="423.3" y="74" width="3.4" height="432" fill="#8a929b" stroke="#555" stroke-width="0.6"/>
+  <!-- front lip / label strip -->
+  <rect x="113.3" y="476" width="3.4" height="30" fill="#8a929b" stroke="#555" stroke-width="0.6"/>
+
+  <!-- LED bar (at x = ±160, under the ceiling) -->
+  <rect x="150" y="84" width="240" height="10" fill="#fff3b0" stroke="#c9a400" stroke-dasharray="4 2"/>
+  <text x="200" y="110" fill="#8a6d00">LED bar ×2 at x = ±160, y = 30…270</text>
+
+  <!-- head unit: plate on ceiling + arm + camera -->
+  <rect x="80" y="62" width="150" height="6" fill="#6b7f99" stroke="#333" stroke-width="0.6"/>
+  <rect x="80" y="62" width="5" height="34" fill="#6b7f99" stroke="#333" stroke-width="0.6"/>
+  <rect x="140" y="44" width="85" height="18" fill="#3c8d4e" stroke="#1d4d29" stroke-width="0.6"/>
+  <text x="140" y="38" fill="#1d4d29">Raspberry Pi 5 + Active Cooler</text>
+  <g transform="rotate(-30 90 100)">
+    <rect x="77.5" y="94" width="25" height="6" fill="#2e7d32" stroke="#1b5e20" stroke-width="0.6"/>
+    <rect x="86" y="100" width="8" height="4" fill="#111"/>
+  </g>
+  <circle cx="90" cy="100" r="2.2" fill="#d32f2f"/>
+  <text x="20" y="40" fill="#b71c1c">lens centre</text>
+  <text x="20" y="54" fill="#b71c1c">(y −30, z 400)</text>
+
+  <!-- pitch angle -->
+  <line x1="90" y1="100" x2="160" y2="100" stroke="#b71c1c" stroke-width="0.8" stroke-dasharray="3 2"/>
+  <path d="M 140 100 A 50 50 0 0 1 115 143.3" fill="none" stroke="#b71c1c" stroke-width="1"/>
+  <text x="140" y="130" fill="#b71c1c" font-weight="bold">60°</text>
+
+  <!-- example products -->
+  <rect x="130" y="385" width="66" height="115" fill="#e57373" fill-opacity="0.7" stroke="#8e2b2b"/>
+  <text x="137" y="446" fill="#fff" font-size="11">can 115</text>
+  <rect x="340" y="320" width="60" height="180" fill="#ffb74d" fill-opacity="0.8" stroke="#a15c00"/>
+  <text x="344" y="414" fill="#5d3400" font-size="11">box 180</text>
+  <line x1="120" y1="320" x2="420" y2="320" stroke="#a15c00" stroke-dasharray="6 4"/>
+  <text x="205" y="315" fill="#a15c00">product envelope h ≤ 180</text>
+
+  <!-- dimensions -->
+  <g stroke="#333" stroke-width="0.8" fill="none">
+    <!-- lens height 400 -->
+    <line x1="40" y1="100" x2="40" y2="500" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="34" y1="100" x2="86" y2="100" stroke-dasharray="2 2"/>
+    <line x1="34" y1="500" x2="110" y2="500" stroke-dasharray="2 2"/>
+    <!-- clear height 420 -->
+    <line x1="470" y1="80" x2="470" y2="500" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="430" y1="80" x2="476" y2="80" stroke-dasharray="2 2"/>
+    <line x1="430" y1="500" x2="476" y2="500" stroke-dasharray="2 2"/>
+    <!-- overall height 444 -->
+    <line x1="530" y1="68" x2="530" y2="512" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="430" y1="68" x2="536" y2="68" stroke-dasharray="2 2"/>
+    <line x1="430" y1="512" x2="536" y2="512" stroke-dasharray="2 2"/>
+    <!-- working depth 300 -->
+    <line x1="120" y1="540" x2="420" y2="540" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="120" y1="512" x2="120" y2="546" stroke-dasharray="2 2"/>
+    <line x1="420" y1="512" x2="420" y2="546" stroke-dasharray="2 2"/>
+    <!-- overall depth 320 -->
+    <line x1="110" y1="572" x2="430" y2="572" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="110" y1="546" x2="110" y2="578" stroke-dasharray="2 2"/>
+    <line x1="430" y1="546" x2="430" y2="578" stroke-dasharray="2 2"/>
+    <!-- lens offset 30 -->
+    <line x1="90" y1="160" x2="120" y2="160" marker-start="url(#arr)" marker-end="url(#arr)"/>
+    <line x1="90" y1="104" x2="90" y2="166" stroke-dasharray="2 2"/>
+    <line x1="120" y1="154" x2="120" y2="500" stroke-dasharray="2 2"/>
+  </g>
+  <g fill="#111">
+    <text x="46" y="300" transform="rotate(-90 46 300)" text-anchor="middle">lens height 400</text>
+    <text x="476" y="290" transform="rotate(-90 476 290)" text-anchor="middle">clear height 420</text>
+    <text x="536" y="290" transform="rotate(-90 536 290)" text-anchor="middle">overall height 444 (+ Pi ≈ 25)</text>
+    <text x="270" y="535" text-anchor="middle">working depth 300</text>
+    <text x="270" y="567" text-anchor="middle">overall depth 320 (lens overhangs 20 more)</text>
+    <text x="96" y="176">30</text>
+  </g>
+  <text x="560" y="300" fill="#555" font-size="11" transform="rotate(-90 560 300)" text-anchor="middle">back panel = background, front face at y 303.3</text>
+  <text x="440" y="110" fill="#555" font-size="11">ceiling</text>
+  <text x="440" y="525" fill="#555" font-size="11">floor</text>
+  <text x="440" y="560" fill="#555" font-size="11">y = 0 is the front edge</text>
+  <text x="440" y="574" fill="#555" font-size="11">of the working area</text>
+</svg>

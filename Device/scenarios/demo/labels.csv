@@ -1,0 +1,28 @@
+# Ground truth for every test photo: what the ML service should see.
+# One row per file in images/. Shared with the ML accuracy tests (ADR-0010).
+file,sku,count
+1.jpg,COCA-COLA,16
+2.jpg,COCA-COLA,15
+3.jpg,COCA-COLA,14
+4.jpg,COCA-COLA,13
+5.jpg,COCA-COLA,12
+6.jpg,COCA-COLA,11
+7.jpg,COCA-COLA,11
+8.jpg,COCA-COLA,9
+9.jpg,COCA-COLA,8
+10.jpg,COCA-COLA,6
+11.jpg,COCA-COLA,4
+12.jpg,COCA-COLA,2
+13.jpg,COCA-COLA,10
+14.jpg,COCA-COLA,12
+15.jpg,COCA-COLA,14
+16.jpg,COCA-COLA,14
+17.jpg,COCA-COLA,14
+18.jpg,COCA-COLA,16
+19.jpg,COCA-COLA,14
+20.jpg,COCA-COLA,12
+21.jpg,COCA-COLA,10
+22.jpg,COCA-COLA,9
+23.jpg,COCA-COLA,7
+24.jpg,COCA-COLA,5
+25.jpg,COCA-COLA,3
