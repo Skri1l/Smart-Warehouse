@@ -9,6 +9,7 @@ import { Modal } from '../../components/Modal.jsx';
 import { StateView } from '../../components/StateView.jsx';
 import { formatDate, formatRelative, humanize } from '../../core/format.js';
 import { daysUntil } from '../../core/stock.js';
+import { isValid, validateRecommendationChange } from '../../core/validation.js';
 
 const STATUS_TONES = {
   NEW: 'info',
@@ -26,15 +27,10 @@ function EditDialog({ row, busy, error, onSave, onClose }) {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const next = {};
-    const parsed = Number(quantity);
-    if (!Number.isInteger(parsed) || parsed <= 0) next.quantity = 'Enter a whole number above 0.';
-    if (!requiredBy) next.requiredBy = 'Choose a date.';
-    else if (daysUntil(requiredBy) < 0) next.requiredBy = 'The date cannot be in the past.';
-    if (!reason.trim()) next.reason = 'Explain the change.';
+    const next = validateRecommendationChange({ quantity, requiredBy, reason });
     setErrors(next);
-    if (Object.keys(next).length === 0) {
-      onSave({ recommendedQuantity: parsed, requiredBy, reason: reason.trim() });
+    if (isValid(next)) {
+      onSave({ recommendedQuantity: Number(quantity), requiredBy, reason: reason.trim() });
     }
   };
 

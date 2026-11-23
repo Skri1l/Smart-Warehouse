@@ -45,9 +45,15 @@
   padding: var(--space-2);
   background: repeating-linear-gradient(90deg, #cbd5e1 0 18px, #94a3b8 18px 22px),
     var(--color-surface-muted);
-  color: #fff;
   font-weight: 700;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 60%);
+}
+
+/* Solid chip so the label keeps WCAG AA contrast over the striped placeholder. */
+.photo span {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-text);
+  color: var(--color-on-primary);
 }
 
 .itemBody {

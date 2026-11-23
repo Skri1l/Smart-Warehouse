@@ -1,10 +1,16 @@
 name: Website Deploy
 
+# One GitHub Pages site:
+#   /       landing page and how-to guide (Website/)
+#   /app/   the React UI in demo mode: backend mocked in the browser (MSW), sign in as worker/manager/admin
+#   /api/   API reference rendered from Documentation/api/openapi.yaml (Redoc)
 on:
   push:
     branches: [main]
     paths:
       - "Website/**"
+      - "Frontend/**"
+      - "Documentation/api/**"
       - ".github/workflows/website-deploy.yml"
   workflow_dispatch:
 
@@ -26,11 +32,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/configure-pages@v5
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build the demo app (/app/)
+        working-directory: Frontend
+        run: |
+          npm ci
+          npm run build:demo -- --base "${{ steps.pages.outputs.base_path }}/app/"
+          # GitHub Pages has no SPA fallback: unknown paths serve 404.html, which boots the app.
+          cp dist/index.html dist/404.html
+
+      - name: Build the API reference (/api/)
+        working-directory: Documentation/api
+        run: |
+          npm ci
+          npm run docs
+
+      - name: Assemble the site
+        run: |
+          mkdir -p _site
+          cp -r Website/. _site/
+          cp -r Frontend/dist _site/app
+          mkdir -p _site/api
+          cp Documentation/api/dist/index.html _site/api/index.html
+          cp Documentation/api/openapi.yaml _site/api/openapi.yaml
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: Website
+          path: _site
 
       - id: deployment
         uses: actions/deploy-pages@v4

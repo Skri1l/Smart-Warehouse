@@ -1,0 +1,36 @@
+name: API Docs CI
+
+on:
+  pull_request:
+    paths:
+      - "Documentation/api/**"
+      - ".github/workflows/api-docs-ci.yml"
+  push:
+    branches: [main, develop]
+    paths:
+      - "Documentation/api/**"
+
+jobs:
+  validate-openapi:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Documentation/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: Documentation/api/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build, lint and check openapi.yaml is up to date
+        run: npm run check
+
+      - name: Render Redoc (smoke test)
+        run: npm run docs

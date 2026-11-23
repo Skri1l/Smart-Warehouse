@@ -13,6 +13,8 @@ export async function startMockBackend() {
   setMockLatency(200);
   const worker = setupWorker(...handlers);
   await worker.start({
+    // Under a sub-path (GitHub Pages demo) the worker file is not at the site root.
+    serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
     onUnhandledRequest: ({ url }, print) => {
       if (new URL(url).pathname.startsWith('/api/')) print.warning();
     },

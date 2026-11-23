@@ -1,0 +1,17 @@
+{
+  "name": "smart-warehouse-api-docs",
+  "private": true,
+  "type": "module",
+  "description": "Builds, validates and renders the Smart Warehouse OpenAPI specification.",
+  "scripts": {
+    "export": "node scripts/export-spec.mjs",
+    "build": "node scripts/build-spec.mjs",
+    "lint": "redocly lint openapi.yaml",
+    "docs": "redocly build-docs openapi.yaml --output dist/index.html",
+    "check": "npm run build && npm run lint && git diff --exit-code -- openapi.yaml"
+  },
+  "devDependencies": {
+    "@redocly/cli": "1.34.5",
+    "yaml": "2.6.1"
+  }
+}

@@ -27,6 +27,7 @@ jobs:
             --exclude-loopback
             --exclude "http://localhost*"
             --exclude "https://localhost*"
+            --exclude "https://skri1l.github.io/Smart-Warehouse/(app|api)/"
             '**/*.md'
             'Website/**/*.html'
           fail: true

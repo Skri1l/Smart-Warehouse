@@ -4,6 +4,7 @@ import styles from './AppShell.module.css';
 import { Icon } from './components/Icon.jsx';
 import { Button } from './components/Button.jsx';
 import { Modal } from './components/Modal.jsx';
+import { ErrorBoundary } from './components/ErrorBoundary.jsx';
 import { hasRole, useAuth } from './hooks/useAuth.jsx';
 import { BREAKPOINTS, useMediaQuery } from './hooks/useMediaQuery.js';
 import { humanize } from './core/format.js';
@@ -45,7 +46,7 @@ export function AppShell() {
       </a>
       <header className={styles.header}>
         <div className={styles.brand}>
-          <img src="/favicon.svg" alt="" width="28" height="28" />
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="28" height="28" />
           <span>Smart Warehouse</span>
           {IS_MOCK ? <span className={styles.mock}>Demo data</span> : null}
         </div>
@@ -68,7 +69,10 @@ export function AppShell() {
 
       <main id="main" className={styles.main}>
         <div className={styles.content}>
-          <Outlet />
+          {/* A crash in one screen keeps the navigation usable; moving to another route clears it. */}
+          <ErrorBoundary resetKey={location.pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
 

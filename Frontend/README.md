@@ -2,6 +2,8 @@
 
 Responsive browser UI for Smart Warehouse: React 18 + Vite, plain JavaScript with JSDoc. Runs on phones, tablets and desktops. Decisions: [ADR-0012](../Documentation/adr/0012-browser-ui-javascript.md); conventions: [CODE_STYLE_FRONTEND.md](../Documentation/CODE_STYLE_FRONTEND.md).
 
+**Architecture, user flows, tech stack and tests:** [ARCHITECTURE.md](ARCHITECTURE.md). **Design system and adaptive layout:** [DESIGN_SYSTEM.md](../Documentation/design/DESIGN_SYSTEM.md). **Live demo:** https://skri1l.github.io/Smart-Warehouse/app/
+
 ## Run
 
 Node.js 20+.
@@ -15,13 +17,15 @@ npm run dev:api    # real backend: Vite proxies /api to http://localhost:8080
 
 In mock mode sign in as `worker`, `manager` or `admin`; the password is the same word. Roles see different navigation (Purchasing for manager/admin, Devices for admin only).
 
-| Command                           | What it does                                                   |
-| --------------------------------- | -------------------------------------------------------------- |
-| `npm run lint`                    | ESLint (react, hooks, jsx-a11y)                                |
-| `npm run format` / `format:check` | Prettier                                                       |
-| `npm test`                        | Vitest + React Testing Library, against the same mock handlers |
-| `npm run build`                   | Production build into `dist/` (no mock code included)          |
-| `npm run licenses`                | Fails on any non-permissive runtime dependency                 |
+| Command                           | What it does                                                              |
+| --------------------------------- | ------------------------------------------------------------------------- |
+| `npm run lint`                    | ESLint (react, hooks, jsx-a11y)                                           |
+| `npm run format` / `format:check` | Prettier                                                                  |
+| `npm test`                        | Vitest + React Testing Library, against the same mock handlers            |
+| `npm run build`                   | Production build into `dist/` (no mock code included)                     |
+| `npm run build:demo`              | Static demo with the mocked backend (deployed to GitHub Pages `/app/`)    |
+| `npm run test:e2e`                | Playwright end-to-end and adaptive-layout tests (own dev server on :5174) |
+| `npm run licenses`                | Fails on any non-permissive runtime dependency                            |
 
 ## Screens
 
