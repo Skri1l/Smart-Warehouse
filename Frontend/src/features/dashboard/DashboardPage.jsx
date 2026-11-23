@@ -141,6 +141,16 @@ export default function DashboardPage() {
               </Card>
             ) : null}
 
+            {data.mixedShelves.length > 0 ? (
+              <Card title="Shelf setup problems" actions={<Link to="/shelves">Shelves</Link>}>
+                <p>
+                  {data.mixedShelves.map((item) => `Shelf ${item.shelf.label}`).join(', ')}{' '}
+                  {data.mixedShelves.length === 1 ? 'holds' : 'hold'} more than one product. The
+                  camera only counts items, so these counts are unreliable.
+                </p>
+              </Card>
+            ) : null}
+
             {data.recognitionErrors > 0 ? (
               <Card title="Recognition errors">
                 <p>

@@ -5,7 +5,13 @@ import { listRecommendations } from '../../api/recommendations.js';
 import { POLL_INTERVAL_MS, useResource } from '../../hooks/useResource.js';
 import { hasRole, useAuth } from '../../hooks/useAuth.jsx';
 import { loadStockSnapshot } from '../../api/snapshot.js';
-import { indexById, movementsPerDay, pendingReview, summariseProducts } from '../../core/stock.js';
+import {
+  findMixedShelves,
+  indexById,
+  movementsPerDay,
+  pendingReview,
+  summariseProducts,
+} from '../../core/stock.js';
 
 const RECENT_MOVEMENTS = 8;
 const CHART_DAYS = 7;
@@ -44,6 +50,7 @@ export function useDashboard() {
       lowStock: summaries.filter((item) => item.isLow).sort((a, b) => a.quantity - b.quantity),
       expiringSoon: summaries.filter((item) => item.expiresSoon || item.expiredQuantity > 0),
       pendingReviewCount: pending.length,
+      mixedShelves: findMixedShelves(snapshot.stock, snapshot.shelves),
       recognitionErrors: recognition.filter((item) => item.status === 'FAILED').length,
       recentMovements: [...movements]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))

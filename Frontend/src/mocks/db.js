@@ -58,6 +58,7 @@ function seed() {
     { id: 6, label: 'B-3', capacity: 50, status: 'INACTIVE', rackId: 2 },
     { id: 7, label: 'C-1', capacity: 100, status: 'ACTIVE', rackId: 3 },
     { id: 8, label: 'C-2', capacity: 100, status: 'ACTIVE', rackId: 3 },
+    { id: 9, label: 'C-3', capacity: 60, status: 'ACTIVE', rackId: 3 },
   ];
   const products = [
     { id: 1, sku: 'SKU-1001', name: 'Milk 1L', description: 'Pasteurised milk, 3.2 %' },
@@ -70,17 +71,18 @@ function seed() {
     { id: 8, sku: 'SKU-4002', name: 'Tomato paste 140g', description: null },
   ];
   const day = (offset) => toLocalDate(new Date(now + offset * DAY));
+  // One product per shelf: the camera only counts items (Vision returns a count), so it cannot
+  // tell two products apart. Several batches of the same product on one shelf are fine.
   const shelfStock = [
     { id: 1, shelfId: 1, productId: 1, quantity: 38, expirationDate: day(6), status: 'ACTIVE' },
-    { id: 2, shelfId: 1, productId: 2, quantity: 6, expirationDate: day(20), status: 'ACTIVE' },
+    { id: 2, shelfId: 3, productId: 2, quantity: 6, expirationDate: day(20), status: 'ACTIVE' },
     { id: 3, shelfId: 2, productId: 5, quantity: 44, expirationDate: day(120), status: 'ACTIVE' },
-    { id: 4, shelfId: 3, productId: 1, quantity: 3, expirationDate: day(-1), status: 'EXPIRED' },
+    { id: 4, shelfId: 1, productId: 1, quantity: 3, expirationDate: day(-1), status: 'EXPIRED' },
     { id: 5, shelfId: 4, productId: 3, quantity: 72, expirationDate: day(300), status: 'ACTIVE' },
     { id: 6, shelfId: 5, productId: 4, quantity: 11, expirationDate: day(240), status: 'ACTIVE' },
-    { id: 7, shelfId: 5, productId: 8, quantity: 9, expirationDate: day(180), status: 'ACTIVE' },
+    { id: 7, shelfId: 8, productId: 3, quantity: 18, expirationDate: day(280), status: 'ACTIVE' },
     { id: 8, shelfId: 7, productId: 6, quantity: 85, expirationDate: day(365), status: 'ACTIVE' },
-    { id: 9, shelfId: 8, productId: 7, quantity: 24, expirationDate: day(500), status: 'ACTIVE' },
-    { id: 10, shelfId: 8, productId: 3, quantity: 18, expirationDate: day(280), status: 'ACTIVE' },
+    { id: 9, shelfId: 9, productId: 7, quantity: 24, expirationDate: day(500), status: 'ACTIVE' },
   ];
   const devices = shelves
     .filter((shelf) => shelf.id !== 6)
@@ -278,7 +280,11 @@ export function simulateCameraUpload(random = Math.random) {
     id: nextId(db.recognitionResults),
     imageEventId,
     productId: stock.productId,
-    detectedQuantity: stock.quantity + delta,
+    // The camera sees the whole shelf, so it reports the shelf total, not one batch.
+    detectedQuantity:
+      db.shelfStock
+        .filter((row) => row.shelfId === stock.shelfId)
+        .reduce((sum, row) => sum + row.quantity, 0) + delta,
     quantityDelta: delta,
     confidence,
     status: confident ? 'CONFIRMED' : 'DETECTED',

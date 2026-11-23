@@ -91,7 +91,10 @@ export function summariseProducts(products, stock, shelves, today = new Date()) 
 }
 
 /**
- * Shelves grouped by rack with their contents and fill level.
+ * Shelves grouped by rack. A shelf holds exactly one product: the camera only counts items
+ * and cannot tell products apart. Several batches (expiry dates) of that product are allowed.
+ * A shelf with more than one product is a setup error and is reported as `mixedProducts`
+ * instead of being silently summed.
  * @param {{ racks: import('../api/types.js').Rack[], shelves: import('../api/types.js').Shelf[],
  *   stock: import('../api/types.js').ShelfStock[], products: import('../api/types.js').Product[],
  *   devices: import('../api/types.js').Device[] }} data
@@ -108,19 +111,25 @@ export function groupShelvesByRack(
       .filter((shelf) => shelf.rackId === rack.id)
       .sort((a, b) => a.label.localeCompare(b.label))
       .map((shelf) => {
-        const items = stock
-          .filter((row) => row.shelfId === shelf.id)
+        const rows = stock.filter((row) => row.shelfId === shelf.id);
+        const productIds = [...new Set(rows.map((row) => row.productId))];
+        const batches = rows
           .map((row) => ({
             stockId: row.id,
-            product: productById.get(row.productId),
             quantity: row.quantity,
             expirationDate: row.expirationDate,
             expiry: expiryState(row, today),
-          }));
-        const quantity = items.reduce((sum, item) => sum + item.quantity, 0);
+          }))
+          .sort((a, b) => a.expirationDate.localeCompare(b.expirationDate));
+        const quantity = rows.reduce((sum, row) => sum + row.quantity, 0);
+        const mixed = productIds.length > 1;
         return {
           shelf,
-          items,
+          product: productIds.length === 1 ? (productById.get(productIds[0]) ?? null) : null,
+          mixedProducts: mixed
+            ? productIds.map((id) => productById.get(id) ?? { id, name: `#${id}`, sku: '' })
+            : [],
+          batches,
           quantity,
           fillRatio: shelf.capacity > 0 ? Math.min(1, quantity / shelf.capacity) : 0,
           level: fillLevel(quantity, shelf.capacity),
@@ -175,4 +184,22 @@ export function indexById({ products, shelves }) {
     productById: new Map(products.map((product) => [product.id, product])),
     shelfById: new Map(shelves.map((shelf) => [shelf.id, shelf])),
   };
+}
+
+/**
+ * Shelves that hold more than one product. The camera cannot tell products apart, so stock
+ * counts on these shelves are unreliable until the shelf is cleaned up.
+ * @param {import('../api/types.js').ShelfStock[]} stock
+ * @param {import('../api/types.js').Shelf[]} shelves
+ * @returns {{ shelf: import('../api/types.js').Shelf, productCount: number }[]}
+ */
+export function findMixedShelves(stock, shelves) {
+  return shelves
+    .map((shelf) => ({
+      shelf,
+      productCount: new Set(
+        stock.filter((row) => row.shelfId === shelf.id).map((row) => row.productId),
+      ).size,
+    }))
+    .filter((item) => item.productCount > 1);
 }

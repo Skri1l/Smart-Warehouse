@@ -5,7 +5,7 @@ import { Badge } from '../../components/Badge.jsx';
 import { PageHeader } from '../../components/Card.jsx';
 import { Icon } from '../../components/Icon.jsx';
 import { StateView } from '../../components/StateView.jsx';
-import { formatPercent, formatRelative } from '../../core/format.js';
+import { formatDate, formatPercent, formatRelative } from '../../core/format.js';
 import { ExpiryBadge } from '../products/StockStatus.jsx';
 
 const LEVEL_BADGES = {
@@ -16,15 +16,45 @@ const LEVEL_BADGES = {
 };
 
 function ShelfCard({ view }) {
-  const { shelf, items, quantity, fillRatio, level, device } = view;
+  const { shelf, product, mixedProducts, batches, quantity, fillRatio, level, device } = view;
   const inactive = shelf.status === 'INACTIVE';
-  const badge = inactive ? { tone: 'neutral', text: 'Inactive' } : LEVEL_BADGES[level];
+  const mixed = mixedProducts.length > 0;
+  let badge = LEVEL_BADGES[level];
+  if (inactive) badge = { tone: 'neutral', text: 'Inactive' };
+  if (mixed) badge = { tone: 'danger', text: 'Mixed' };
+  const showBatches = batches.length > 1 || batches.some((batch) => batch.expiry !== 'ok');
+
   return (
     <article className={`${styles.shelf} ${inactive ? styles.inactive : ''}`}>
       <header className={styles.shelfHeader}>
         <h3>Shelf {shelf.label}</h3>
         <Badge tone={badge.tone}>{badge.text}</Badge>
       </header>
+
+      {product ? (
+        <Link to={`/products/${product.id}`} className={styles.product}>
+          <span>{product.name}</span>
+          <span className={styles.sku}>{product.sku}</span>
+        </Link>
+      ) : null}
+      {!product && !mixed ? <p className={styles.muted}>No product on this shelf.</p> : null}
+      {mixed ? (
+        <div className={styles.mixed} role="alert">
+          <p>
+            <strong>{mixedProducts.length} products on one shelf.</strong> The camera only counts
+            items, so it cannot tell them apart and the count below is unreliable. Keep one product
+            per shelf.
+          </p>
+          <ul>
+            {mixedProducts.map((item) => (
+              <li key={item.id}>
+                <Link to={`/products/${item.id}`}>{item.name}</Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div
         className={styles.meter}
         role="meter"
@@ -40,23 +70,22 @@ function ShelfCard({ view }) {
         />
       </div>
       <p className={styles.capacity}>
-        {quantity} / {shelf.capacity} units · {formatPercent(fillRatio)}
+        {quantity} / {shelf.capacity} pcs · {formatPercent(fillRatio)}
       </p>
-      {items.length === 0 ? (
-        <p className={styles.muted}>No products on this shelf.</p>
-      ) : (
-        <ul className={styles.items}>
-          {items.map((item) => (
-            <li key={item.stockId}>
-              <Link to={`/products/${item.product?.id}`}>{item.product?.name ?? 'Unknown'}</Link>
-              <span className={styles.itemMeta}>
-                {item.quantity} pcs{' '}
-                {item.expiry !== 'ok' ? <ExpiryBadge expiry={item.expiry} /> : null}
+
+      {showBatches ? (
+        <ul className={styles.items} aria-label={`Batches on shelf ${shelf.label}`}>
+          {batches.map((batch) => (
+            <li key={batch.stockId}>
+              <span>
+                {batch.quantity} pcs · until {formatDate(batch.expirationDate)}
               </span>
+              <ExpiryBadge expiry={batch.expiry} />
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
+
       <footer className={styles.device}>
         <Icon name="camera" size={16} />
         {device ? (
