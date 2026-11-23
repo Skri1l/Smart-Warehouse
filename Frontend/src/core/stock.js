@@ -2,12 +2,10 @@
  * Pure stock calculations: no React, no HTTP. Input rows are backend DTOs (src/api/types.js).
  */
 
-/** A product is "low" when its usable quantity across all shelves is below this. */
+/** A product is "low" when its quantity across all shelves is below this. */
 export const LOW_STOCK_THRESHOLD = 15;
 /** A shelf is "low" when filled below this share of its capacity. */
 export const LOW_FILL_RATIO = 0.25;
-/** Stock expiring within this many days is flagged. */
-export const EXPIRY_WARNING_DAYS = 7;
 /** Recognition results below this confidence need manual review (FR-08). */
 export const REVIEW_CONFIDENCE = 0.6;
 
@@ -27,19 +25,6 @@ export function daysUntil(isoDate, today = new Date()) {
 }
 
 /**
- * Expiry state of a shelf-stock row.
- * @param {{ expirationDate: string, status: string }} row
- * @param {Date} [today]
- * @returns {'expired' | 'soon' | 'ok'}
- */
-export function expiryState(row, today = new Date()) {
-  const days = daysUntil(row.expirationDate, today);
-  if (row.status === 'EXPIRED' || days < 0) return 'expired';
-  if (days <= EXPIRY_WARNING_DAYS) return 'soon';
-  return 'ok';
-}
-
-/**
  * Fill level of a shelf from quantity and capacity.
  * @param {number} quantity
  * @param {number} capacity
@@ -53,38 +38,36 @@ export function fillLevel(quantity, capacity) {
 }
 
 /**
- * Stock summary per product: usable quantity (expired stock excluded), locations, nearest expiry.
+ * Sum quantities per shelf. Expiry is not recorded, so several `shelf-stock` rows for the
+ * same shelf are just parts of one count.
+ * @param {import('../api/types.js').ShelfStock[]} rows
+ * @returns {Map<number, number>} shelfId -> quantity
+ */
+function quantityByShelf(rows) {
+  const totals = new Map();
+  rows.forEach((row) => totals.set(row.shelfId, (totals.get(row.shelfId) ?? 0) + row.quantity));
+  return totals;
+}
+
+/**
+ * Stock summary per product: total quantity and the shelves holding it (FR-10).
  * @param {import('../api/types.js').Product[]} products
  * @param {import('../api/types.js').ShelfStock[]} stock
  * @param {import('../api/types.js').Shelf[]} shelves
- * @param {Date} [today]
  */
-export function summariseProducts(products, stock, shelves, today = new Date()) {
+export function summariseProducts(products, stock, shelves) {
   const shelfById = new Map(shelves.map((shelf) => [shelf.id, shelf]));
   return products.map((product) => {
-    const rows = stock.filter((row) => row.productId === product.id);
-    const usable = rows.filter((row) => expiryState(row, today) !== 'expired');
-    const quantity = usable.reduce((sum, row) => sum + row.quantity, 0);
-    const expiredQuantity = rows
-      .filter((row) => expiryState(row, today) === 'expired')
-      .reduce((sum, row) => sum + row.quantity, 0);
-    const nearestExpiry = usable
-      .map((row) => row.expirationDate)
-      .sort()
-      .at(0);
+    const totals = quantityByShelf(stock.filter((row) => row.productId === product.id));
+    const quantity = [...totals.values()].reduce((sum, value) => sum + value, 0);
     return {
       product,
       quantity,
-      expiredQuantity,
       isLow: quantity < LOW_STOCK_THRESHOLD,
-      nearestExpiry: nearestExpiry ?? null,
-      expiresSoon: nearestExpiry ? daysUntil(nearestExpiry, today) <= EXPIRY_WARNING_DAYS : false,
-      locations: rows.map((row) => ({
-        stockId: row.id,
-        shelfLabel: shelfById.get(row.shelfId)?.label ?? `#${row.shelfId}`,
-        quantity: row.quantity,
-        expirationDate: row.expirationDate,
-        expiry: expiryState(row, today),
+      locations: [...totals].map(([shelfId, shelfQuantity]) => ({
+        shelfId,
+        shelfLabel: shelfById.get(shelfId)?.label ?? `#${shelfId}`,
+        quantity: shelfQuantity,
       })),
     };
   });
@@ -92,18 +75,13 @@ export function summariseProducts(products, stock, shelves, today = new Date()) 
 
 /**
  * Shelves grouped by rack. A shelf holds exactly one product: the camera only counts items
- * and cannot tell products apart. Several batches (expiry dates) of that product are allowed.
- * A shelf with more than one product is a setup error and is reported as `mixedProducts`
- * instead of being silently summed.
+ * and cannot tell products apart. A shelf with more than one product is a setup error and
+ * is reported as `mixedProducts` instead of being silently summed.
  * @param {{ racks: import('../api/types.js').Rack[], shelves: import('../api/types.js').Shelf[],
  *   stock: import('../api/types.js').ShelfStock[], products: import('../api/types.js').Product[],
  *   devices: import('../api/types.js').Device[] }} data
- * @param {Date} [today]
  */
-export function groupShelvesByRack(
-  { racks, shelves, stock, products, devices },
-  today = new Date(),
-) {
+export function groupShelvesByRack({ racks, shelves, stock, products, devices }) {
   const productById = new Map(products.map((product) => [product.id, product]));
   return racks.map((rack) => ({
     rack,
@@ -113,23 +91,14 @@ export function groupShelvesByRack(
       .map((shelf) => {
         const rows = stock.filter((row) => row.shelfId === shelf.id);
         const productIds = [...new Set(rows.map((row) => row.productId))];
-        const batches = rows
-          .map((row) => ({
-            stockId: row.id,
-            quantity: row.quantity,
-            expirationDate: row.expirationDate,
-            expiry: expiryState(row, today),
-          }))
-          .sort((a, b) => a.expirationDate.localeCompare(b.expirationDate));
         const quantity = rows.reduce((sum, row) => sum + row.quantity, 0);
-        const mixed = productIds.length > 1;
         return {
           shelf,
           product: productIds.length === 1 ? (productById.get(productIds[0]) ?? null) : null,
-          mixedProducts: mixed
-            ? productIds.map((id) => productById.get(id) ?? { id, name: `#${id}`, sku: '' })
-            : [],
-          batches,
+          mixedProducts:
+            productIds.length > 1
+              ? productIds.map((id) => productById.get(id) ?? { id, name: `#${id}`, sku: '' })
+              : [],
           quantity,
           fillRatio: shelf.capacity > 0 ? Math.min(1, quantity / shelf.capacity) : 0,
           level: fillLevel(quantity, shelf.capacity),
@@ -137,6 +106,17 @@ export function groupShelvesByRack(
         };
       }),
   }));
+}
+
+/**
+ * Active shelves with nothing on them, as last counted by the camera.
+ * @param {import('../api/types.js').ShelfStock[]} stock
+ * @param {import('../api/types.js').Shelf[]} shelves
+ * @returns {import('../api/types.js').Shelf[]}
+ */
+export function findEmptyShelves(stock, shelves) {
+  const totals = quantityByShelf(stock);
+  return shelves.filter((shelf) => shelf.status === 'ACTIVE' && !(totals.get(shelf.id) > 0));
 }
 
 /**

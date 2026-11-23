@@ -6,6 +6,7 @@ import { POLL_INTERVAL_MS, useResource } from '../../hooks/useResource.js';
 import { hasRole, useAuth } from '../../hooks/useAuth.jsx';
 import { loadStockSnapshot } from '../../api/snapshot.js';
 import {
+  findEmptyShelves,
   findMixedShelves,
   indexById,
   movementsPerDay,
@@ -48,7 +49,7 @@ export function useDashboard() {
       totalUnits: summaries.reduce((sum, item) => sum + item.quantity, 0),
       productCount: snapshot.products.length,
       lowStock: summaries.filter((item) => item.isLow).sort((a, b) => a.quantity - b.quantity),
-      expiringSoon: summaries.filter((item) => item.expiresSoon || item.expiredQuantity > 0),
+      emptyShelves: findEmptyShelves(snapshot.stock, snapshot.shelves),
       pendingReviewCount: pending.length,
       mixedShelves: findMixedShelves(snapshot.stock, snapshot.shelves),
       recognitionErrors: recognition.filter((item) => item.status === 'FAILED').length,

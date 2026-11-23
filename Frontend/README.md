@@ -29,7 +29,7 @@ In mock mode sign in as `worker`, `manager` or `admin`; the password is the same
 | ---------------------------- | --------------------------------------------------------------------------------------- | ------------------- |
 | `/login`                     | Sign-in                                                                                 | FR-01               |
 | `/`                          | Dashboard: KPIs, 7-day movement chart, low stock, recent movements, new recommendations | FR-17               |
-| `/shelves`                   | Racks and shelves: the shelf's product, fill level, batches by expiry, camera status    | M5 shelf/stock view |
+| `/shelves`                   | Racks and shelves: the shelf's product, fill level, camera status                       | M5 shelf/stock view |
 | `/products`, `/products/:id` | Catalogue with stock, search and filters; product locations and history                 | FR-03, FR-09, FR-10 |
 | `/review`                    | Confirm / reject low-confidence recognitions before they change stock                   | FR-08               |
 | `/movements`                 | Stock history filtered by type and source                                               | FR-09               |
@@ -54,9 +54,10 @@ These are assumptions the backend has to match (or the UI adapts) before `npm ru
 2. **Auth endpoints** (`src/api/auth.js`): `POST /api/v1/auth/login` → `200 { id, username, email, role }` + `HttpOnly` session cookie, `GET /api/v1/auth/me` → current user or `401`, `POST /api/v1/auth/logout` → `204`. Role checks: recommendations actions need `MANAGER`/`ADMIN`, device registration needs `ADMIN`.
 3. **Error code.** `ErrorResponse` has only `status` and `message`; the UI also reads the stable `error` code from API_GUIDELINES.md when present.
 4. **No pagination yet.** Lists are paged on the client (`DataTable`); switch to `?page=&size=` once the backend wraps lists.
-5. **"Low stock" and "expiring soon"** are UI constants in `src/core/stock.js` (below 15 pcs, within 7 days); the backend has no per-product minimum yet.
+5. **"Low stock"** is a UI constant in `src/core/stock.js` (below 15 pcs); the backend has no per-product minimum yet.
 6. **Camera images** are not served to the browser yet; the review screen shows a placeholder instead of the shelf photo.
-7. **One product per shelf.** The camera only counts items (Vision returns a count), so it cannot tell products apart. The UI treats a shelf as one product with possibly several batches (expiry dates). `shelf-stock` still allows several products per shelf; when the backend returns that, the shelf card and the dashboard flag it as a setup problem instead of summing the counts.
+7. **One product per shelf.** The camera only counts items (Vision returns a count), so it cannot tell products apart. The UI treats a shelf as one product. `shelf-stock` still allows several products per shelf; when the backend returns that, the shelf card and the dashboard flag it as a setup problem instead of summing the counts.
+8. **No expiry.** Expiry dates are not recorded, so the UI ignores `ShelfStock.expirationDate` and `status` (the mock sends `null`) and has no expiry screens or warnings. Several `shelf-stock` rows for one shelf and product are simply summed.
 
 ## Layout
 

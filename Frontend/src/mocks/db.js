@@ -72,17 +72,24 @@ function seed() {
   ];
   const day = (offset) => toLocalDate(new Date(now + offset * DAY));
   // One product per shelf: the camera only counts items (Vision returns a count), so it cannot
-  // tell two products apart. Several batches of the same product on one shelf are fine.
+  // tell two products apart. Expiry is not recorded, so expirationDate stays null.
+  const stock = (id, shelfId, productId, quantity) => ({
+    id,
+    shelfId,
+    productId,
+    quantity,
+    expirationDate: null,
+    status: 'ACTIVE',
+  });
   const shelfStock = [
-    { id: 1, shelfId: 1, productId: 1, quantity: 38, expirationDate: day(6), status: 'ACTIVE' },
-    { id: 2, shelfId: 3, productId: 2, quantity: 6, expirationDate: day(20), status: 'ACTIVE' },
-    { id: 3, shelfId: 2, productId: 5, quantity: 44, expirationDate: day(120), status: 'ACTIVE' },
-    { id: 4, shelfId: 1, productId: 1, quantity: 3, expirationDate: day(-1), status: 'EXPIRED' },
-    { id: 5, shelfId: 4, productId: 3, quantity: 72, expirationDate: day(300), status: 'ACTIVE' },
-    { id: 6, shelfId: 5, productId: 4, quantity: 11, expirationDate: day(240), status: 'ACTIVE' },
-    { id: 7, shelfId: 8, productId: 3, quantity: 18, expirationDate: day(280), status: 'ACTIVE' },
-    { id: 8, shelfId: 7, productId: 6, quantity: 85, expirationDate: day(365), status: 'ACTIVE' },
-    { id: 9, shelfId: 9, productId: 7, quantity: 24, expirationDate: day(500), status: 'ACTIVE' },
+    stock(1, 1, 1, 38),
+    stock(2, 3, 2, 6),
+    stock(3, 2, 5, 44),
+    stock(5, 4, 3, 72),
+    stock(6, 5, 4, 11),
+    stock(7, 8, 3, 18),
+    stock(8, 7, 6, 85),
+    stock(9, 9, 7, 24),
   ];
   const devices = shelves
     .filter((shelf) => shelf.id !== 6)
@@ -174,7 +181,7 @@ function seed() {
       productId: 1,
       recommendedQuantity: 24,
       requiredBy: day(3),
-      reason: 'Shelf life is 7 days: ordering a smaller batch closer to the demand date.',
+      reason: 'Planned demand of 50 pcs next week; 38 pcs on the shelf.',
       status: 'NEW',
       createdAt: toLocalDateTime(new Date(now - 26 * 3600000)),
     },
@@ -280,7 +287,7 @@ export function simulateCameraUpload(random = Math.random) {
     id: nextId(db.recognitionResults),
     imageEventId,
     productId: stock.productId,
-    // The camera sees the whole shelf, so it reports the shelf total, not one batch.
+    // The camera sees the whole shelf, so it reports the shelf total.
     detectedQuantity:
       db.shelfStock
         .filter((row) => row.shelfId === stock.shelfId)

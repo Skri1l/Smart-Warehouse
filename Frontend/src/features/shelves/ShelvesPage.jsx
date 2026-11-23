@@ -5,8 +5,7 @@ import { Badge } from '../../components/Badge.jsx';
 import { PageHeader } from '../../components/Card.jsx';
 import { Icon } from '../../components/Icon.jsx';
 import { StateView } from '../../components/StateView.jsx';
-import { formatDate, formatPercent, formatRelative } from '../../core/format.js';
-import { ExpiryBadge } from '../products/StockStatus.jsx';
+import { formatPercent, formatRelative } from '../../core/format.js';
 
 const LEVEL_BADGES = {
   empty: { tone: 'danger', text: 'Empty' },
@@ -16,13 +15,12 @@ const LEVEL_BADGES = {
 };
 
 function ShelfCard({ view }) {
-  const { shelf, product, mixedProducts, batches, quantity, fillRatio, level, device } = view;
+  const { shelf, product, mixedProducts, quantity, fillRatio, level, device } = view;
   const inactive = shelf.status === 'INACTIVE';
   const mixed = mixedProducts.length > 0;
   let badge = LEVEL_BADGES[level];
   if (inactive) badge = { tone: 'neutral', text: 'Inactive' };
   if (mixed) badge = { tone: 'danger', text: 'Mixed' };
-  const showBatches = batches.length > 1 || batches.some((batch) => batch.expiry !== 'ok');
 
   return (
     <article className={`${styles.shelf} ${inactive ? styles.inactive : ''}`}>
@@ -72,19 +70,6 @@ function ShelfCard({ view }) {
       <p className={styles.capacity}>
         {quantity} / {shelf.capacity} pcs · {formatPercent(fillRatio)}
       </p>
-
-      {showBatches ? (
-        <ul className={styles.items} aria-label={`Batches on shelf ${shelf.label}`}>
-          {batches.map((batch) => (
-            <li key={batch.stockId}>
-              <span>
-                {batch.quantity} pcs · until {formatDate(batch.expirationDate)}
-              </span>
-              <ExpiryBadge expiry={batch.expiry} />
-            </li>
-          ))}
-        </ul>
-      ) : null}
 
       <footer className={styles.device}>
         <Icon name="camera" size={16} />

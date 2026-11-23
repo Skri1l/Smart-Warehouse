@@ -165,10 +165,6 @@ const stockHandlers = [
       HttpResponse.json(db.shelfStock.filter((row) => row.productId === Number(params.productId))),
     ),
   ),
-  http.get(
-    `${API}/shelf-stock/expired`,
-    secured(() => HttpResponse.json(db.shelfStock.filter((row) => row.status === 'EXPIRED'))),
-  ),
   ...readable('/shelf-stock', 'shelfStock', 'Shelf stock'),
   http.get(
     `${API}/stock-movements/product/:productId`,

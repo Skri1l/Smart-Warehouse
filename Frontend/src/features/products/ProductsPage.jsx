@@ -6,12 +6,10 @@ import { Card, PageHeader } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
 import { Field } from '../../components/Field.jsx';
 import { StateView } from '../../components/StateView.jsx';
-import { formatDate } from '../../core/format.js';
 
 const FILTERS = [
   { value: 'all', label: 'All products' },
   { value: 'low', label: 'Low stock' },
-  { value: 'expiring', label: 'Expiring or expired' },
 ];
 
 const COLUMNS = [
@@ -31,12 +29,6 @@ const COLUMNS = [
     key: 'shelves',
     header: 'Shelves',
     render: (row) => row.locations.map((location) => location.shelfLabel).join(', ') || '—',
-  },
-  {
-    key: 'expiry',
-    header: 'Nearest expiry',
-    secondary: true,
-    render: (row) => formatDate(row.nearestExpiry),
   },
   { key: 'status', header: 'Status', render: (row) => <StockStatus summary={row} /> },
 ];

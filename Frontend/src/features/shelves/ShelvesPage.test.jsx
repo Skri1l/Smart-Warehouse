@@ -15,11 +15,9 @@ describe('ShelvesPage', () => {
   });
 
   it('shows a warning when the backend reports two products on one shelf', async () => {
-    server.use(
-      http.get('/api/v1/shelf-stock', () =>
-        HttpResponse.json([...db.shelfStock, { ...db.shelfStock[4], id: 99, productId: 8 }]),
-      ),
-    );
+    const b1 = db.shelves.find((shelf) => shelf.label === 'B-1');
+    const extra = { ...db.shelfStock.find((row) => row.shelfId === b1.id), id: 99, productId: 8 };
+    server.use(http.get('/api/v1/shelf-stock', () => HttpResponse.json([...db.shelfStock, extra])));
     signInAs('worker');
     renderApp('/shelves');
     const shelf = (await screen.findByRole('heading', { name: 'Shelf B-1' })).closest('article');

@@ -1,18 +1,16 @@
 import { Link, useParams } from 'react-router-dom';
 import styles from './ProductsPage.module.css';
 import { useProductDetails } from './useProducts.js';
-import { ExpiryBadge, StockStatus } from './StockStatus.jsx';
+import { StockStatus } from './StockStatus.jsx';
 import { Badge } from '../../components/Badge.jsx';
 import { Card, PageHeader } from '../../components/Card.jsx';
 import { DataTable } from '../../components/DataTable.jsx';
 import { StateView } from '../../components/StateView.jsx';
-import { formatDate, formatDateTime, formatDelta, humanize } from '../../core/format.js';
+import { formatDateTime, formatDelta, humanize } from '../../core/format.js';
 
 const LOCATION_COLUMNS = [
   { key: 'shelf', header: 'Shelf', primary: true, render: (row) => `Shelf ${row.shelfLabel}` },
   { key: 'quantity', header: 'Quantity', align: 'end', render: (row) => `${row.quantity} pcs` },
-  { key: 'expires', header: 'Expires', render: (row) => formatDate(row.expirationDate) },
-  { key: 'state', header: 'Shelf life', render: (row) => <ExpiryBadge expiry={row.expiry} /> },
 ];
 
 const MOVEMENT_COLUMNS = [
@@ -49,16 +47,12 @@ export default function ProductDetailsPage() {
               <Card title="Summary" className={styles.full}>
                 <dl className={styles.facts}>
                   <div>
-                    <dt>Usable quantity</dt>
+                    <dt>Quantity</dt>
                     <dd>{summary.quantity} pcs</dd>
                   </div>
                   <div>
-                    <dt>Expired</dt>
-                    <dd>{summary.expiredQuantity} pcs</dd>
-                  </div>
-                  <div>
-                    <dt>Nearest expiry</dt>
-                    <dd>{formatDate(summary.nearestExpiry)}</dd>
+                    <dt>Shelves</dt>
+                    <dd>{summary.locations.length}</dd>
                   </div>
                   <div>
                     <dt>Status</dt>
@@ -80,7 +74,7 @@ export default function ProductDetailsPage() {
                     caption="Shelves holding this product"
                     columns={LOCATION_COLUMNS}
                     rows={summary.locations}
-                    rowKey={(row) => row.stockId}
+                    rowKey={(row) => row.shelfId}
                   />
                 </StateView>
               </Card>

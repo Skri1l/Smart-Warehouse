@@ -7,7 +7,7 @@ import { POLL_INTERVAL_MS, useResource } from '../../hooks/useResource.js';
 import { summariseProducts } from '../../core/stock.js';
 
 /**
- * @typedef {'all' | 'low' | 'expiring'} ProductFilter
+ * @typedef {'all' | 'low'} ProductFilter
  */
 
 /**
@@ -22,7 +22,6 @@ export function useProducts({ query, filter }) {
   const text = query.trim().toLowerCase();
   const rows = summaries.filter((item) => {
     if (filter === 'low' && !item.isLow) return false;
-    if (filter === 'expiring' && !(item.expiresSoon || item.expiredQuantity > 0)) return false;
     if (!text) return true;
     return (
       item.product.name.toLowerCase().includes(text) ||

@@ -112,7 +112,7 @@ export default function RecommendationsPage() {
     <>
       <PageHeader
         title="Purchase recommendations"
-        subtitle={`${newCount} waiting for a decision. Calculated from stock, demand plans and shelf life.`}
+        subtitle={`${newCount} waiting for a decision. Calculated from stock and demand plans.`}
       />
       {actionError && !editing ? (
         <p className={styles.formError} role="alert">

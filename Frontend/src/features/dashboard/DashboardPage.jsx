@@ -57,11 +57,11 @@ export default function DashboardPage() {
                 to="/review"
               />
               <Stat
-                icon="clock"
-                label="Expiring or expired"
-                value={data.expiringSoon.length}
-                tone={data.expiringSoon.length ? 'warn' : 'ok'}
-                to="/products?filter=expiring"
+                icon="shelves"
+                label="Empty shelves"
+                value={data.emptyShelves.length}
+                tone={data.emptyShelves.length ? 'warn' : 'ok'}
+                to="/shelves"
               />
             </div>
 
