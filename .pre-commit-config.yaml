@@ -9,15 +9,15 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=5000"]
 
-  # --- Frontend (Python / PySide6) and Device (shelf agent) ---
+  # --- Device (shelf agent, Python) ---
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
       - id: ruff
         args: ["--fix"]
-        files: ^(Frontend|Device)/
+        files: ^Device/
       - id: ruff-format
-        files: ^(Frontend|Device)/
+        files: ^Device/
 
   # --- Backend (Java / Spring Boot) ---
   - repo: local
