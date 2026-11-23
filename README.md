@@ -57,7 +57,7 @@ when the backend starts.
 - Java 21 (JDK)
 - Maven (or use the bundled `./Backend/mvnw` wrapper)
 - PostgreSQL 15+ running locally, or via Docker
-- Python 3.12+ (for the frontend, once scaffolded — see [Frontend/README.md](Frontend/README.md))
+- Node.js 20+ (for the frontend — see [Frontend/README.md](Frontend/README.md))
 - Python 3.11+ (for the shelf agent / emulator — see [Device/README.md](Device/README.md))
 
 ### Backend
@@ -92,7 +92,15 @@ If you get **HTTP 403** or an unexpected page at that address, another applicati
 
 ### Frontend
 
-The frontend is being moved from the PySide6 desktop prototype to a responsive browser UI in JavaScript ([ADR-0012](Documentation/adr/0012-browser-ui-javascript.md)); in production it is served by our hosted server on the same address as the API ([ADR-0011](Documentation/adr/0011-hosted-server-deployment.md)). Until the new app is scaffolded, `Frontend/` still contains the old prototype (`python -m app --demo`). See [Frontend/README.md](Frontend/README.md).
+The frontend is a responsive browser UI in React ([ADR-0012](Documentation/adr/0012-browser-ui-javascript.md)); in production it is served by our hosted server on the same address as the API ([ADR-0011](Documentation/adr/0011-hosted-server-deployment.md)). Until the backend has `/api/v1` and authentication, the dev server mocks the whole REST protocol in the browser. From `Frontend/`:
+
+```bash
+npm ci
+npm run dev        # http://localhost:5173, mocked backend; sign in as worker / manager / admin
+npm run dev:api    # real backend on http://localhost:8080
+```
+
+See [Frontend/README.md](Frontend/README.md).
 
 ### Shelf device / emulator
 
@@ -112,13 +120,13 @@ On macOS or Linux, `scripts/pipeline.sh start` starts Vision, PostgreSQL and the
 ## Quality gates
 
 - **Backend:** `./mvnw verify` runs unit/integration tests and checks code formatting (Spotless). Run `./mvnw spotless:apply` to auto-format before committing.
-- **Frontend:** `ruff check .`, `black --check .`, `mypy .` and a `pip-licenses` dependency audit (see [ADR-0006](Documentation/adr/0006-frontend-pyside6-desktop.md)) run from `Frontend/`. See [Frontend/pyproject.toml](Frontend/pyproject.toml).
-- **Device:** the same four checks plus `pytest`, run from `Device/`. See [Device/pyproject.toml](Device/pyproject.toml).
-- Both are enforced locally via [pre-commit](.pre-commit-config.yaml) hooks and in CI on every pull request (`.github/workflows/`).
+- **Frontend:** `npm run lint` (ESLint), `npm run format:check` (Prettier), `npm test` (Vitest), `npm run build` and a `license-checker` audit of runtime dependencies, run from `Frontend/`. See [Frontend/package.json](Frontend/package.json).
+- **Device:** `ruff check .`, `black --check .`, `mypy .`, a `pip-licenses` audit and `pytest`, run from `Device/`. See [Device/pyproject.toml](Device/pyproject.toml).
+- Java and Python formatting is also enforced locally via [pre-commit](.pre-commit-config.yaml) hooks; every check runs in CI on each pull request (`.github/workflows/`).
 
 ## License
 
-This repository is **proprietary and confidential**. See [LICENSE](LICENSE). No part of this codebase may be copied, used or distributed without prior written permission from the copyright holders. Third-party components (e.g. the LGPL-licensed Qt/PySide6 used by the frontend) keep their own licenses — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+This repository is **proprietary and confidential**. See [LICENSE](LICENSE). No part of this codebase may be copied, used or distributed without prior written permission from the copyright holders. Third-party components keep their own licenses — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Team
 
