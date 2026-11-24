@@ -19,11 +19,18 @@ jobs:
 
       - name: Check for broken links
         uses: lycheeverse/lychee-action@v2
+        env:
+          # Authenticated requests to github.com are throttled far less: unauthenticated
+          # runs hit random "503 Service Unavailable" on valid blob/ links.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           # Local service URLs (Swagger on 127.0.0.1:8080, Vision on :8000)
           # are documentation, not links CI can reach.
+          # Retries absorb the remaining transient 5xx/429 from GitHub.
           args: >
             --no-progress
+            --max-retries 4
+            --retry-wait-time 5
             --exclude-loopback
             --exclude "http://localhost*"
             --exclude "https://localhost*"
