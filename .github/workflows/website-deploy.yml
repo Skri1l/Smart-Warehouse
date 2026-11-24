@@ -44,8 +44,6 @@ jobs:
         run: |
           npm ci
           npm run build:demo -- --base "${{ steps.pages.outputs.base_path }}/app/"
-          # GitHub Pages has no SPA fallback: unknown paths serve 404.html, which boots the app.
-          cp dist/index.html dist/404.html
 
       - name: Build the API reference (/api/)
         working-directory: Documentation/api
@@ -61,6 +59,18 @@ jobs:
           mkdir -p _site/api
           cp Documentation/api/dist/index.html _site/api/index.html
           cp Documentation/api/openapi.yaml _site/api/openapi.yaml
+
+      - name: SPA fallback for /app/ deep links
+        # GitHub Pages has no rewrites and serves only the ROOT 404.html for any unknown path,
+        # so reloading /app/products would show GitHub's 404. Make the root 404.html the app's
+        # index.html (its asset URLs are absolute): the router then renders the requested
+        # screen. Unknown paths outside /app/ are sent to the landing page instead.
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          guard="<script>if(!location.pathname.startsWith('${BASE_PATH}/app/'))location.replace('${BASE_PATH}/')</script>"
+          sed "s|<head>|<head>${guard}|" _site/app/index.html > _site/404.html
+          grep -q "location.replace" _site/404.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
