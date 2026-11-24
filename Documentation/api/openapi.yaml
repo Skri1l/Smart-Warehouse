@@ -20,7 +20,8 @@ info:
     |---|---|
     | Base URL | `http://localhost:8080` when run locally. All paths start at the root (no `/api/v1` prefix yet). |
     | Format | JSON (`application/json`) in and out; camera photos are `multipart/form-data`. |
-    | Authentication | None yet — every endpoint is open in development. Do not expose this build publicly. |
+    | Authentication | JWT bearer token. Get it from `POST /auth/login` (public, as is `POST /auth/register`) and send `Authorization: Bearer <token>` with every other request. The token is valid for **15 minutes**; sign in again when you get 401. |
+    | Roles | The token carries the user's role (`ROLE_WORKER`, `ROLE_MANAGER`, `ROLE_ADMIN`), but the backend does not check roles yet: any signed-in user can call any endpoint. |
     | Create | `POST` returns **201** and the new resource **ID as a bare number** (e.g. `7`), not the object. Fetch it with `GET /{resource}/{id}`. |
     | Update / delete | `PUT` replaces the whole resource and returns it (**200**); `DELETE` and status actions (`PATCH …/activate`) return **204** with no body. |
     | Lists | Plain JSON arrays, not paginated yet. |
@@ -46,6 +47,7 @@ info:
     | Status | Meaning | Body |
     |---|---|---|
     | 400 | Invalid JSON, failed validation (`@NotBlank`, `@Positive`, `@FutureOrPresent`…), wrong or missing parameter | `SpringErrorResponse` |
+    | 401 | No token, a malformed or expired token, or wrong credentials on `POST /auth/login`. **Empty body**; the reason is in the `WWW-Authenticate` header | — |
     | 404 | The resource or a referenced resource (e.g. `productId`) does not exist | `ErrorResponse` |
     | 409 | Duplicate (SKU, device key, user e-mail/username, warehouse name + address) or a state conflict | `ErrorResponse` |
     | 415 | Wrong `Content-Type` (e.g. JSON sent to the photo upload) | `SpringErrorResponse` |
@@ -54,7 +56,11 @@ info:
   license:
     name: Proprietary — see LICENSE
     url: https://github.com/Skri1l/Smart-Warehouse/blob/main/LICENSE
+security:
+  - bearerAuth: []
 tags:
+  - name: Authentication
+    description: "Sign in to get a JWT access token, or register a new user. These two endpoints are public; every other endpoint needs `Authorization: Bearer <token>`."
   - name: Warehouses
     description: Warehouses (sites). Unique by name + address.
   - name: Racks
@@ -120,6 +126,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /warehouses/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Warehouse not found
           content:
@@ -168,6 +181,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='warehouseRequestDTO'. Error count: 1"
                 path: /warehouses/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Warehouse not found
           content:
@@ -215,6 +235,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /warehouses/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Warehouse not found
           content:
@@ -258,6 +285,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /users/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: User not found
           content:
@@ -306,6 +340,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='userRequestDTO'. Error count: 1"
                 path: /users/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: User not found
           content:
@@ -353,6 +394,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /users/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: User not found
           content:
@@ -396,6 +444,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelves/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf not found
           content:
@@ -444,6 +499,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='shelfRequestDto'. Error count: 1"
                 path: /shelves/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf or rack not found
           content:
@@ -482,6 +544,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelves/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf not found
           content:
@@ -525,6 +594,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelf-stock/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf stock not found
           content:
@@ -573,6 +649,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='shelfStockRequestDto'. Error count: 1"
                 path: /shelf-stock/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf stock not found
           content:
@@ -611,6 +694,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelf-stock/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf stock not found
           content:
@@ -654,6 +744,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -702,6 +799,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='replenishmentRecommendationRequestDto'. Error count: 1"
                 path: /replenishment-recommendations/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation or product not found
           content:
@@ -740,6 +844,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -783,6 +894,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /products/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -831,6 +949,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='productRequestDto'. Error count: 1"
                 path: /products/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -878,6 +1003,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /products/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -921,6 +1053,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /devices/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device not found
           content:
@@ -969,6 +1108,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='deviceRequestDto'. Error count: 1"
                 path: /devices/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device or shelf not found
           content:
@@ -1016,6 +1162,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /devices/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device not found
           content:
@@ -1059,6 +1212,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /demand-plans/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Demand plan not found
           content:
@@ -1107,6 +1267,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='demandPlanRequestDto'. Error count: 1"
                 path: /demand-plans/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -1145,6 +1312,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /demand-plans/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Plan not found
           content:
@@ -1169,6 +1343,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/WarehouseResponseDTO"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Warehouses
@@ -1201,6 +1382,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='warehouseRequestDTO'. Error count: 1"
                 path: /warehouses
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "409":
           description: Warehouse already exists
           content:
@@ -1225,6 +1413,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/UserResponseDTO"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Users
@@ -1257,6 +1452,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='userRequestDTO'. Error count: 1"
                 path: /users
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "409":
           description: User already exists
           content:
@@ -1281,6 +1483,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StockMovementResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Stock Movements
@@ -1313,6 +1522,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='stockMovementRequestDto'. Error count: 1"
                 path: /stock-movements
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product or shelf not found
           content:
@@ -1337,6 +1553,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ShelfResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Shelves
@@ -1369,6 +1592,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='shelfRequestDto'. Error count: 1"
                 path: /shelves
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Rack not found
           content:
@@ -1393,6 +1623,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ShelfStockResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Shelf Stock
@@ -1425,6 +1662,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='shelfStockRequestDto'. Error count: 1"
                 path: /shelf-stock
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf or product not found
           content:
@@ -1449,6 +1693,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ReplenishmentRecommendationResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Replenishment Recommendations
@@ -1481,6 +1732,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='replenishmentRecommendationRequestDto'. Error count: 1"
                 path: /replenishment-recommendations
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -1505,6 +1763,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RecognitionResultResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Recognition Results
@@ -1537,6 +1802,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='recognitionResultRequestDto'. Error count: 1"
                 path: /recognition-results
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Image event or product not found
           content:
@@ -1587,6 +1859,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='rackRequestDto'. Error count: 1"
                 path: /racks/warehouse/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Warehouse not found
           content:
@@ -1611,6 +1890,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/PurchaseOrderResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Purchase Orders
@@ -1643,6 +1929,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='purchaseOrderRequestDto'. Error count: 1"
                 path: /purchase-orders
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -1676,6 +1969,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProductResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Products
@@ -1708,6 +2008,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='productRequestDto'. Error count: 1"
                 path: /products
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "409":
           description: Product with this SKU already exists
           content:
@@ -1732,6 +2039,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ImageEventResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Image Events
@@ -1764,6 +2078,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='imageEventRequestDto'. Error count: 1"
                 path: /image-events
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device not found
           content:
@@ -1788,6 +2109,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DeviceResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Devices
@@ -1820,6 +2148,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='deviceRequestDto'. Error count: 1"
                 path: /devices
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf not found
           content:
@@ -1905,6 +2240,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'capturedAt' is not present.
                 path: /devices/1/images
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device does not exist.
           content:
@@ -1975,6 +2317,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DemandPlanResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
     post:
       tags:
         - Demand Plans
@@ -2007,6 +2356,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='demandPlanRequestDto'. Error count: 1"
                 path: /demand-plans
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -2016,6 +2372,91 @@ paths:
               example:
                 status: 404
                 message: Product with id 42 is not found
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRequestDTO"
+        required: true
+      responses:
+        "201":
+          description: User registered. The body is the ID of the new resource.
+          content:
+            application/json:
+              schema:
+                type: integer
+                format: int64
+              example: 1
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpringErrorResponse"
+              example:
+                timestamp: 2026-11-23T20:38:10.000Z
+                status: 400
+                error: Bad Request
+                message: "Validation failed for object='userRequestDTO'. Error count: 1"
+                path: /auth/register
+        "409":
+          description: E-mail or username is already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                status: 409
+                message: User with that email already exists
+      security: []
+      description: "Creates a user with role `WORKER` and status `ACTIVE` and returns its ID. Then sign in with `POST /auth/login`. Same rules as `POST /users`: e-mail and username must be unique."
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Sign in and get an access token
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequestDto"
+        required: true
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponseDto"
+        "400":
+          description: Username or password is blank
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpringErrorResponse"
+              example:
+                timestamp: 2026-11-23T20:38:10.000Z
+                status: 400
+                error: Bad Request
+                message: "Validation failed for object='loginRequestDto'. Error count: 1"
+                path: /auth/login
+        "401":
+          description: Wrong username or password, or the user is `BLOCKED`. Empty body.
+      security: []
+      description: |-
+        Checks the username and password and returns a JWT access token valid for 15 minutes.
+        Send it as `Authorization: Bearer <accessToken>` with every other request.
+
+        ```bash
+        curl -X POST http://localhost:8080/auth/login   -H "Content-Type: application/json"   -d '{"username":"anna","password":"S3cure-passw0rd"}'
+        ```
   /users/{id}/unblock:
     patch:
       tags:
@@ -2046,6 +2487,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /users/42/unblock
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: User not found
           content:
@@ -2085,6 +2533,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /users/42/block
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: User not found
           content:
@@ -2124,6 +2579,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelves/42/deactivate
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf not found
           content:
@@ -2163,6 +2625,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelves/42/activate
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Shelf not found
           content:
@@ -2202,6 +2671,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/42/reject
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -2241,6 +2717,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/42/ordered
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -2280,6 +2763,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/42/complete
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -2319,6 +2809,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/42/approve
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Replenishment recommendation not found
           content:
@@ -2358,6 +2855,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/42/reject
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Recognition result not found
           content:
@@ -2397,6 +2901,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/42/failed
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Recognition result not found
           content:
@@ -2436,6 +2947,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/42/confirm
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Recognition result not found
           content:
@@ -2475,6 +2993,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/42/received
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Purchase order not found
           content:
@@ -2514,6 +3039,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/42/ordered
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Purchase order not found
           content:
@@ -2553,6 +3085,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/42/cancel
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Purchase order not found
           content:
@@ -2592,6 +3131,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/42/processing
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Image event not found
           content:
@@ -2631,6 +3177,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/42/processed
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Image event not found
           content:
@@ -2670,6 +3223,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/42/failed
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Image event not found
           content:
@@ -2709,6 +3269,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /devices/42/heartbeat
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device not found
           content:
@@ -2749,6 +3316,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /devices/42/deactivate
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device not found
           content:
@@ -2788,6 +3362,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /devices/42/activate
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Device not found
           content:
@@ -2832,6 +3413,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'sku' is not present.
                 path: /stocks
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
       summary: Get total stock for one or more SKUs
       description: "Sums `quantity` over all shelf stock records of each SKU. Repeat the parameter for several SKUs: `GET /stocks?sku=SKU-1001&sku=SKU-2001`. Unknown SKUs are omitted from the result."
   /stock-movements/{id}:
@@ -2868,6 +3456,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /stock-movements/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Stock movement not found
           content:
@@ -2906,6 +3501,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /stock-movements/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Stock movement not found
           content:
@@ -2955,6 +3557,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /stock-movements/type/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /stock-movements/source/{source}:
     get:
       tags:
@@ -2992,6 +3601,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /stock-movements/source/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /stock-movements/shelf/{shelfId}:
     get:
       tags:
@@ -3027,6 +3643,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /stock-movements/shelf/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /stock-movements/product/{productId}:
     get:
       tags:
@@ -3062,6 +3685,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /stock-movements/product/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /stock-movements/date-range:
     get:
       tags:
@@ -3106,6 +3736,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'from' is not present.
                 path: /stock-movements/date-range
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /shelf-stock/shelf/{shelfId}:
     get:
       tags:
@@ -3141,6 +3778,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelf-stock/shelf/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /shelf-stock/product/{productId}:
     get:
       tags:
@@ -3176,6 +3820,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /shelf-stock/product/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /shelf-stock/expired:
     get:
       tags:
@@ -3191,6 +3842,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ShelfStockResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /shelf-stock/expiration-date:
     get:
       tags:
@@ -3227,6 +3885,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'date' is not present.
                 path: /shelf-stock/expiration-date
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /replenishment-recommendations/status/{status}:
     get:
       tags:
@@ -3266,6 +3931,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/status/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /replenishment-recommendations/product/{productId}:
     get:
       tags:
@@ -3301,6 +3973,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/product/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /replenishment-recommendations/date/{requiredBy}:
     get:
       tags:
@@ -3336,6 +4015,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /replenishment-recommendations/date/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /replenishment-recommendations/date-range:
     get:
       tags:
@@ -3380,6 +4066,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'from' is not present.
                 path: /replenishment-recommendations/date-range
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /recognition-results/{id}:
     get:
       tags:
@@ -3414,6 +4107,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Recognition result not found
           content:
@@ -3452,6 +4152,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Recognition result not found
           content:
@@ -3499,6 +4206,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/status/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /recognition-results/product/{productId}:
     get:
       tags:
@@ -3534,6 +4248,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/product/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /recognition-results/image-event/{imageEventId}:
     get:
       tags:
@@ -3569,6 +4290,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /recognition-results/image-event/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /recognition-results/confidence:
     get:
       tags:
@@ -3604,6 +4332,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'min' is not present.
                 path: /recognition-results/confidence
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /racks:
     get:
       tags:
@@ -3619,6 +4354,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/RackResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /racks/{id}:
     get:
       tags:
@@ -3653,6 +4395,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /racks/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Rack not found
           content:
@@ -3701,6 +4450,13 @@ paths:
                 error: Bad Request
                 message: "Validation failed for object='rackRequestDto'. Error count: 1"
                 path: /racks/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Rack or warehouse not found
           content:
@@ -3739,6 +4495,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /racks/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Rack not found
           content:
@@ -3782,6 +4545,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Purchase order not found
           content:
@@ -3820,6 +4590,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Purchase order not found
           content:
@@ -3867,6 +4644,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/status/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /purchase-orders/recommendation/{recommendationId}:
     get:
       tags:
@@ -3900,6 +4684,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/recommendation/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Purchase order not found
           content:
@@ -3944,6 +4735,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /purchase-orders/product/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /products/sku/{sku}:
     get:
       tags:
@@ -3975,6 +4773,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /products/sku/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Product not found
           content:
@@ -4018,6 +4823,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'name' is not present.
                 path: /products/search
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /image-events/{id}:
     get:
       tags:
@@ -4052,6 +4864,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Image event not found
           content:
@@ -4090,6 +4909,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
         "404":
           description: Image event not found
           content:
@@ -4137,6 +4963,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/status/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /image-events/shelf/{shelfId}:
     get:
       tags:
@@ -4172,6 +5005,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/shelf/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /image-events/device/{deviceId}:
     get:
       tags:
@@ -4207,6 +5047,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /image-events/device/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /image-events/date-range:
     get:
       tags:
@@ -4251,6 +5098,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'from' is not present.
                 path: /image-events/date-range
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /demand-plans/product/{productId}:
     get:
       tags:
@@ -4286,6 +5140,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /demand-plans/product/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /demand-plans/future:
     get:
       tags:
@@ -4301,6 +5162,13 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DemandPlanResponseDto"
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /demand-plans/date/{requiredDate}:
     get:
       tags:
@@ -4336,6 +5204,13 @@ paths:
                 error: Bad Request
                 message: "Method parameter 'id': Failed to convert value of type 'java.lang.String' to required type 'java.lang.Long'; For input string: \"abc\""
                 path: /demand-plans/date/42
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
   /demand-plans/date-range:
     get:
       tags:
@@ -4380,6 +5255,13 @@ paths:
                 error: Bad Request
                 message: Required parameter 'from' is not present.
                 path: /demand-plans/date-range
+        "401":
+          description: Missing, malformed or expired access token. Empty body.
+          headers:
+            WWW-Authenticate:
+              description: Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.
+              schema:
+                type: string
 components:
   schemas:
     WarehouseRequestDTO:
@@ -4922,6 +5804,29 @@ components:
         previousQuantity: 24
         quantity: 20
         quantityDelta: -4
+    LoginRequestDto:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+        password:
+          type: string
+          minLength: 1
+      required:
+        - password
+        - username
+      example:
+        username: anna
+        password: S3cure-passw0rd
+    LoginResponseDto:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: "JWT to send as `Authorization: Bearer <accessToken>`. Expires after 15 minutes."
+      example:
+        accessToken: eyJraWQiOiJWQS1PU2V5cllrU2N0bVJobzZKVlBrWHl5UExQQnZMaExRRnlHS1NNVTZNIiwiYWxnIjoiSFMyNTYifQ.eyJpc3MiOiJzbWFydC13YXJlaG91c2UiLCJzdWIiOiJhbm5hIiwiZXhwIjoxNzk1NTQ3MTI3LCJpYXQiOjE3OTU1NDYyMjcsInJvbGVzIjpbIlJPTEVfV09SS0VSIl19.signature
     ProductStockResponseDto:
       type: object
       properties:
@@ -5127,10 +6032,18 @@ components:
         error: Bad Request
         message: "Validation failed for object='productRequestDto'. Error count: 2"
         path: /products
+  securitySchemes:
+    bearerAuth:
+      type: http
+      description: |-
+        JWT access token from `POST /auth/login`, sent as `Authorization: Bearer <token>`.
+        Signed with HS256, issuer `smart-warehouse`, valid for 15 minutes. Claims: `sub` (username),
+        `roles` (e.g. `["ROLE_WORKER"]`), `iat`, `exp`.
+      scheme: bearer
+      bearerFormat: JWT
 servers:
   - url: http://localhost:8080
     description: Local backend (docker compose or ./mvnw spring-boot:run)
-security: []
 x-tagGroups:
   - name: Warehouse layout
     tags:
@@ -5156,4 +6069,5 @@ x-tagGroups:
       - Purchase Orders
   - name: Administration
     tags:
+      - Authentication
       - Users

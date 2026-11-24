@@ -33,7 +33,8 @@ then follow the tutorial [Connect a shelf camera](${REPO}/Documentation/api/tuto
 |---|---|
 | Base URL | \`http://localhost:8080\` when run locally. All paths start at the root (no \`/api/v1\` prefix yet). |
 | Format | JSON (\`application/json\`) in and out; camera photos are \`multipart/form-data\`. |
-| Authentication | None yet — every endpoint is open in development. Do not expose this build publicly. |
+| Authentication | JWT bearer token. Get it from \`POST /auth/login\` (public, as is \`POST /auth/register\`) and send \`Authorization: Bearer <token>\` with every other request. The token is valid for **15 minutes**; sign in again when you get 401. |
+| Roles | The token carries the user's role (\`ROLE_WORKER\`, \`ROLE_MANAGER\`, \`ROLE_ADMIN\`), but the backend does not check roles yet: any signed-in user can call any endpoint. |
 | Create | \`POST\` returns **201** and the new resource **ID as a bare number** (e.g. \`7\`), not the object. Fetch it with \`GET /{resource}/{id}\`. |
 | Update / delete | \`PUT\` replaces the whole resource and returns it (**200**); \`DELETE\` and status actions (\`PATCH …/activate\`) return **204** with no body. |
 | Lists | Plain JSON arrays, not paginated yet. |
@@ -59,6 +60,7 @@ parameter type, missing parameter, wrong content type) use the Spring Boot error
 | Status | Meaning | Body |
 |---|---|---|
 | 400 | Invalid JSON, failed validation (\`@NotBlank\`, \`@Positive\`, \`@FutureOrPresent\`…), wrong or missing parameter | \`SpringErrorResponse\` |
+| 401 | No token, a malformed or expired token, or wrong credentials on \`POST /auth/login\`. **Empty body**; the reason is in the \`WWW-Authenticate\` header | — |
 | 404 | The resource or a referenced resource (e.g. \`productId\`) does not exist | \`ErrorResponse\` |
 | 409 | Duplicate (SKU, device key, user e-mail/username, warehouse name + address) or a state conflict | \`ErrorResponse\` |
 | 415 | Wrong \`Content-Type\` (e.g. JSON sent to the photo upload) | \`SpringErrorResponse\` |
@@ -78,6 +80,8 @@ const TAG_RENAMES = {
 };
 
 const TAGS = {
+  Authentication:
+    'Sign in to get a JWT access token, or register a new user. These two endpoints are public; every other endpoint needs `Authorization: Bearer <token>`.',
   Warehouses: 'Warehouses (sites). Unique by name + address.',
   Racks: 'Racks inside a warehouse. A rack holds shelves.',
   Shelves: 'Shelves on a rack. One shelf holds one product and has at most one camera.',
@@ -102,8 +106,16 @@ const TAGS = {
 
 spec.tags = Object.entries(TAGS).map(([name, description]) => ({ name, description }));
 
-// No authentication yet: say so explicitly instead of leaving security undefined.
-spec.security = [];
+// springdoc emits the global bearerAuth requirement (OpenApiConfig) and an empty one on
+// the public /auth endpoints; fail loudly if either disappears.
+if (!spec.components.securitySchemes?.bearerAuth) throw new Error('bearerAuth scheme is missing');
+spec.components.securitySchemes.bearerAuth.description = `
+JWT access token from \`POST /auth/login\`, sent as \`Authorization: Bearer <token>\`.
+Signed with HS256, issuer \`smart-warehouse\`, valid for 15 minutes. Claims: \`sub\` (username),
+\`roles\` (e.g. \`["ROLE_WORKER"]\`), \`iat\`, \`exp\`.`.trim();
+for (const path of ['/auth/login', '/auth/register']) {
+  if (JSON.stringify(spec.paths[path]?.post?.security) !== '[]') throw new Error(`${path} must be public`);
+}
 
 // RackController names the same path parameter `rackId` in PUT/DELETE and `id` in GET.
 // One URL, one path item: merge them under `{id}` (the wire format is identical).
@@ -126,7 +138,7 @@ spec['x-tagGroups'] = [
     name: 'Purchasing',
     tags: ['Demand Plans', 'Replenishment Recommendations', 'Purchase Orders'],
   },
-  { name: 'Administration', tags: ['Users'] },
+  { name: 'Administration', tags: ['Authentication', 'Users'] },
 ];
 
 // ---------------------------------------------------------------- schemas
@@ -307,6 +319,14 @@ const SCHEMA_DOCS = {
     example: { email: 'anna@example.com', username: 'anna', password: 'S3cure-passw0rd' },
     fields: { password: 'Plain text in the request; stored as a BCrypt hash, never returned.' },
   },
+  LoginRequestDto: { example: { username: 'anna', password: 'S3cure-passw0rd' } },
+  LoginResponseDto: {
+    example: {
+      accessToken:
+        'eyJraWQiOiJWQS1PU2V5cllrU2N0bVJobzZKVlBrWHl5UExQQnZMaExRRnlHS1NNVTZNIiwiYWxnIjoiSFMyNTYifQ.eyJpc3MiOiJzbWFydC13YXJlaG91c2UiLCJzdWIiOiJhbm5hIiwiZXhwIjoxNzk1NTQ3MTI3LCJpYXQiOjE3OTU1NDYyMjcsInJvbGVzIjpbIlJPTEVfV09SS0VSIl19.signature',
+    },
+    fields: { accessToken: 'JWT to send as `Authorization: Bearer <accessToken>`. Expires after 15 minutes.' },
+  },
   UserResponseDTO: {
     example: { id: 1, email: 'anna@example.com', username: 'anna', role: 'WORKER', status: 'ACTIVE' },
   },
@@ -363,6 +383,7 @@ const CONFLICT = {
   createDevice: 'Device with key shelf-a1-cam already exists',
   updateDevice: 'Device with key shelf-a1-cam already exists',
   createUser: 'User with that email already exists',
+  register: 'User with that email already exists',
   updateUser: 'User with that username already exists',
   createPurchaseOrder: 'Purchase order for recommendation with id 1 already exists',
 };
@@ -382,7 +403,32 @@ const springError = (status, error, message, path) => ({
 const examplePath = (path) => path.replace(/\{[^}]+\}/g, '42');
 const decapitalize = (name) => name[0].toLowerCase() + name.slice(1);
 
+const UNAUTHORIZED_HEADERS = {
+  'WWW-Authenticate': {
+    description: 'Why the token was rejected, e.g. `Bearer error="invalid_token", error_description="Jwt expired at …"`. Absent when no token was sent.',
+    schema: { type: 'string' },
+  },
+};
+
 const OP_DOCS = {
+  login: {
+    description: `
+Checks the username and password and returns a JWT access token valid for 15 minutes.
+Send it as \`Authorization: Bearer <accessToken>\` with every other request.
+
+\`\`\`bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"anna","password":"S3cure-passw0rd"}'
+\`\`\``.trim(),
+    responseDescriptions: {
+      401: 'Wrong username or password, or the user is `BLOCKED`. Empty body.',
+    },
+  },
+  register: {
+    description:
+      'Creates a user with role `WORKER` and status `ACTIVE` and returns its ID. Then sign in with `POST /auth/login`. Same rules as `POST /users`: e-mail and username must be unique.',
+  },
   uploadImage: {
     summary: 'Upload a shelf photo from a camera',
     description: `
@@ -537,6 +583,12 @@ for (const [path, item] of Object.entries(spec.paths)) {
         response.content = errorBody(409, CONFLICT[op.operationId] ?? 'Conflict');
         continue;
       }
+      if (status === 401) {
+        delete response.content;
+        // Wrong credentials on the public /auth/login carry no WWW-Authenticate header.
+        if (op.security?.length !== 0) response.headers = UNAUTHORIZED_HEADERS;
+        continue;
+      }
       throw new Error(`No error example for ${code} on ${op.operationId}`);
     }
     // Responses the code can return but the controller does not declare.
@@ -544,6 +596,13 @@ for (const [path, item] of Object.entries(spec.paths)) {
       if (op.responses[code] || typeof content === 'string') continue;
       if (content['application/json'].example.message === null) delete content['application/json'].example.message;
       op.responses[code] = { description: docs.responseDescriptions?.[code] ?? 'Error.', content };
+    }
+    const isPublic = Array.isArray(op.security) && op.security.length === 0;
+    if (!isPublic && !op.responses['401']) {
+      op.responses['401'] = {
+        description: 'Missing, malformed or expired access token. Empty body.',
+        headers: UNAUTHORIZED_HEADERS,
+      };
     }
     op.responses = Object.fromEntries(
       Object.entries(op.responses).sort(([a], [b]) => Number(a) - Number(b)),

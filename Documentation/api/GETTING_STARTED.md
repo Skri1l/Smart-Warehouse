@@ -21,7 +21,7 @@ This guide takes you from a fresh clone to your first API calls in about 10 minu
 
 ```bash
 cd Backend
-cp .env.example .env          # set POSTGRES_PASSWORD; change ports if 8080/5432 are taken
+cp .env.example .env          # set POSTGRES_PASSWORD and JWT_SECRET; change ports if 8080/5432 are taken
 docker compose up -d --build  # postgres + vision + backend
 ```
 
@@ -30,6 +30,7 @@ docker compose up -d --build  # postgres + vision + backend
 ```bash
 cd Backend
 export SPRING_DATASOURCE_USERNAME=smart_warehouse SPRING_DATASOURCE_PASSWORD=<your password>
+export JWT_SECRET=$(openssl rand -base64 32)   # signs access tokens; Base64, at least 32 bytes
 ./mvnw spring-boot:run
 ```
 
@@ -42,12 +43,38 @@ curl -s http://localhost:8080/v3/api-docs | head -c 80
 # {"openapi":"3.1.0","info":{"title":"Smart Warehouse API", ...
 ```
 
-## 3. Your first calls
+## 3. Get an access token
+
+Every endpoint except `POST /auth/register` and `POST /auth/login` needs a JWT access token. Without it the backend answers `401` with an empty body.
+
+**Register a user** (new users get the role `WORKER`):
+
+```bash
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "anna@example.com", "username": "anna", "password": "S3cure-passw0rd"}'
+# 1
+```
+
+**Sign in** and keep the token in a shell variable:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "anna", "password": "S3cure-passw0rd"}' | sed -E 's/.*"accessToken":"([^"]+)".*/\1/')
+```
+
+The response is `{"accessToken": "eyJraWQiOi..."}`. The token is valid for **15 minutes**; when a call returns `401`, sign in again. All examples below send it as `Authorization: Bearer $TOKEN`.
+
+In Swagger UI press **Authorize**, paste the token (without the word `Bearer`), and every **Try it out** request will carry it.
+
+## 4. Your first calls
 
 **Create a warehouse.** `POST` returns `201 Created` and only the **ID** of the new resource:
 
 ```bash
 curl -i -X POST http://localhost:8080/warehouses \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name": "Central warehouse", "address": "Gedimino pr. 1, Vilnius"}'
 ```
@@ -63,6 +90,7 @@ Content-Type: application/json
 
 ```bash
 curl -X POST http://localhost:8080/products \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"sku": "SKU-1001", "name": "Milk 1L", "description": "UHT milk 3.2%, 1 litre carton"}'
 # 1
@@ -71,7 +99,7 @@ curl -X POST http://localhost:8080/products \
 **Read it back.** `GET` returns the full object:
 
 ```bash
-curl http://localhost:8080/products/1
+curl http://localhost:8080/products/1 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -81,30 +109,31 @@ curl http://localhost:8080/products/1
 **List and search.** Lists are plain JSON arrays:
 
 ```bash
-curl "http://localhost:8080/products/search?name=milk"
+curl "http://localhost:8080/products/search?name=milk" -H "Authorization: Bearer $TOKEN"
 # [{"id":1,"sku":"SKU-1001","name":"Milk 1L","description":"UHT milk 3.2%, 1 litre carton"}]
 ```
 
-Prefer clicking? Open `http://localhost:8080/swagger-ui.html`, expand an endpoint and press **Try it out**.
+Prefer clicking? Open `http://localhost:8080/swagger-ui.html`, press **Authorize**, then expand an endpoint and press **Try it out**.
 
-## 4. Conventions you need to know
+## 5. Conventions you need to know
 
 | Topic | Rule |
 |---|---|
 | Base URL | `http://localhost:8080`. Paths start at the root, e.g. `/products`. A `/api/v1` prefix is planned ([API_GUIDELINES.md](../API_GUIDELINES.md)). |
-| Authentication | None yet: all endpoints are open in development. Never expose this build to the internet. |
+| Authentication | `Authorization: Bearer <token>` from `POST /auth/login`, valid 15 minutes. Only `/auth/login` and `/auth/register` are public. |
+| Roles | The token carries the role (`ROLE_WORKER`, `ROLE_MANAGER`, `ROLE_ADMIN`), but roles are not enforced yet: any signed-in user can call any endpoint. |
 | Create | `POST` → `201` with the new ID as a bare number. |
 | Update | `PUT` replaces the **whole** resource (send every field) → `200` with the updated object. |
 | Delete / actions | `DELETE`, `PATCH …/activate`, `…/approve` etc. → `204 No Content`. |
 | Dates | `2026-12-01` for dates; `2026-11-23T10:15:00` for date-times (server local time, no timezone). |
 | Enums | Upper case: `ACTIVE`, `REMOVAL`, `CAMERA`, … (each schema in the reference lists the values). |
 
-## 5. Handling errors
+## 6. Handling errors
 
 Check the HTTP status first, then show `message` to people. Do not parse `message` in code: its wording may change.
 
 ```bash
-curl http://localhost:8080/products/999
+curl http://localhost:8080/products/999 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -112,7 +141,8 @@ curl http://localhost:8080/products/999
 ```
 
 ```bash
-curl -X POST http://localhost:8080/products -H "Content-Type: application/json" -d '{"sku": ""}'
+curl -X POST http://localhost:8080/products -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" -d '{"sku": ""}'
 ```
 
 ```json
@@ -128,6 +158,7 @@ curl -X POST http://localhost:8080/products -H "Content-Type: application/json" 
 | Status | When | What to do |
 |---|---|---|
 | `400` | Invalid JSON, a required field missing or invalid (`@NotBlank`, `@Positive`, date in the past), wrong parameter type | Fix the request; nothing was changed |
+| `401` | No token, an expired or malformed token, or wrong username/password on `/auth/login`. Empty body; the reason is in the `WWW-Authenticate` header | Sign in again and retry with the new token |
 | `404` | The resource, or an ID you referenced (`productId`, `shelfId`…), does not exist | Check the IDs |
 | `409` | Duplicate (SKU, device key, user e-mail, warehouse name + address) or a state conflict (inactive camera, out-of-order photo) | Read `message`; usually the data already exists |
 | `415` | Wrong `Content-Type` (photo upload needs `multipart/form-data`) | Send the right content type |
@@ -136,9 +167,9 @@ curl -X POST http://localhost:8080/products -H "Content-Type: application/json" 
 
 Every endpoint in the [reference](https://skri1l.github.io/Smart-Warehouse/api/) lists its possible status codes with an example body.
 
-## 6. Import into your tools
+## 7. Import into your tools
 
-- **Postman / Insomnia:** *Import → File →* `Documentation/api/openapi.yaml`. You get a collection with all 113 operations and example bodies.
+- **Postman / Insomnia:** *Import → File →* `Documentation/api/openapi.yaml`. You get a collection with all 115 operations and the `bearerAuth` scheme (set the token once on the collection) and example bodies.
 - **Client code generation:** `npx @openapitools/openapi-generator-cli generate -i Documentation/api/openapi.yaml -g typescript-fetch -o client/` (or `-g java`, `-g python`…).
 
 ## Next step

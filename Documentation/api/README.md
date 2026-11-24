@@ -4,7 +4,7 @@
 |---|---|
 | [GETTING_STARTED.md](GETTING_STARTED.md) | Run the backend and make the first calls; conventions and error handling |
 | [tutorials/connect-shelf-camera.md](tutorials/connect-shelf-camera.md) | Step-by-step integration: layout → camera → photo upload → stock update |
-| [openapi.yaml](openapi.yaml) | **OpenAPI 3.1 specification**: 113 operations, examples for every request and response, every status code with its error body |
+| [openapi.yaml](openapi.yaml) | **OpenAPI 3.1 specification**: 115 operations, examples for every request and response, every status code with its error body |
 | **https://skri1l.github.io/Smart-Warehouse/api/** | The same spec rendered with Redoc (published by [`website-deploy.yml`](../../.github/workflows/website-deploy.yml)) |
 | `http://localhost:8080/swagger-ui.html` | Swagger UI with *Try it out*, served by the running backend |
 
@@ -54,7 +54,9 @@ After changing a controller or DTO: start the backend, then run `npm run export 
 
 ## Known gaps in the API (tracked for the backend)
 
-- No `/api/v1` prefix and no authentication yet (both required by [API_GUIDELINES.md](../API_GUIDELINES.md)).
+- No `/api/v1` prefix yet (required by [API_GUIDELINES.md](../API_GUIDELINES.md)).
+- Roles are not enforced: the JWT carries `ROLE_WORKER` / `ROLE_MANAGER` / `ROLE_ADMIN`, but any signed-in user can call any endpoint, so there is no 403 yet.
+- The shelf agent (`Device/`) does not send a token yet, so its heartbeats and uploads get 401 from a backend with authentication.
 - `ErrorResponse` has `status` and `message` only. The guideline format (`error` code, `path`, `details`) is not implemented, and validation errors use Spring's default body.
 - `POST`/`PUT /devices` for a shelf that already has a camera returns **500** instead of 409 (`ShelfAlreadyHasDeviceException` has no handler).
 - Lists are not paginated.

@@ -4,6 +4,17 @@
 
 **Time:** 15 minutes. **You need:** the backend running with the Vision service ([Getting Started, step 2](../GETTING_STARTED.md#2-start-the-backend)), `curl`, and any shelf photo (`shelf.jpg`; the demo photos in `Device/scenarios/demo/images/` work).
 
+## Step 0. Get an access token
+
+Every call below needs a JWT. Register and sign in as in [Getting Started, step 3](../GETTING_STARTED.md#3-get-an-access-token) and keep the token in `$TOKEN`:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8080/auth/login -H "Content-Type: application/json" \
+  -d '{"username": "anna", "password": "S3cure-passw0rd"}' | sed -E 's/.*"accessToken":"([^"]+)".*/\1/')
+```
+
+The token expires after 15 minutes. If a call suddenly returns `401` with an empty body, run the line above again.
+
 The responses below were captured from a real run on an empty database. If your database already has data, IDs will differ: use the IDs your calls return.
 
 ```mermaid
@@ -11,6 +22,7 @@ sequenceDiagram
   participant You as You / shelf agent
   participant API as Backend API
   participant V as Vision service
+  You->>API: 0. POST /auth/login → accessToken
   You->>API: 1–4. POST warehouse, rack, shelf, product, stock
   You->>API: 5. POST /devices (register camera)
   You->>API: 6. PATCH /devices/{id}/heartbeat (camera online)
@@ -24,7 +36,7 @@ sequenceDiagram
 ## Step 1. Create the warehouse and a rack
 
 ```bash
-curl -X POST http://localhost:8080/warehouses -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/warehouses -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"name": "Central warehouse", "address": "Gedimino pr. 1, Vilnius"}'
 # 1
 ```
@@ -32,7 +44,7 @@ curl -X POST http://localhost:8080/warehouses -H "Content-Type: application/json
 A rack is created **under** its warehouse (the ID in the path):
 
 ```bash
-curl -X POST http://localhost:8080/racks/warehouse/1 -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/racks/warehouse/1 -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"label": "A", "warehouseId": 1}'
 # 1
 ```
@@ -40,7 +52,7 @@ curl -X POST http://localhost:8080/racks/warehouse/1 -H "Content-Type: applicati
 ## Step 2. Create a shelf on the rack
 
 ```bash
-curl -X POST http://localhost:8080/shelves -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/shelves -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"label": "A-1", "capacity": 120, "rackId": 1}'
 # 1
 ```
@@ -50,7 +62,7 @@ curl -X POST http://localhost:8080/shelves -H "Content-Type: application/json" \
 ## Step 3. Add the product
 
 ```bash
-curl -X POST http://localhost:8080/products -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/products -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"sku": "SKU-1001", "name": "Milk 1L", "description": "UHT milk 3.2%, 1 litre carton"}'
 # 1
 ```
@@ -60,7 +72,7 @@ curl -X POST http://localhost:8080/products -H "Content-Type: application/json" 
 Record that shelf A-1 holds 24 cartons:
 
 ```bash
-curl -X POST http://localhost:8080/shelf-stock -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/shelf-stock -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"shelfId": 1, "productId": 1, "quantity": 24, "expirationDate": "2026-12-20"}'
 # 1
 ```
@@ -70,7 +82,7 @@ curl -X POST http://localhost:8080/shelf-stock -H "Content-Type: application/jso
 Check the total for the SKU:
 
 ```bash
-curl "http://localhost:8080/stocks?sku=SKU-1001"
+curl "http://localhost:8080/stocks?sku=SKU-1001" -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -82,13 +94,13 @@ curl "http://localhost:8080/stocks?sku=SKU-1001"
 The `deviceKey` is the name the camera uses; the shelf agent has the same value in its config.
 
 ```bash
-curl -X POST http://localhost:8080/devices -H "Content-Type: application/json" \
+curl -X POST http://localhost:8080/devices -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"deviceKey": "shelf-a1-cam", "shelfId": 1}'
 # 1
 ```
 
 ```bash
-curl http://localhost:8080/devices/1
+curl http://localhost:8080/devices/1 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -102,7 +114,7 @@ A new camera is `INACTIVE` and has never been seen. Registering the same key aga
 The shelf agent sends a heartbeat when it starts and then periodically. The first heartbeat makes the device `ACTIVE`:
 
 ```bash
-curl -i -X PATCH http://localhost:8080/devices/1/heartbeat
+curl -i -X PATCH http://localhost:8080/devices/1/heartbeat -H "Authorization: Bearer $TOKEN"
 # HTTP/1.1 204
 ```
 
@@ -113,7 +125,7 @@ curl -i -X PATCH http://localhost:8080/devices/1/heartbeat
 This is the main integration call. Send the photo as `multipart/form-data` (field `file`) and say when it was taken:
 
 ```bash
-curl -X POST "http://localhost:8080/devices/1/images?capturedAt=2026-11-23T10:15:00" \
+curl -X POST "http://localhost:8080/devices/1/images?capturedAt=2026-11-23T10:15:00" -H "Authorization: Bearer $TOKEN" \
   -F "file=@shelf.jpg;type=image/jpeg"
 ```
 
@@ -137,7 +149,7 @@ Upload the same photo again with the same `capturedAt` and you get `409 An image
 **Stock** is now 20:
 
 ```bash
-curl http://localhost:8080/shelf-stock/shelf/1
+curl http://localhost:8080/shelf-stock/shelf/1 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -147,7 +159,7 @@ curl http://localhost:8080/shelf-stock/shelf/1
 **The change is logged** as a camera adjustment:
 
 ```bash
-curl http://localhost:8080/stock-movements/shelf/1
+curl http://localhost:8080/stock-movements/shelf/1 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -157,7 +169,7 @@ curl http://localhost:8080/stock-movements/shelf/1
 **What the camera saw:**
 
 ```bash
-curl http://localhost:8080/recognition-results/image-event/1
+curl http://localhost:8080/recognition-results/image-event/1 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -167,7 +179,7 @@ curl http://localhost:8080/recognition-results/image-event/1
 **The camera is online** (`lastSeenAt` updated by the upload):
 
 ```bash
-curl http://localhost:8080/devices/1
+curl http://localhost:8080/devices/1 -H "Authorization: Bearer $TOKEN"
 ```
 
 ```json
@@ -177,6 +189,8 @@ curl http://localhost:8080/devices/1
 ## Step 9 (optional). Let the real shelf agent do it
 
 Steps 6–7 are what the shelf agent automates: heartbeats, photos on a trigger, and an outbox that retries uploads in capture order.
+
+> **Known gap:** the shelf agent does not send an access token yet, so against a backend with authentication its heartbeats and uploads get `401`. Until device authentication lands, use the manual calls above (or the agent's built-in mock server, `python -m shelf_agent mock-server`) to see the flow.
 
 - **On a PC (no camera):** the emulator registers its devices and uploads the demo photos for the shelves in a scenario:
 
@@ -198,6 +212,7 @@ Details: [Device/README.md](../../../Device/README.md#against-the-real-backend).
 
 | Response | Cause | Fix |
 |---|---|---|
+| `401` with an empty body | No `Authorization` header, or the token expired (15 minutes) | Step 0: sign in again and resend with `-H "Authorization: Bearer $TOKEN"` |
 | `404 Device not found: 1` | Wrong device ID in the upload path | Use the ID from step 5 (`GET /devices`) |
 | `409 Device is inactive` | No heartbeat yet, or the camera was deactivated | `PATCH /devices/{id}/heartbeat` or `/activate` |
 | `409 Camera processing requires exactly one stock record on the shelf` | The shelf has no stock record or several | Step 4: exactly one `shelf-stock` record per shelf |

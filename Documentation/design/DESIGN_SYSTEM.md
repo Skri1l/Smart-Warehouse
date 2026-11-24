@@ -2,7 +2,7 @@
 
 The browser UI ([Frontend/](../../Frontend/README.md)) uses one set of design tokens on every device. Phone, tablet and desktop differ only in layout. Colours, type and components stay the same.
 
-- **Mockups (Figma):** _link to be added_ (pages: `Components`, `Mobile 375`, `Tablet 768`, `Desktop 1280`)
+- **Mockups (Figma):** [Smart Warehouse — Adaptive UI](https://www.figma.com/design/2cT9dahpeFuGZmCCnzSU1X/Smart-Warehouse-%E2%80%94-Adaptive-UI) (view-only, no sign-in). Pages: `Foundations`, `Components`, `Screens` (sections `Mobile · 375`, `Tablet · 768 portrait`, `Desktop · 1440`, `Landscape · phone 812×375`, `Landscape · tablet 1024×768`)
 - **Source of truth for tokens:** [`Frontend/src/styles/tokens.css`](../../Frontend/src/styles/tokens.css)
 - **Same tokens for Figma:** [`figma-tokens.json`](figma-tokens.json) (Tokens Studio format, generated from `tokens.css`)
 
