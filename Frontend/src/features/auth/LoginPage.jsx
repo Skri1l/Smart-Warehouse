@@ -4,6 +4,7 @@ import styles from './LoginPage.module.css';
 import { Button } from '../../components/Button.jsx';
 import { Field } from '../../components/Field.jsx';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { isValid, validateLogin } from '../../core/validation.js';
 
 const IS_MOCK = import.meta.env.VITE_API_MOCK === 'true';
 
@@ -21,11 +22,9 @@ export function LoginPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const nextErrors = {};
-    if (!username.trim()) nextErrors.username = 'Enter your username.';
-    if (!password) nextErrors.password = 'Enter your password.';
+    const nextErrors = validateLogin({ username, password });
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (!isValid(nextErrors)) return;
 
     setSubmitting(true);
     try {
@@ -43,7 +42,7 @@ export function LoginPage() {
     <main className={styles.page}>
       <form className={styles.card} onSubmit={handleSubmit} noValidate>
         <div className={styles.brand}>
-          <img src="/favicon.svg" alt="" width="40" height="40" />
+          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="40" height="40" />
           <h1>Smart Warehouse</h1>
         </div>
         <p className={styles.lead}>Sign in to see stock on your shelves.</p>

@@ -40,6 +40,17 @@ a {
   color: var(--color-primary);
 }
 
+/* Touch screens: plain text links (card actions, table cells) get a 44px hit area too. */
+@media (pointer: coarse) {
+  a:not([class]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+}
+
 img,
 svg {
   max-width: 100%;

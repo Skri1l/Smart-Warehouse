@@ -10,6 +10,8 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
+    include: ['src/**/*.test.{js,jsx}'], // e2e/ is Playwright's
+
     globals: true,
     setupFiles: ['./tests/setup.jsx'],
     css: { modules: { classNameStrategy: 'non-scoped' } },

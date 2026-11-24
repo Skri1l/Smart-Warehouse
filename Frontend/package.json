@@ -7,12 +7,15 @@
     "dev": "vite",
     "dev:api": "vite --mode api",
     "build": "vite build",
+    "build:demo": "vite build --mode demo",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "licenses": "license-checker --production --onlyAllow \"MIT;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;0BSD\" --excludePrivatePackages"
   },
   "msw": {
@@ -29,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.16.0",
+    "@playwright/test": "1.55.0",
     "@testing-library/jest-dom": "6.6.3",
     "@testing-library/react": "16.1.0",
     "@testing-library/user-event": "14.5.2",

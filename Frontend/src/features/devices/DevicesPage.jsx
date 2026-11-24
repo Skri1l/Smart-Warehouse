@@ -9,8 +9,7 @@ import { Field } from '../../components/Field.jsx';
 import { Modal } from '../../components/Modal.jsx';
 import { StateView } from '../../components/StateView.jsx';
 import { formatRelative } from '../../core/format.js';
-
-const DEVICE_KEY_PATTERN = /^[a-z0-9][a-z0-9-]{2,63}$/;
+import { isValid, validateDevice } from '../../core/validation.js';
 
 function RegisterDialog({ shelves, busy, error, onSave, onClose }) {
   const [deviceKey, setDeviceKey] = useState('');
@@ -19,13 +18,9 @@ function RegisterDialog({ shelves, busy, error, onSave, onClose }) {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    const next = {};
-    if (!DEVICE_KEY_PATTERN.test(deviceKey)) {
-      next.deviceKey = 'Use 3–64 lowercase letters, digits and dashes.';
-    }
-    if (!shelfId) next.shelfId = 'Choose a shelf.';
+    const next = validateDevice({ deviceKey, shelfId });
     setErrors(next);
-    if (Object.keys(next).length === 0) onSave({ deviceKey, shelfId: Number(shelfId) });
+    if (isValid(next)) onSave({ deviceKey, shelfId: Number(shelfId) });
   };
 
   return (

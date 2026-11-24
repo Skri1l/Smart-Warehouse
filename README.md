@@ -4,6 +4,43 @@ Smart Warehouse is an intelligent warehouse management system that combines shel
 
 For the full product specification (goals, scope, domain model, business flows) see [Documentation/PROJECT_DOCUMENTATION.md](Documentation/PROJECT_DOCUMENTATION.md) and the delivery plan in [Documentation/MILESTONES.md](Documentation/MILESTONES.md). [Documentation/README.md](Documentation/README.md) is the full documentation index.
 
+## For reviewers: diploma stage 3
+
+**Live:** [demo app](https://skri1l.github.io/Smart-Warehouse/app/) (backend mocked in the browser; sign in as `worker`, `manager` or `admin`, password = the same word) · [API reference](https://skri1l.github.io/Smart-Warehouse/api/). **Run locally:** `cd Frontend && npm ci && npm run dev` → http://localhost:5173 (details in [Getting started](#getting-started)).
+
+### Front-end
+
+| Requirement | Where |
+|---|---|
+| SPA on a modern framework + bundler | React 18 + Vite 5: [`Frontend/`](Frontend/README.md), [`vite.config.js`](Frontend/vite.config.js) |
+| Architecture diagram, user flows, tech stack justification | [Frontend/ARCHITECTURE.md](Frontend/ARCHITECTURE.md), [ADR-0012](Documentation/adr/0012-browser-ui-javascript.md) |
+| Components, pages, services for API calls | [`src/components/`](Frontend/src/components), [`src/features/*/…Page.jsx`](Frontend/src/features), [`src/api/`](Frontend/src/api) |
+| Forms with validation | [`src/core/validation.js`](Frontend/src/core/validation.js): login, register camera, modify purchase recommendation |
+| Global error handling | [`ErrorBoundary.jsx`](Frontend/src/components/ErrorBoundary.jsx), [`core/errors.js`](Frontend/src/core/errors.js), [`api/http.js`](Frontend/src/api/http.js) (ApiError, global 401) |
+| Loading states | [`StateView.jsx`](Frontend/src/components/StateView.jsx), busy buttons, `Suspense` fallbacks |
+| Unit tests (≥ 3 key components) | `npm test`: `DataTable`, `ErrorBoundary`, `LoginPage`, `DevicesPage`, `ReviewPage`, `ShelvesPage` + logic tests |
+| E2E tests | `npm run test:e2e` (Playwright): [`e2e/`](Frontend/e2e) — phone review flow, desktop purchasing flow, adaptive checks |
+
+### API documentation
+
+| Requirement | Where |
+|---|---|
+| OpenAPI spec in the repository, validated | [Documentation/api/openapi.yaml](Documentation/api/openapi.yaml) (OpenAPI 3.1, Redocly lint in [`api-docs-ci.yml`](.github/workflows/api-docs-ci.yml)) |
+| Samples, status codes, error messages, data models | Every operation and schema in `openapi.yaml`; see the [API reference](https://skri1l.github.io/Smart-Warehouse/api/) |
+| Authentication | JWT bearer scheme `bearerAuth` in the spec; `POST /auth/login` and `/auth/register` documented; 401 on every protected operation |
+| Getting Started + integration tutorial | [GETTING_STARTED.md](Documentation/api/GETTING_STARTED.md), [tutorials/connect-shelf-camera.md](Documentation/api/tutorials/connect-shelf-camera.md) |
+| Published docs | Redoc on GitHub Pages; Swagger UI at `http://localhost:8080/swagger-ui.html`. How it is built: [Documentation/api/README.md](Documentation/api/README.md) |
+
+### Adaptive UI
+
+| Requirement | Where |
+|---|---|
+| Phone, tablet, desktop; orientation; browser zoom | Mobile-first layout, breakpoints and navigation per device: [DESIGN_SYSTEM.md](Documentation/design/DESIGN_SYSTEM.md#devices-and-layout) |
+| Responsive grid, relative units, no overlaps, navigation everywhere | CSS Grid/Flex + `rem`; checked on every screen × 6 viewports by [`e2e/adaptive.spec.js`](Frontend/e2e/adaptive.spec.js) |
+| 44px touch targets, WCAG 2.1 AA contrast | [`tokens.css`](Frontend/src/styles/tokens.css) `--touch-target`; contrast table in [DESIGN_SYSTEM.md](Documentation/design/DESIGN_SYSTEM.md#text-contrast-wcag-21-aa-needs-451); both asserted by the e2e suite |
+| Consistent palette and typography | Single token set [`tokens.css`](Frontend/src/styles/tokens.css), exported for Figma: [`figma-tokens.json`](Documentation/design/figma-tokens.json) |
+| Mockups for 3 devices + component library | [Figma: Smart Warehouse — Adaptive UI](https://www.figma.com/design/2cT9dahpeFuGZmCCnzSU1X/Smart-Warehouse-%E2%80%94-Adaptive-UI) (view-only, no sign-in): pages *Foundations* (colours, type, spacing, grid, contrast), *Components* (11 reusable components with variants), *Screens* (Login, Dashboard, Products, Review on 375 / 768 / 1440, plus phone and tablet landscape) |
+
 ## Repository structure
 
 This is a monorepo. Each top-level directory is an independently buildable component with its own dependency manifest and its own conventions document.
@@ -73,7 +110,7 @@ Alternatively, run the backend together with PostgreSQL in Docker:
 
 ```bash
 cd Backend
-cp .env.example .env   # adjust ports/password if 8080 or 5432 are already taken
+cp .env.example .env   # adjust ports/password if 8080 or 5432 are taken; set your own JWT_SECRET
 docker compose up -d --build
 ```
 
@@ -86,7 +123,7 @@ Once the backend is running, the interactive API docs are available at:
 
 (Replace `8080` with `BACKEND_PORT` from `Backend/.env` if you changed it.)
 
-For now all endpoints are open (no authentication) to simplify development, so requests can be sent straight from Swagger UI via **Try it out**. Access control will be added together with real authentication — do not deploy this configuration publicly.
+The docs themselves are public. Every endpoint except `POST /auth/register` and `POST /auth/login` needs a JWT: sign in with `/auth/login`, press **Authorize** in Swagger UI, paste the `accessToken`, then use **Try it out**. The token lives 15 minutes. Step by step: [Documentation/api/GETTING_STARTED.md](Documentation/api/GETTING_STARTED.md#3-get-an-access-token).
 
 If you get **HTTP 403** or an unexpected page at that address, another application is most likely occupying the port — check with `docker ps` / `netstat -ano | findstr :8080`.
 
@@ -120,7 +157,8 @@ On macOS or Linux, `scripts/pipeline.sh start` starts Vision, PostgreSQL and the
 ## Quality gates
 
 - **Backend:** `./mvnw verify` runs unit/integration tests and checks code formatting (Spotless). Run `./mvnw spotless:apply` to auto-format before committing.
-- **Frontend:** `npm run lint` (ESLint), `npm run format:check` (Prettier), `npm test` (Vitest), `npm run build` and a `license-checker` audit of runtime dependencies, run from `Frontend/`. See [Frontend/package.json](Frontend/package.json).
+- **Frontend:** `npm run lint` (ESLint), `npm run format:check` (Prettier), `npm test` (Vitest), `npm run test:e2e` (Playwright), `npm run build` and a `license-checker` audit of runtime dependencies, run from `Frontend/`. See [Frontend/package.json](Frontend/package.json).
+- **API docs:** `npm run check` in `Documentation/api/` rebuilds `openapi.yaml`, validates it with Redocly and fails if it is out of date.
 - **Device:** `ruff check .`, `black --check .`, `mypy .`, a `pip-licenses` audit and `pytest`, run from `Device/`. See [Device/pyproject.toml](Device/pyproject.toml).
 - Java and Python formatting is also enforced locally via [pre-commit](.pre-commit-config.yaml) hooks; every check runs in CI on each pull request (`.github/workflows/`).
 

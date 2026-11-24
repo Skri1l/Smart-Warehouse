@@ -6,7 +6,15 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import prettier from 'eslint-config-prettier';
 
 export default [
-  { ignores: ['dist', 'coverage', 'public/mockServiceWorker.js'] },
+  {
+    ignores: [
+      'dist',
+      'coverage',
+      'public/mockServiceWorker.js',
+      'playwright-report',
+      'test-results',
+    ],
+  },
   js.configs.recommended,
   react.configs.flat.recommended,
   react.configs.flat['jsx-runtime'],
@@ -30,7 +38,14 @@ export default [
     },
   },
   {
-    files: ['tests/**', '**/*.test.{js,jsx}', 'vite.config.js', 'eslint.config.js'],
+    files: [
+      'tests/**',
+      'e2e/**',
+      '**/*.test.{js,jsx}',
+      'vite.config.js',
+      'eslint.config.js',
+      'playwright.config.js',
+    ],
     languageOptions: { globals: { ...globals.node, ...globals.vitest } },
   },
   prettier,
