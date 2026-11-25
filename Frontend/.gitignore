@@ -1,18 +1,8 @@
-__pycache__/
-*.pyc
-.venv/
-venv/
-.mypy_cache/
-.ruff_cache/
-.pytest_cache/
-.env
-
-# PyInstaller build output (see ADR-0006 — built per-OS in CI, not committed)
-build/
+node_modules/
 dist/
-*.spec
-
-# Qt Designer / resource-compiler output is generated from .ui/.qrc sources
-# at build time (see Documentation/CODE_STYLE_FRONTEND.md) — never committed.
-**/*_ui.py
-**/resources_rc.py
+coverage/
+.env.local
+.env.*.local
+*.log
+playwright-report/
+test-results/

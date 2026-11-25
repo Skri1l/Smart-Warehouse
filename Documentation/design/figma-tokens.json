@@ -1,0 +1,231 @@
+{
+  "global": {
+    "color": {
+      "bg": {
+        "value": "#f4f6fa",
+        "type": "color"
+      },
+      "surface": {
+        "value": "#ffffff",
+        "type": "color"
+      },
+      "surface-muted": {
+        "value": "#f0f2f7",
+        "type": "color"
+      },
+      "border": {
+        "value": "#d9dee8",
+        "type": "color"
+      },
+      "text": {
+        "value": "#172033",
+        "type": "color"
+      },
+      "text-muted": {
+        "value": "#556079",
+        "type": "color"
+      },
+      "primary": {
+        "value": "#1d4ed8",
+        "type": "color"
+      },
+      "primary-hover": {
+        "value": "#1e40af",
+        "type": "color"
+      },
+      "primary-soft": {
+        "value": "#e0e8fc",
+        "type": "color"
+      },
+      "on-primary": {
+        "value": "#ffffff",
+        "type": "color"
+      },
+      "ok": {
+        "value": "#166534",
+        "type": "color"
+      },
+      "ok-soft": {
+        "value": "#dcfce7",
+        "type": "color"
+      },
+      "warn": {
+        "value": "#92400e",
+        "type": "color"
+      },
+      "warn-soft": {
+        "value": "#fef3c7",
+        "type": "color"
+      },
+      "danger": {
+        "value": "#b91c1c",
+        "type": "color"
+      },
+      "danger-soft": {
+        "value": "#fee2e2",
+        "type": "color"
+      },
+      "info": {
+        "value": "#1e40af",
+        "type": "color"
+      },
+      "info-soft": {
+        "value": "#dbeafe",
+        "type": "color"
+      },
+      "neutral-soft": {
+        "value": "#e9ecf2",
+        "type": "color"
+      },
+      "focus": {
+        "value": "#f59e0b",
+        "type": "color"
+      }
+    },
+    "spacing": {
+      "1": {
+        "value": "4",
+        "type": "spacing"
+      },
+      "2": {
+        "value": "8",
+        "type": "spacing"
+      },
+      "3": {
+        "value": "12",
+        "type": "spacing"
+      },
+      "4": {
+        "value": "16",
+        "type": "spacing"
+      },
+      "5": {
+        "value": "24",
+        "type": "spacing"
+      },
+      "6": {
+        "value": "32",
+        "type": "spacing"
+      },
+      "7": {
+        "value": "48",
+        "type": "spacing"
+      }
+    },
+    "fontSizes": {
+      "sm": {
+        "value": "14",
+        "type": "fontSizes"
+      },
+      "md": {
+        "value": "16",
+        "type": "fontSizes"
+      },
+      "lg": {
+        "value": "18",
+        "type": "fontSizes"
+      },
+      "xl": {
+        "value": "24",
+        "type": "fontSizes"
+      },
+      "xxl": {
+        "value": "32",
+        "type": "fontSizes"
+      }
+    },
+    "fontFamilies": {
+      "base": {
+        "value": "Inter",
+        "type": "fontFamilies",
+        "description": "Web uses the system UI stack: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+      }
+    },
+    "fontWeights": {
+      "regular": {
+        "value": "400",
+        "type": "fontWeights"
+      },
+      "medium": {
+        "value": "500",
+        "type": "fontWeights"
+      },
+      "semibold": {
+        "value": "600",
+        "type": "fontWeights"
+      },
+      "bold": {
+        "value": "700",
+        "type": "fontWeights"
+      }
+    },
+    "lineHeights": {
+      "base": {
+        "value": "150%",
+        "type": "lineHeights"
+      },
+      "heading": {
+        "value": "125%",
+        "type": "lineHeights"
+      }
+    },
+    "borderRadius": {
+      "sm": {
+        "value": "6",
+        "type": "borderRadius"
+      },
+      "md": {
+        "value": "10",
+        "type": "borderRadius"
+      },
+      "lg": {
+        "value": "14",
+        "type": "borderRadius"
+      },
+      "pill": {
+        "value": "999",
+        "type": "borderRadius"
+      }
+    },
+    "sizing": {
+      "touch-target": {
+        "value": "44",
+        "type": "sizing"
+      },
+      "header-height": {
+        "value": "56",
+        "type": "sizing"
+      },
+      "sidebar-width": {
+        "value": "240",
+        "type": "sizing"
+      },
+      "bottom-nav-height": {
+        "value": "64",
+        "type": "sizing"
+      },
+      "content-max-width": {
+        "value": "1440",
+        "type": "sizing"
+      }
+    },
+    "breakpoints": {
+      "sm": {
+        "value": "600",
+        "type": "sizing"
+      },
+      "md": {
+        "value": "900",
+        "type": "sizing"
+      },
+      "lg": {
+        "value": "1200",
+        "type": "sizing"
+      },
+      "xl": {
+        "value": "1600",
+        "type": "sizing"
+      }
+    }
+  }
+}

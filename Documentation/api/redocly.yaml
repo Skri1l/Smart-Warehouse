@@ -1,0 +1,12 @@
+# Redocly CLI config: `npm run lint` validates openapi.yaml against the recommended ruleset.
+extends:
+  - recommended
+
+rules:
+  # The local server is the only one that exists until the hosted deployment (ADR-0011).
+  no-server-example.com: off
+  # List endpoints without parameters (GET /products) cannot fail with a 4xx.
+  operation-4xx-response: off
+  # Spring matches literal segments first, so /purchase-orders/status/{status} and
+  # /purchase-orders/{id}/received never collide. Kept as a warning, not hidden.
+  no-ambiguous-paths: warn

@@ -52,6 +52,8 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
         .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
+        // API documentation is public: Swagger UI is where a developer gets the first token.
+        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
         .anyRequest().authenticated())
       .exceptionHandling(exceptions -> exceptions
         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
