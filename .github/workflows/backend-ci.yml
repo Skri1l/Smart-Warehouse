@@ -10,6 +10,7 @@ on:
     branches: [main, develop]
     paths:
       - "Backend/**"
+      - ".github/workflows/backend-ci.yml"
 
 permissions:
   contents: read
@@ -54,3 +55,11 @@ jobs:
 
       - name: Verify backend
         run: ./mvnw -B verify
+
+      - name: Upload JaCoCo coverage report
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: Backend/target/site/jacoco/
+          if-no-files-found: error

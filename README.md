@@ -166,6 +166,75 @@ On macOS or Linux, `scripts/pipeline.sh start` starts Vision, PostgreSQL and the
 
 This repository is **proprietary and confidential**. See [LICENSE](LICENSE). No part of this codebase may be copied, used or distributed without prior written permission from the copyright holders. Third-party components keep their own licenses — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
+
+## Testing
+
+The project uses automated unit, integration, component, and end-to-end tests.
+
+### Backend testing
+
+- JUnit 5 and Mockito for unit testing.
+- Spring Boot Test and MockMvc for API integration testing.
+- PostgreSQL for repository integration testing.
+- Authentication, JWT validation, and protected endpoint access tests.
+- JaCoCo for code coverage analysis.
+
+Start the test database:
+
+```bash
+docker run -d --name smart-warehouse-test-db -p 5433:5432 -e POSTGRES_DB=smart_warehouse_test -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres postgres:17
+```
+
+Run all backend tests and generate the coverage report:
+
+```bash
+cd Backend
+./mvnw clean verify
+```
+
+On Windows:
+
+```powershell
+.\mvnw.cmd clean verify
+```
+
+### Backend coverage
+
+| Metric | Result |
+|---|---:|
+| Total tests | 544 |
+| Line coverage | 96.46% |
+| Instruction coverage | 95.68% |
+| Branch coverage | 63.89% |
+| Method coverage | 96% |
+| Minimum required line coverage | 80% |
+
+The JaCoCo HTML report is generated at:
+
+`Backend/target/site/jacoco/index.html`
+
+### Frontend testing
+
+- Vitest for unit and component testing.
+- Playwright for end-to-end testing.
+- Responsive UI and user interaction testing.
+
+```bash
+cd Frontend
+npm ci
+npm test
+npx playwright install chromium
+npm run test:e2e
+```
+
+### Continuous integration
+
+Backend and frontend tests are executed automatically through GitHub Actions.
+
+The backend pipeline enforces a minimum line coverage of 80%. JaCoCo reports are published as workflow artifacts and can be downloaded from the GitHub Actions workflow run.
+
+The frontend pipeline executes unit, component, and end-to-end tests.
+
 ## Team
 
 | Name | Primary responsibility |
